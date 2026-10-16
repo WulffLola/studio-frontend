@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  studio_front_testing:
+    build:
+      context: .
+      dockerfile: Dockerfile.testing
+    container_name: STUDIO_FRONTEND_TESTING
+    restart: always
+    volumes:
+      - ./:/studio
+      - /studio/node_modules
+      - /studio/.next
+    ports:
+      - "4009:3000"
+    env_file:
+      - .env.testing
+    networks:
+      - STUDIO_FRONT_TESTING_NET
+
+networks:
+  STUDIO_FRONT_TESTING_NET:

@@ -1,0 +1,22 @@
+version: "3.7"
+
+services:
+  studio_front_production:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: STUDIO_FRONTEND_PRODUCTION
+    restart: always
+    volumes:
+      - ./:/studio
+      - /studio/node_modules
+      - /studio/.next
+    ports:
+      - "4010:3000"
+    env_file:
+      - .env.production
+    networks:
+      - STUDIO_FRONT_PRODUCTION_NET
+
+networks:
+  STUDIO_FRONT_PRODUCTION_NET:
