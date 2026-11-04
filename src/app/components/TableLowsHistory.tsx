@@ -303,7 +303,7 @@ const sortedData = Object.entries(list || {})
                     {/* Izquierda: título + subtítulo */}
                     <Box>
                         <Text fontSize="sm" color="text.secondary">
-                            Visualizá todas las cancelaciones de turnos realizadas
+                            Alumnos dados de baja en el último año y los turnos que tenían
                         </Text>
                     </Box>
 

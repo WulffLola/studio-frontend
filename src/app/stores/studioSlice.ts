@@ -148,10 +148,22 @@ export const getClientsByPlan = createAsyncThunk(
 // 10. deleted-people
 export const getDeletedPeople = createAsyncThunk(
   "studio/getDeletedPeople",
-  async () => {
+  async (range?: { date_from?: string; date_to?: string }) => {
+    // El backend exige date_from y date_to (máximo 366 días): por defecto, el último año.
+    const iso = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const today = new Date();
+    const yearAgo = new Date(today);
+    yearAgo.setDate(yearAgo.getDate() - 365);
     const res = await axios.get(
       `${process.env.NEXT_PUBLIC_URL_BACKEND_DELETED_PEOPLE}`,
-      { headers: getHeaders() },
+      {
+        headers: getHeaders(),
+        params: {
+          date_from: range?.date_from ?? iso(yearAgo),
+          date_to: range?.date_to ?? iso(today),
+        },
+      },
     );
     return res.data;
   },
