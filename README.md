@@ -2,7 +2,7 @@
 
 Interfaz web de **STUDIO**, una plataforma para la gestión operativa de estudios de Pilates. Es la herramienta que usan la recepción y la administración del estudio en el día a día.
 
-Consume la API de [studio-backend](https://github.com/WulffLola/studio-backend).
+Consume la API del proyecto `studio-backend`.
 
 ## Pantallas
 
@@ -12,7 +12,7 @@ Consume la API de [studio-backend](https://github.com/WulffLola/studio-backend).
 | `/studioSelection` | Elección de la sede con la que se va a trabajar. |
 | `/` | Inicio con accesos rápidos y la frase del día. |
 | `/students` | Alumnos: alta, edición, planes vigentes, deudores y activos/inactivos. |
-| `/lowsHistory` | Historial de bajas. |
+| `/lowsHistory` | Historial de bajas del último año. |
 | `/appointments` | Agenda semanal, reservas y lista de espera. |
 | `/studios` | Estudios, salas, feriados, plantillas de turnos y generación de la agenda. |
 | `/plans` | Tipos de plan, planes, precios por medio de pago, actividades y descuentos. |
@@ -20,11 +20,9 @@ Consume la API de [studio-backend](https://github.com/WulffLola/studio-backend).
 | `/payments` | Cobros con uno o varios planes y comprobantes. |
 | `/cashRegister` | Caja diaria: pagos y gastos. |
 | `/stadistics` | Indicadores de ocupación, alumnos y finanzas. |
-| `/studio-tips` | Notas y recetas que ven los alumnos. |
-| `/feed` | Publicaciones para la app de alumnos. |
+| `/feed` | Contenido para alumnos: publicaciones del inicio y, en la pestaña *Studio Tips*, notas y recetas (`/studio-tips`). |
 | `/users` | Usuarios del sistema y sus roles. |
 | `/actions` | Registro de acciones de los operadores. |
-| `/settings` | Configuración del estudio. |
 
 Lo que ve cada usuario depende de su rol (Super, Administrador o Consultor).
 
@@ -56,13 +54,50 @@ src/
 public/brand/            # logos de STUDIO
 ```
 
-## Instalación
+## Cómo levantarlo
 
-Requisitos: Node 18 o superior y el backend corriendo.
+### 1. Requisitos
+
+- **Docker Desktop** (Windows o Mac) o Docker Engine + Docker Compose (Linux). Se descarga de https://www.docker.com/products/docker-desktop/ y tiene que estar abierto.
+- **El backend levantado** y con los datos de prueba cargados (ver el README de `studio-backend`). La API tiene que responder en `http://localhost:8000/`.
+- El puerto `4010` libre.
+
+No hace falta instalar Node: corre dentro del contenedor.
+
+### 2. Descomprimir
+
+Descomprimir `studio-frontend.zip` y abrir una terminal dentro de la carpeta `studio-frontend`.
+
+### 3. Levantar
 
 ```bash
-git clone https://github.com/WulffLola/studio-frontend.git
-cd studio-frontend
+cp .env.example .env.production
+docker compose -f docker-compose.production.yml up -d --build
+```
+
+En Windows con CMD se usa `copy .env.example .env.production` en lugar de `cp`.
+
+La primera vez tarda varios minutos porque instala las dependencias y compila el proyecto.
+
+Durante la instalación aparecen avisos de paquetes deprecados y de vulnerabilidades en dependencias (`npm warn deprecated`, `caniuse-lite is outdated`). No impiden que funcione.
+
+### 4. Entrar
+
+Abrir **http://localhost:4010** y entrar con `admin@studio.local` / `studio1234`. Después de iniciar sesión se elige el estudio con el que se va a trabajar (por ejemplo *Studio Central*).
+
+También se puede entrar con `super@studio.local` o `recepcion@studio.local` (misma contraseña) para ver las pantallas según cada rol. El Consultor solo ve los estudios completamente configurados; con los datos de prueba es *Studio Central*.
+
+### 5. Apagar
+
+```bash
+docker compose -f docker-compose.production.yml down
+```
+
+## Desarrollo sin Docker (opcional)
+
+Requisitos: Node 18 o superior.
+
+```bash
 cp .env.example .env.local
 npm install
 npm run dev
@@ -70,20 +105,13 @@ npm run dev
 
 Queda en `http://localhost:3000`.
 
-Con los datos de prueba del backend se puede entrar con `admin@studio.local` / `studio1234`.
-
 ## Variables de entorno
 
-Están todas en [`.env.example`](.env.example). Cada endpoint del backend tiene su variable `NEXT_PUBLIC_URL_BACKEND_*`, así se puede apuntar a otro servidor cambiando solo la URL base. Si el backend corre en otro host o puerto, hay que reemplazar `http://localhost:8000` en todo el archivo.
+Están todas en [`.env.example`](.env.example). Cada endpoint del backend tiene su variable `NEXT_PUBLIC_URL_BACKEND_*`, así se puede apuntar a otro servidor cambiando solo la URL base. Si el backend corre en otro host o puerto, hay que reemplazar `http://localhost:8000` en todo el archivo y volver a construir la imagen (`up -d --build`), porque las variables se fijan al compilar.
 
-## Docker
+## Entorno de pruebas
 
-```bash
-cp .env.example .env.production
-docker compose -f docker-compose.production.yml up -d --build
-```
-
-Queda publicado en el puerto `4010`. Para un entorno de pruebas está `docker-compose.testing.yml`, que lee `.env.testing`.
+`docker-compose.testing.yml` levanta el modo desarrollo en el puerto `4009` y lee `.env.testing`.
 
 ## Scripts
 
