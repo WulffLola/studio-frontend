@@ -39,7 +39,7 @@ interface Studio {
 export default function StudioSelection() {
   const [loading, setLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { studios, rooms, slots } = useSelector((state: any) => state.studio);
+  const { studios } = useSelector((state: any) => state.studio);
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -52,22 +52,11 @@ export default function StudioSelection() {
     normalizedRole === "super";
 
   const activeStudios: Studio[] = (Array.isArray(studios) ? studios : []).filter((studio: Studio) => {
-    if (!studio?.is_active) return false;
+    if (!studio?.is_active || studio?.deleted) return false;
 
     if (tipo !== "Consultor") return true;
-    if (!studio.is_ready) return false;
-
-    const hasRooms =
-      Array.isArray(rooms) &&
-      rooms.some((room: any) => room.studio === studio.id || room.studio_id === studio.id);
-
-    const hasSlots =
-      Array.isArray(slots) &&
-      slots.some((slot: any) => slot.studio === studio.id || slot.studio_id === studio.id);
-
-    return hasRooms 
-    // && hasSlots;
-
+    // is_ready ya incluye que el estudio tenga salas, turnos y planes configurados
+    return studio.is_ready;
   });
 
   const count = activeStudios.length;
@@ -147,7 +136,6 @@ export default function StudioSelection() {
     );
   }
 
-  console.log(mainItems)
   console.log(activeStudios)
 
 
