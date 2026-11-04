@@ -25,6 +25,7 @@ import {
     MenuItem,
     MenuList,
     Portal,
+    Select,
     SimpleGrid,
     Stack,
     Text,
@@ -36,7 +37,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import ModalTeacherTurnEdit from "./ModalTeacherTurnEdit";
 import ModalTeacherTurnAdd from "./ModalTeacherTurnAdd";
 import { useSelector } from "react-redux";
-import { useStudioStore } from "../stores/studio";
 import { brandActivityPalette } from "../../theme/brand";
 import { Surface } from "./ui/PageContainer";
 import { StateMessage } from "./ui/StateMessage";
@@ -47,42 +47,51 @@ import { useAuthStore } from "../stores/auth";
 
 type TeachersShiftTableProps = {
     getTeachersTurn: () => void;
+    studioId?: string;
 };
 
 const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
     getTeachersTurn,
+    studioId,
 }) => {
     const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
-    const [shouldUpdate, setShouldUpdate] = useState(false);
     const [openTable, setOpenTable] = useState(true);
     const [selectedSlot, setSelectedSlot] = useState<any | null>(null);
     const [selectedRoomId, setSelectedRoomId] = useState("");
     const [weekOffset, setWeekOffset] = useState(0);
     const [selectedMobileDate, setSelectedMobileDate] = useState("");
     const [selectedForDelete, setSelectedForDelete] = useState<any | null>(null);
+    const [deletedTurnIds, setDeletedTurnIds] = useState<Set<string>>(() => new Set());
     const [deleting, setDeleting] = useState(false);
+    const [useRoomSelector, setUseRoomSelector] = useState(false);
     const cancelDeleteRef = React.useRef<HTMLButtonElement>(null);
+    const roomOptionsContainerRef = React.useRef<HTMLDivElement>(null);
+    const roomOptionsMeasureRef = React.useRef<HTMLDivElement>(null);
     const toast = useToast();
     const { tokens } = useAuthStore();
 
-    const selectedStudio = useStudioStore((s) => s.selectedStudio);
-    const studioId = selectedStudio?.id;
-
     const allRooms = useSelector((state: any) => state.studio.rooms || []);
+    const studios = useSelector((state: any) => state.studio.studios || []);
     const slots = useSelector((state: any) => state.studio.slots || []);
     const teachersTurn = useSelector((state: any) => state.studio.teachersTurn || []);
     const loadingTable = useSelector((state: any) => state.studio.loadingTeachersTurn);
 
     const rooms = useMemo(() => {
-        if (!studioId) return allRooms || [];
-
-        return (allRooms || []).filter((room: any) => {
+        const availableRooms = !studioId ? (allRooms || []) : (allRooms || []).filter((room: any) => {
             const roomStudioId =
                 room?.studio?.id ??
                 room?.studio_id ??
                 room?.studio;
 
             return String(roomStudioId) === String(studioId);
+        });
+
+        return [...availableRooms].sort((a: any, b: any) => {
+            const aStudio = String(a?.studio?.name || a?.studio_id || a?.studio || "");
+            const bStudio = String(b?.studio?.name || b?.studio_id || b?.studio || "");
+            const aRoom = String(a?.name || a?.room_name || a?.sala || a?.id || "");
+            const bRoom = String(b?.name || b?.room_name || b?.sala || b?.id || "");
+            return aStudio.localeCompare(bStudio) || aRoom.localeCompare(bRoom);
         });
     }, [allRooms, studioId]);
 
@@ -95,7 +104,7 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
         if (!rooms.some((room: any) => String(room.id) === selectedRoomId)) {
             setSelectedRoomId(String(rooms[0].id));
         }
-    }, [rooms, selectedRoomId]);
+    }, [rooms, selectedRoomId, studioId]);
 
     const {
         isOpen: isAlertOpenEdit,
@@ -115,10 +124,6 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
         onClose: onCloseDelete,
     } = useDisclosure();
 
-    useEffect(() => {
-        getTeachersTurn();
-    }, [getTeachersTurn, shouldUpdate, studioId]);
-
     const getTeacherColor = (teacherId: string | number) => {
         const numericId = Number(teacherId);
 
@@ -131,8 +136,42 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
     const getRoomIdFromItem = (item: any) =>
         String(item?.slot?.room?.id || item?.slot?.room || item?.room || "");
 
-    const getRoomName = (room: any) =>
-        room?.name || room?.room_name || room?.sala || `Sala ${room?.id}`;
+    const getRoomName = React.useCallback(
+        (room: any) => room?.name || room?.room_name || room?.sala || `Sala ${room?.id}`,
+        []
+    );
+
+    const getRoomStudioName = React.useCallback((room: any) => {
+        if (room?.studio?.name) return room.studio.name;
+        const roomStudioId = room?.studio?.id ?? room?.studio_id ?? room?.studio;
+        return studios.find(
+            (studio: any) => String(studio.id) === String(roomStudioId)
+        )?.name || "Estudio";
+    }, [studios]);
+
+    const getRoomOptionLabel = React.useCallback((room: any) =>
+        studioId
+            ? getRoomName(room)
+            : `${getRoomStudioName(room)} — ${getRoomName(room)}`,
+        [getRoomName, getRoomStudioName, studioId]
+    );
+
+    useEffect(() => {
+        const container = roomOptionsContainerRef.current;
+        const options = roomOptionsMeasureRef.current;
+        if (!container || !options) return;
+
+        const updateDisplayMode = () => {
+            setUseRoomSelector(options.scrollWidth > container.clientWidth);
+        };
+
+        updateDisplayMode();
+        const observer = new ResizeObserver(updateDisplayMode);
+        observer.observe(container);
+        observer.observe(options);
+
+        return () => observer.disconnect();
+    }, [rooms, getRoomOptionLabel]);
 
     const getDateFromItem = (item: any) => item?.slot?.date || item?.date || "";
 
@@ -194,29 +233,50 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
     };
 
     const filteredTeachersTurn = useMemo(() => {
-        if (!studioId) return teachersTurn || [];
+        const visibleTeachersTurn = (teachersTurn || []).filter(
+            (item: any) => !deletedTurnIds.has(String(item.id))
+        );
 
-        return (teachersTurn || []).filter((item: any) => {
+        if (!studioId) return visibleTeachersTurn;
+
+        return visibleTeachersTurn.filter((item: any) => {
+            const slot =
+                item?.slot && typeof item.slot === "object"
+                    ? item.slot
+                    : (slots || []).find(
+                        (currentSlot: any) =>
+                            String(currentSlot.id) === String(item?.slot_id || item?.slot)
+                    );
             const itemRoomId =
-                item?.slot?.room?.id ??
-                item?.slot?.room ??
+                slot?.room?.id ??
+                slot?.room_id ??
+                slot?.room ??
                 item?.room?.id ??
                 item?.room;
 
-            const room = (allRooms || []).find(
-                (r: any) => String(r.id) === String(itemRoomId)
-            );
-
-            if (!room) return false;
+            const room =
+                (slot?.room && typeof slot.room === "object" ? slot.room : null) ||
+                (allRooms || []).find(
+                    (r: any) => String(r.id) === String(itemRoomId)
+                );
 
             const roomStudioId =
+                item?.studio?.id ??
+                item?.studio_id ??
+                item?.studio ??
+                slot?.studio?.id ??
+                slot?.studio_id ??
+                slot?.studio ??
                 room?.studio?.id ??
                 room?.studio_id ??
                 room?.studio;
 
+            // Si la variante del endpoint no incluye la relación completa,
+            // se conserva el registro porque ya llegó filtrado por backend.
+            if (roomStudioId === undefined || roomStudioId === null) return true;
             return String(roomStudioId) === String(studioId);
         });
-    }, [teachersTurn, studioId, allRooms]);
+    }, [teachersTurn, studioId, allRooms, slots, deletedTurnIds]);
 
     const dateSlots = useMemo(() => {
         const today = new Date();
@@ -261,7 +321,7 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
 
             (rooms || []).forEach((room: any) => {
                 const roomId = String(room.id);
-                const roomName = getRoomName(room);
+                const roomName = getRoomOptionLabel(room);
 
                 const entries = (filteredTeachersTurn || [])
                     .filter((item: any) => {
@@ -287,7 +347,7 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
         });
 
         return result;
-    }, [dateSlots, rooms, filteredTeachersTurn]);
+    }, [dateSlots, rooms, filteredTeachersTurn, getRoomOptionLabel]);
 
     const selectedRoom = rooms.find(
         (room: any) => String(room.id) === selectedRoomId
@@ -308,7 +368,8 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
         });
 
         dateSlots.forEach((date) => {
-            (schedule?.[date]?.[selectedRoomId] || []).forEach((entry: any) => {
+            const entries = schedule?.[date]?.[selectedRoomId] || [];
+            entries.forEach((entry: any) => {
                 if (entry.time && entry.time !== "-") labels.add(entry.time);
             });
         });
@@ -316,13 +377,23 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
         return [...labels].sort((a, b) => a.localeCompare(b));
     }, [dateSlots, schedule, selectedRoomId, slots]);
 
+    const getEntriesForCell = (date: string, time: string) => {
+        const entries = schedule?.[date]?.[selectedRoomId] || [];
+        return entries.filter((entry: any) => entry.time === time);
+    };
+
     const openEmptyCell = (date: string, time: string) => {
         if (!selectedRoom) return;
+        const selectedRoomStudioId =
+            selectedRoom?.studio?.id ??
+            selectedRoom?.studio_id ??
+            selectedRoom?.studio;
         setSelectedSlot({
             time: time.split(" - ")[0],
             date,
             day: getDayNameFromDate(date),
-            isReceptionist: false,
+            studioId: String(selectedRoomStudioId || ""),
+            studioName: getRoomStudioName(selectedRoom),
             roomId: selectedRoomId,
             roomName: getRoomName(selectedRoom),
         });
@@ -369,16 +440,22 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
 
     const handleDelete = async () => {
         if (!selectedForDelete?.id) return;
+        const deletedId = String(selectedForDelete.id);
         setDeleting(true);
         try {
             await axios.delete(
                 `${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHERS_TURN}${selectedForDelete.id}/`,
                 { headers: { Authorization: `Bearer ${tokens?.access}` } }
             );
+            setDeletedTurnIds((current) => {
+                const next = new Set(current);
+                next.add(deletedId);
+                return next;
+            });
             toast({ title: "Turno eliminado correctamente", status: "success", duration: 3000, isClosable: true, position: "bottom-right" });
             onCloseDelete();
             setSelectedForDelete(null);
-            getTeachersTurn();
+            await getTeachersTurn();
         } catch {
             toast({ title: "No se pudo eliminar el turno", status: "error", duration: 5000, isClosable: true, position: "bottom-right" });
         } finally {
@@ -442,16 +519,6 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
             </Menu>
         </Box>
     );
-
-
-    console.log("studioId", studioId);
-    console.log("allRooms", allRooms);
-    console.log("rooms filtradas", rooms);
-    console.log("teachersTurn", teachersTurn);
-    console.log("filteredTeachersTurn", filteredTeachersTurn);
-    console.log("dateSlots", dateSlots);
-    console.log("schedule", schedule);
-
     return (
         <>
             <Modal
@@ -471,7 +538,6 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
                         product={selectedSlot}
                         getTeachersTurn={getTeachersTurn}
                         openTable={openTable}
-                        grillRoom={selectedSlot?.roomName}
                     />
                 </ModalContent>
             </Modal>
@@ -480,7 +546,6 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
                 <Modal
                     onClose={() => {
                         onCloseModalEdit();
-                        setShouldUpdate((prev) => !prev);
                     }}
                     isOpen={isAlertOpenEdit}
                     isCentered
@@ -570,26 +635,72 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
                                 </HStack>
                             </Flex>
 
-                            <HStack spacing={2} overflowX="auto" pb={1}>
-                                {rooms.map((room: any) => {
-                                    const active = String(room.id) === selectedRoomId;
-                                    return (
-                                        <Button
-                                            key={room.id}
-                                            size="sm"
-                                            flexShrink={0}
-                                            variant="toggle"
-                                            isActive={active}
-                                            aria-pressed={active}
-                                            onClick={() => setSelectedRoomId(String(room.id))}
-                                        >
-                                            {getRoomName(room)}
+                            <Box ref={roomOptionsContainerRef} position="relative" w="100%">
+                                <Text mb={2} textStyle="overline">
+                                    Sala
+                                </Text>
+                                <HStack
+                                    ref={roomOptionsMeasureRef}
+                                    spacing={2}
+                                    position="absolute"
+                                    visibility="hidden"
+                                    pointerEvents="none"
+                                    w="max-content"
+                                    aria-hidden="true"
+                                >
+                                    {rooms.map((room: any) => (
+                                        <Button key={room.id} size="sm" flexShrink={0} variant="toggle">
+                                            {getRoomOptionLabel(room)}
                                         </Button>
-                                    );
-                                })}
-                            </HStack>
+                                    ))}
+                                </HStack>
 
-                            {timeRows.length === 0 ? (
+                                {useRoomSelector ? (
+                                    <Select
+                                        aria-label="Seleccionar sala"
+                                        placeholder="Seleccionar sala"
+                                        value={selectedRoomId}
+                                        onChange={(event) => setSelectedRoomId(event.target.value)}
+                                        maxW={{ base: "100%", md: "420px" }}
+                                    >
+                                        {rooms.map((room: any) => (
+                                            <option key={room.id} value={String(room.id)}>
+                                                {getRoomOptionLabel(room)}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                ) : (
+                                    <HStack spacing={2} pb={1}>
+                                        {rooms.map((room: any) => {
+                                            const active = String(room.id) === selectedRoomId;
+                                            return (
+                                                <Button
+                                                    key={room.id}
+                                                    size="sm"
+                                                    flexShrink={0}
+                                                    variant="toggle"
+                                                    isActive={active}
+                                                    aria-pressed={active}
+                                                    onClick={() => setSelectedRoomId(String(room.id))}
+                                                >
+                                                    {getRoomOptionLabel(room)}
+                                                </Button>
+                                            );
+                                        })}
+                                    </HStack>
+                                )}
+                            </Box>
+
+                            {!selectedRoomId ? (
+                                <Box border="1px dashed" borderColor="border.default" borderRadius="card" py={12} px={4} textAlign="center">
+                                    <Text fontWeight={600} color="text.primary">
+                                        Seleccioná una sala para ver la agenda
+                                    </Text>
+                                    <Text mt={1} fontSize="sm" color="text.muted">
+                                        Las salas están identificadas por estudio para evitar mezclar turnos.
+                                    </Text>
+                                </Box>
+                            ) : timeRows.length === 0 ? (
                                 <Box border="1px dashed" borderColor="border.default" borderRadius="card" py={12} textAlign="center" color="text.muted">
                                     No hay turnos asignados para esta sala durante la semana.
                                 </Box>
@@ -643,14 +754,33 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
 
                                     <Stack spacing={3}>
                                         {timeRows.map((time) => {
-                                            const entries = (schedule?.[selectedMobileDate]?.[selectedRoomId] || []).filter((entry: any) => entry.time === time);
+                                            const entries = getEntriesForCell(selectedMobileDate, time);
                                             const hasAvailableSlot = (Array.isArray(slots) ? slots : []).some((slot: any) =>
                                                 getRoomIdFromItem(slot) === selectedRoomId &&
                                                 getDateFromItem(slot) === selectedMobileDate &&
                                                 getTimeLabelFromItem(slot) === time
                                             );
                                             return (
-                                                <Box key={`${selectedMobileDate}-${time}`} bg="bg.surface" border="1px solid" borderColor="border.subtle" borderRadius="card" overflow="hidden">
+                                                <Box
+                                                    key={`${selectedMobileDate}-${time}`}
+                                                    bg="bg.surface"
+                                                    border="1px solid"
+                                                    borderColor="border.subtle"
+                                                    borderRadius="card"
+                                                    overflow="hidden"
+                                                    cursor={!entries.length && hasAvailableSlot ? "pointer" : "default"}
+                                                    role={!entries.length && hasAvailableSlot ? "button" : undefined}
+                                                    tabIndex={!entries.length && hasAvailableSlot ? 0 : undefined}
+                                                    onClick={!entries.length && hasAvailableSlot ? () => openEmptyCell(selectedMobileDate, time) : undefined}
+                                                    onKeyDown={!entries.length && hasAvailableSlot ? (event) => {
+                                                        if (event.key === "Enter" || event.key === " ") {
+                                                            event.preventDefault();
+                                                            openEmptyCell(selectedMobileDate, time);
+                                                        }
+                                                    } : undefined}
+                                                    _hover={!entries.length && hasAvailableSlot ? { borderColor: "brand.300", bg: "brand.50" } : undefined}
+                                                    _focusVisible={{ boxShadow: "focusRing", outline: "none" }}
+                                                >
                                                     <Box px={3} py={2} bg="bg.subtle" borderBottom="1px solid" borderColor="border.subtle">
                                                         <Text fontSize="sm" fontWeight={600}>{time}</Text>
                                                     </Box>
@@ -658,9 +788,9 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
                                                         {entries.length ? (
                                                             <Stack spacing={2}>{entries.map(renderTeacherCard)}</Stack>
                                                         ) : hasAvailableSlot ? (
-                                                            <Button w="100%" minH="58px" variant="ghost" border="1px dashed" borderColor="border.default" color="text.muted" _hover={{ borderColor: "brand.300", color: "text.brand", bg: "brand.50" }} onClick={() => openEmptyCell(selectedMobileDate, time)}>
+                                                            <Flex w="100%" minH="58px" align="center" justify="center" border="1px dashed" borderColor="border.default" borderRadius="md" color="text.muted" fontWeight={500}>
                                                                 + Agregar profesora
-                                                            </Button>
+                                                            </Flex>
                                                         ) : (
                                                             <Flex minH="44px" align="center" justify="center" color="text.disabled" fontSize="sm">Sin horario disponible</Flex>
                                                         )}
@@ -689,33 +819,53 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
                                                     <Text fontWeight={600} fontSize="sm">{time}</Text>
                                                 </Box>
                                                 {dateSlots.map((date) => {
-                                                    const entries = (schedule?.[date]?.[selectedRoomId] || []).filter((entry: any) => entry.time === time);
+                                                    const entries = getEntriesForCell(date, time);
                                                     const hasAvailableSlot = (Array.isArray(slots) ? slots : []).some((slot: any) =>
                                                         getRoomIdFromItem(slot) === selectedRoomId &&
                                                         getDateFromItem(slot) === date &&
                                                         getTimeLabelFromItem(slot) === time
                                                     );
                                                     return (
-                                                        <Box key={`${date}-${time}`} minH="82px" borderRight="1px solid" borderBottom="1px solid" borderColor="border.subtle" p={1.5} display="flex">
+                                                        <Box
+                                                            key={`${date}-${time}`}
+                                                            minH="82px"
+                                                            borderRight="1px solid"
+                                                            borderBottom="1px solid"
+                                                            borderColor="border.subtle"
+                                                            p={1.5}
+                                                            display="flex"
+                                                            cursor={!entries.length && hasAvailableSlot ? "pointer" : "default"}
+                                                            role={!entries.length && hasAvailableSlot ? "button" : undefined}
+                                                            tabIndex={!entries.length && hasAvailableSlot ? 0 : undefined}
+                                                            onClick={!entries.length && hasAvailableSlot ? () => openEmptyCell(date, time) : undefined}
+                                                            onKeyDown={!entries.length && hasAvailableSlot ? (event) => {
+                                                                if (event.key === "Enter" || event.key === " ") {
+                                                                    event.preventDefault();
+                                                                    openEmptyCell(date, time);
+                                                                }
+                                                            } : undefined}
+                                                            _hover={!entries.length && hasAvailableSlot ? { bg: "brand.50" } : undefined}
+                                                            _focusVisible={{ boxShadow: "focusRing", outline: "none" }}
+                                                        >
                                                             {entries.length ? (
                                                                 <Stack spacing={2} w="100%" h="100%" flex="1">
                                                                     {entries.map(renderTeacherCard)}
                                                                 </Stack>
                                                             ) : hasAvailableSlot ? (
-                                                                <Button
+                                                                <Flex
                                                                     w="100%"
                                                                     h="100%"
                                                                     minH="68px"
-                                                                    variant="ghost"
                                                                     border="1px dashed"
                                                                     borderColor="border.default"
+                                                                    borderRadius="md"
                                                                     color="text.muted"
                                                                     fontWeight={500}
-                                                                    _hover={{ borderColor: "brand.300", color: "text.brand", bg: "brand.50" }}
-                                                                    onClick={() => openEmptyCell(date, time)}
+                                                                    align="center"
+                                                                    justify="center"
                                                                 >
                                                                     + Agregar
-                                                                </Button>
+                                                                </Flex>
                                                             ) : (
                                                                 <Flex w="100%" minH="68px" align="center" justify="center" color="text.disabled">—</Flex>
                                                             )}

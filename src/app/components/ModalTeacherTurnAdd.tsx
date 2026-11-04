@@ -38,7 +38,6 @@ import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import ModalCode from "./ModalCode";
 import { useAuthStore } from "../stores/auth";
-import { useStudioStore } from "../stores/studio";
 import { useAppDispatch } from "../stores/hooks";
 import { useSelector } from "react-redux";
 import {
@@ -48,8 +47,9 @@ import {
     getSlots,
 } from "../stores/studioSlice";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
-const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, grillRoom }: any) => {
+const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable }: any) => {
     // const [idAppointmet, setIdAppointmet] = useState("")
     // const [isReceptionist, setIsReceptionist] = useState(product?.isReceptionist ? "true" : "false" || "false");
     const [isReceptionist, setIsReceptionist] = useState("");
@@ -61,9 +61,8 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
     const [loading, setLoading] = useState(false);
     const [studio, setStudio] = useState<any>(null);
     const [room, setRoom] = useState<any>(null);
-    const { selectedStudio, setSelectedStudio } = useStudioStore();
 
-    const [day, setDay] = useState({ value: product?.day || "", label: product?.day || "" });
+    const [day, setDay] = useState({ value: product?.date || "", label: product?.date || "" });
     const [hour, setHour] = useState({ value: product?.time || "", label: product?.time || "" });
     const [isLoading, setIsLoading] = useState(false);
 
@@ -81,6 +80,28 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
     const [selectedSlotId, setSelectedSlotId] = useState(""); // Para almacenar el ID del slot
 
     const toast = useToast();
+
+    useEffect(() => {
+        if (!openTable || !product) return;
+
+        const dateLabel = product.date
+            ? product.date.split("-").reverse().join("/")
+            : "";
+
+        setStudio(
+            product.studioId
+                ? { value: product.studioId, label: product.studioName }
+                : null
+        );
+        setRoom(
+            product.roomId
+                ? { value: product.roomId, label: product.roomName }
+                : null
+        );
+        setDay({ value: product.date || "", label: dateLabel });
+        setHour({ value: product.time || "", label: product.time || "" });
+        setIsReceptionist("");
+    }, [openTable, product]);
 
 
     const {
@@ -106,6 +127,7 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
         const isFormValid =
             teacher &&
             selectedSlotId &&
+            isReceptionist.trim() &&
             code &&
             studio?.value &&
             room?.value;
@@ -188,6 +210,7 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
     useEffect(() => {
         const selectedDate = openTable ? day.value : date.value;
         const selectedHour = openTable ? hour.value : hours.value;
+        const selectedRoomId = openTable ? product?.roomId : room?.value;
 
         if (!selectedDate || !selectedHour) {
             setSelectedSlotId("");
@@ -197,7 +220,8 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
         const matchingSlot = slots.find(
             (item) =>
                 item.date === selectedDate &&
-                item.start_time.slice(0, 5) === selectedHour
+                item.start_time.slice(0, 5) === selectedHour &&
+                String(item?.room?.id ?? item?.room_id ?? item?.room) === String(selectedRoomId)
         );
 
         if (matchingSlot) {
@@ -205,7 +229,7 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
         } else {
             setSelectedSlotId("");
         }
-    }, [slots, day.value, date.value, hour.value, hours.value, openTable]);
+    }, [slots, day.value, date.value, hour.value, hours.value, openTable, product?.roomId, room?.value]);
 
     useEffect(() => {
         async function fetchData() {
@@ -223,13 +247,12 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
             }
         }
         fetchData();
-    }, []);
+    }, [dispatch]);
 
 
     const parseLocalDate = (dateString?: string | null) => {
         if (!dateString) return null;
         const [year, month, day] = dateString.split("-").map(Number);
-        console.log("dateString:", dateString);
         return new Date(year, month - 1, day);
     };
 
@@ -314,7 +337,7 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
                             </FormControl>
                         </Box>
                         <Box>
-                            <FormControl id="role" >
+                            <FormControl id="role" isRequired>
                                 <FormLabel>Rol</FormLabel>
                                 <Input
                                     h="40px"
@@ -333,14 +356,14 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
                                     placeholder="Seleccionar"
                                     h="40px"
                                     w="100%"
-                                    value={openTable ? selectedStudio : studio}
+                                    value={studio}
                                     isDisabled={openTable}
                                     onChange={(selectedOption) => {
                                         setStudio(selectedOption || null);
                                         setRoom(null);
                                     }}
                                     options={studios
-                                        .filter((item) => item.is_active)
+                                        .filter(isSelectableStudio)
                                         .map((item) => ({
                                             label: item.name,
                                             value: item.id,
@@ -355,7 +378,7 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
                                     placeholder={!studio ? "Seleccioná un estudio primero" : "Seleccionar"}
                                     h="40px"
                                     w="100%"
-                                    value={openTable ? grillRoom : room}
+                                    value={room}
                                     isDisabled={openTable || !studio}
                                     onChange={(selectedOption) => {
                                         setRoom(selectedOption || null);
@@ -390,7 +413,7 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable, gri
                                     _focusWithin={{ borderColor: "border.focus", boxShadow: "focusRing" }}
                                 >
                                     <DatePicker
-                                        selected={openTable ? null : selectedDateObject}
+                                        selected={openTable ? parseLocalDate(day.value) : selectedDateObject}
                                         onChange={(selectedDate: Date | null) => {
                                             if (!selectedDate) {
                                                 setDate({ value: "", label: "" });

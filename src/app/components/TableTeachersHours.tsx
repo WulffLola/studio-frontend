@@ -46,6 +46,7 @@ import { useSelector } from "react-redux";
 import {
     getTeachers,
     getTeachersTurn,
+    getTeacherHours,
     getSlots,
 } from '../stores/studioSlice';
 import { LoadingOverlay } from "./ui/Loaders";
@@ -61,6 +62,38 @@ const orderDays = [
     "SÁBADO",
     "DOMINGO",
 ];
+
+const normalizeWeekDay = (value: unknown) => {
+    const normalized = String(value || "")
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+    const days: Record<string, string> = {
+        LUNES: "LUNES",
+        MARTES: "MARTES",
+        MIERCOLES: "MIÉRCOLES",
+        JUEVES: "JUEVES",
+        VIERNES: "VIERNES",
+        SABADO: "SÁBADO",
+        DOMINGO: "DOMINGO",
+    };
+
+    return days[normalized] || "";
+};
+
+const getTurnWeekDay = (turn: any) => {
+    const dateValue = turn?.slot?.date;
+    if (!dateValue) return "";
+
+    const [year, month, day] = String(dateValue).split("T")[0].split("-").map(Number);
+    if (!year || !month || !day) return "";
+
+    return normalizeWeekDay(
+        new Date(year, month - 1, day).toLocaleDateString("es-ES", { weekday: "long" })
+    );
+};
 
 const TableTeachersHours = ({ list, onOpen }: { list: Array<any>; onOpen: () => void; }) => {
 
@@ -129,7 +162,10 @@ const TableTeachersHours = ({ list, onOpen }: { list: Array<any>; onOpen: () => 
                 isClosable: true,
                 position: "bottom-right",
             });
-            dispatch(getTeachers());
+            await Promise.all([
+                dispatch(getTeachers()),
+                dispatch(getTeacherHours()),
+            ]);
 
         } catch (error: any) {
 
@@ -158,11 +194,6 @@ const TableTeachersHours = ({ list, onOpen }: { list: Array<any>; onOpen: () => 
     };
 
     const filteredItems = list;
-
-    // function getUniqueDays(data: any[]) {
-    // const days = [...new Set(data.map(item => item.week_day ? item.week_day.day : null))];
-    // return days.filter(day => day !== null) as string[];
-    // }
 
     function countDaysInMonth(data: any[], selectedMesId: number, uniqueDays: string[]): number[] {
         if (selectedMesId < 1 || selectedMesId > 12) {
@@ -284,18 +315,15 @@ const TableTeachersHours = ({ list, onOpen }: { list: Array<any>; onOpen: () => 
         const uniqueDays: string[] = Array.from(
             new Set<string>(
                 teacherTurns
-                    .map((turn: any) => turn?.slot?.week_day?.day ?? turn?.week_day?.day ?? turn?.week_day)
+                    .map(getTurnWeekDay)
                     .filter(Boolean)
-                    .map((day: any) => String(day).toUpperCase())
             )
         ).sort((a, b) => orderDays.indexOf(a) - orderDays.indexOf(b));
 
         const workByDay = uniqueDays.map(
             (day) =>
                 teacherTurns.filter((turn: any) => {
-                    const turnDay =
-                        turn?.slot?.week_day?.day ?? turn?.week_day?.day ?? turn?.week_day;
-                    return String(turnDay).toUpperCase() === day;
+                    return getTurnWeekDay(turn) === day;
                 }).length
         );
         const dayCount = countDaysInMonth(slots, parseInt(selectedMes, 10), uniqueDays);

@@ -55,29 +55,11 @@ const ModalTeacherEdit = ({ product, onClose }: any) => {
     const [loading, setLoading] = useState(false);
 
 
-    const [plans, setPlans] = useState([])
-
     const { teachers } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
 
     const toast = useToast();
-
-    async function getPlans() {
-        try {
-            const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PLAN}`, {
-                headers: {
-                    'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-                    'Content-Type': 'application/json',
-                },
-            });
-            setPlans(response.data)
-        } catch (error) {
-            console.log(error);
-        }
-    };
-
-
 
     const handleSubmitTeacher = async () => {
         setLoading(true)
@@ -484,24 +466,6 @@ const ModalTeacherEdit = ({ product, onClose }: any) => {
                             />
                         </FormControl>
                     </Box>
-                    {/* <Box>
-                    <FormControl id="plan" isRequired>
-                        <FormLabel>Plan</FormLabel>
-                        <Select
-                            h={"40px"}
-                            w="100%"
-                            placeholder="Seleccionar"
-                            onChange={(event) => setPlan(event.target.value)}
-                        >
-                            {plans.map((plan) => (
-                                <option key={plan.id} value={plan.id}>
-                                    {plan.days} 
-                                </option>
-                            ))}
-                        </Select>
-
-                    </FormControl>
-                </Box> */}
                 </SimpleGrid>
 
                 <HStack spacing={3} justify="flex-end" mt={6}>

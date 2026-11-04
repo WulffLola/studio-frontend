@@ -233,7 +233,7 @@ const TableTeachers = ({ list, onOpen }: { list: Array<any>; onOpen: () => void;
         }, 800); // Ajusta el tiempo en milisegundos
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [dispatch]);
 
 
 
@@ -412,6 +412,9 @@ const TableTeachers = ({ list, onOpen }: { list: Array<any>; onOpen: () => void;
                             leftIcon={<FiPlus />}
                             onClick={onOpen}
                             w={{ base: "100%", md: "auto" }}
+                            flexBasis={{ base: "100%", md: "auto" }}
+                            flexShrink={0}
+                            whiteSpace="nowrap"
                             variant="primary"
                         >
                             Registrar Profesora
@@ -566,11 +569,13 @@ const TableTeachers = ({ list, onOpen }: { list: Array<any>; onOpen: () => void;
                 </Table>
             </Box >
 
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box display="flex" justifyContent="center" mt={4} w="100%">
                 <Pagination
                     count={countPagination}
                     pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredItems.length}
                     defaultPage={1}
+                    page={currentPage}
                     onPageChange={setCurrentPage}
                 />
             </Box>
