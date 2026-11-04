@@ -1,3 +1,4 @@
+import { alive } from "../utils/studios";
 import {
     Button,
     Stack,
@@ -135,7 +136,7 @@ const ModalActivitySubTypeAdd = ({ onClose }: any) => {
                             value={activityType}
                             onChange={(e) => setActivityType(e.target.value)}
                         >
-                            {activityTypes?.map((item: any) => (
+                            {alive(activityTypes).map((item: any) => (
                                 <option key={item.id} value={item.id}>
                                     {item.name}
                                 </option>

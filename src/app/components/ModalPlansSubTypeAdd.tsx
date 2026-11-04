@@ -1,3 +1,4 @@
+import { alive } from "../utils/studios";
 import {
   Button,
   Stack,
@@ -182,7 +183,7 @@ const ModalPlansSubTypeAdd = ({ onClose, isCancel }: any) => {
                 value={activitySubtypeId}
                 onChange={(event) => setActivitySubtypeId(event.target.value)}
               >
-                {activitySubType?.map((item: any) => (
+                {alive(activitySubType).map((item: any) => (
                   <option key={item.id} value={item.id}>
                     {item.name}
                   </option>
@@ -219,7 +220,7 @@ const ModalPlansSubTypeAdd = ({ onClose, isCancel }: any) => {
                   value={plansTypeId}
                   onChange={(event) => setPlansTypeId(event.target.value)}
                 >
-                  {typePlans?.map((typePlan: any) => (
+                  {alive(typePlans).map((typePlan: any) => (
                     <option key={typePlan.id} value={typePlan.id}>
                       {typePlan.name}
                     </option>

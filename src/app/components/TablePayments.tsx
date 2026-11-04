@@ -316,7 +316,8 @@ const TablePayments = ({
   };
 
   // Ordena la lista por fecha de la más reciente a la más antigua
-  const sortedList = [...list].sort(
+  // Los pagos dados de baja no se muestran (la caja tampoco los cuenta)
+  const sortedList = [...(list || [])].filter((item) => !item?.deleted).sort(
     (a, b) => new Date(b.date) - new Date(a.date)
   );
 
@@ -402,7 +403,7 @@ const TablePayments = ({
     return matchesSearch && matchesStudio;
   });
 
-  const filteredItemsByRange = paymentsByDateRange.filter((item) => {
+  const filteredItemsByRange = paymentsByDateRange.filter((item) => !item?.deleted).filter((item) => {
     const searchValue = searchTerm
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
