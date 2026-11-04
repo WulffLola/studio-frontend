@@ -342,7 +342,7 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable }: a
                                 <Input
                                     h="40px"
                                     w="100%"
-                                    placeholder="Seleccionar"
+                                    placeholder="Ej: Profesora, Recepción"
                                     value={isReceptionist || ""}
                                     onChange={(e) => setIsReceptionist(e.target.value)}
 /*                                     isDisabled={openTable}
@@ -382,10 +382,13 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable }: a
                                     isDisabled={openTable || !studio}
                                     onChange={(selectedOption) => {
                                         setRoom(selectedOption || null);
+                                        // al cambiar de sala, el horario elegido puede no existir en la nueva
+                                        setHours({ value: "", label: "" });
+                                        setSelectedSlotId("");
                                     }}
                                     options={rooms
                                         .filter((item) =>
-                                            item.is_active &&
+                                            item.is_active && !item.deleted &&
                                             item.studio === Number(studio?.value)
                                         )
                                         .map((item) => ({
@@ -472,7 +475,9 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable }: a
                                                 (openTable
                                                     ? slot.date === day.value
                                                     : slot.date === date.value) &&
-                                                slot.start_time.slice(0, 5) === time
+                                                slot.start_time.slice(0, 5) === time &&
+                                                (openTable || !room?.value ||
+                                                    String(slot?.room?.id ?? slot?.room_id ?? slot?.room) === String(room?.value))
                                         );
 
                                         if (matchingSlot) {
@@ -485,9 +490,12 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable }: a
                                         ...new Set(
                                             slots
                                                 .filter((slot) =>
-                                                    openTable
+                                                    (openTable
                                                         ? slot.date === day.value
-                                                        : slot.date === date.value
+                                                        : slot.date === date.value) &&
+                                                    // solo los horarios de la sala elegida
+                                                    (openTable || !room?.value ||
+                                                        String(slot?.room?.id ?? slot?.room_id ?? slot?.room) === String(room?.value))
                                                 )
                                                 .map((slot) => slot.start_time.slice(0, 5))
                                         ),
@@ -532,10 +540,13 @@ const ModalTeacherTurnAdd = ({ product, onClose, getTeachersTurn, openTable }: a
                                     isDisabled={openTable || !studio}
                                     onChange={(selectedOption) => {
                                         setRoom(selectedOption || null);
+                                        // al cambiar de sala, el horario elegido puede no existir en la nueva
+                                        setHours({ value: "", label: "" });
+                                        setSelectedSlotId("");
                                     }}
                                     options={rooms
                                         .filter((item) =>
-                                            item.is_active &&
+                                            item.is_active && !item.deleted &&
                                             item.studio === Number(studio?.value)
                                         )
                                         .map((item) => ({
