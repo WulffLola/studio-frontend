@@ -10,6 +10,7 @@ import {
   Box,
   Spinner,
   HStack,
+  Text,
 } from "@chakra-ui/react";
 import React, { useState } from "react";
 import axios from "axios";
@@ -21,6 +22,7 @@ import { useStudioStore } from "../stores/studio";
 import { Select } from "./ui/Select";
 import { Select as Select2 } from "./ui/Select";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
 type Room = {
   id: number;
@@ -46,6 +48,13 @@ const ModalRoomsEdit = ({ product, onClose }: any) => {
   const toast = useToast();
 
   const selectedStudio = useStudioStore((s) => s.selectedStudio);
+  const originalStudioId =
+    typeof product?.studio === "object" ? product.studio?.id : product?.studio;
+  const originalStudio = studios.find(
+    (item: any) => String(item.id) === String(originalStudioId)
+  );
+  const isHistoricalStudioLocked =
+    Boolean(originalStudio) && !isSelectableStudio(originalStudio);
 
 
   const handleSubmitRoomsEdit = async () => {
@@ -165,8 +174,8 @@ const ModalRoomsEdit = ({ product, onClose }: any) => {
             <FormControl isRequired>
               <FormLabel>Estudio</FormLabel>
               <Select2
-                w="100%"
                 placeholder="Seleccionar"
+                isDisabled={isHistoricalStudioLocked}
                 value={
                   studios
                     .map((stu) => ({ label: stu.name, value: stu.id }))
@@ -174,13 +183,21 @@ const ModalRoomsEdit = ({ product, onClose }: any) => {
                 }
                 onChange={(selectedOption) => setStudio(selectedOption.value)}  // El `selectedOption` contiene `value` y `label`
                 options={studios
-                  .filter((stu) => stu.is_active === true) // 👈 solo activos
+                  .filter((stu) =>
+                    isSelectableStudio(stu) ||
+                    String(stu.id) === String(originalStudioId)
+                  )
                   .map((stu) => ({
                     label: stu.name,
                     value: stu.id
                   }))
                 }
               />
+              {isHistoricalStudioLocked && (
+                <Text mt={1} fontSize="xs" color="orange.600">
+                  El estudio histórico no está habilitado y no puede cambiarse.
+                </Text>
+              )}
             </FormControl>
           </Box>
 

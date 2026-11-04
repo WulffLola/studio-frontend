@@ -21,6 +21,7 @@ import { useStudioStore } from "../stores/studio";
 import { Select } from "./ui/Select";
 import { Select as Select2 } from "./ui/Select";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
 type Room = {
   id: number;
@@ -172,7 +173,7 @@ const ModalRoomsAdd = ({
                 placeholder="Seleccionar"
                 onChange={(selectedOption) => setStudio(selectedOption.value)}
                 options={studios
-                  .filter((stu) => stu.is_active === true)   // 👈 Filtra solo activos
+                  .filter(isSelectableStudio)
                   .map((stu) => ({
                     label: stu.name,
                     value: stu.id

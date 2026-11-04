@@ -7,6 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
+  Badge,
   Box,
   Button,
   Checkbox,
@@ -48,14 +49,21 @@ import {
   getRooms,
   getSlots,
   getStudios,
+  getCalendar,
+  getPeoples,
 } from "../stores/studioSlice";
 import { FiPlus, FiSearch } from "react-icons/fi";
 import { Select as Select2 } from "./ui/Select";
 import { LoadingOverlay } from "./ui/Loaders";
 import { TableState } from "./ui/StateMessage";
 import SearchField from "./ui/SearchField";
+import StatusBadge from "./ui/StatusBadge";
+import { useStudioStore } from "../stores/studio";
 
 const ITEMS_PER_PAGE = 10;
+const fixedSlotsUrl = () =>
+  process.env.NEXT_PUBLIC_URL_BACKEND_FIXED_SLOTS ||
+  `${process.env.NEXT_PUBLIC__URL_BACKEND}fixed-slots/`;
 
 const hasSignedClassDeclaration = (appointment: any) =>
   appointment?.firmo_declaracion_clase === true ||
@@ -64,9 +72,11 @@ const hasSignedClassDeclaration = (appointment: any) =>
 const TableAppointments = ({
   list,
   onOpen,
+  refreshKey,
 }: {
   list: Array<any>;
   onOpen: () => void;
+  refreshKey: number;
 }) => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedRow, setSelectedRow] = useState<any>([]);
@@ -76,17 +86,37 @@ const TableAppointments = ({
     value: "all",
     label: "Todos los estudios",
   });
-  const [code, setCode] = useState("admin");
-  const { tipo, tokens } = useAuthStore();
+  const selectedStudioFromHeader = useStudioStore((state) => state.selectedStudio);
+  const studioStoreHasHydrated = useStudioStore((state) => state.hasHydrated);
+  const studioFilterInitialized = React.useRef(false);
+  const { tipo, tokens, code } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(false);
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
+  const [fixedSlots, setFixedSlots] = useState<any[]>([]);
 
-  const { appointments, activitySubType, rooms, slots, studios } = useSelector(
+  const { appointments, activitySubType, rooms, slots, studios, peoples } = useSelector(
     (state: any) => state.studio
   );
   const dispatch = useAppDispatch();
+  const isStudent = tipo === "Estudiante" || tipo === "Alumno";
+  const canUseAuthenticatedCode = ["Super", "SUPER", "Administrador", "ADMIN", "Admin"].includes(tipo || "");
+  const canDeleteFixed = ["Super", "SUPER", "Administrador", "ADMIN", "Admin", "Consultor"].includes(tipo || "");
 
-  const sortByLastNameAndFirstName = (items = []) => {
+  useEffect(() => {
+    if (!studioStoreHasHydrated || studioFilterInitialized.current) return;
+
+    if (!isStudent && selectedStudioFromHeader?.id) {
+      setSelectedStudio({
+        value: selectedStudioFromHeader.id,
+        label: selectedStudioFromHeader.name,
+      });
+    }
+
+    studioFilterInitialized.current = true;
+  }, [isStudent, selectedStudioFromHeader, studioStoreHasHydrated]);
+
+  const sortByLastNameAndFirstName = (items: any[] = []) => {
     return [...items].sort((a: any, b: any) => {
       const lastNameComparison = (a.person?.last_name || "").localeCompare(
         b.person?.last_name || ""
@@ -243,7 +273,28 @@ const TableAppointments = ({
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
-  const sortedList = sortByLastNameAndFirstName(list);
+  const fixedRows = fixedSlots.map((fixedSlot: any) => {
+    const person = typeof fixedSlot.person === "object"
+      ? fixedSlot.person
+      : peoples?.find((candidate: any) => String(candidate.id) === String(fixedSlot.person));
+
+    return {
+      ...fixedSlot,
+      id: `fixed-${fixedSlot.id}`,
+      fixedSlotId: fixedSlot.id,
+      __type: "fixed",
+      person: person || { id: fixedSlot.person },
+      slot: {
+        ...(fixedSlot.template || {}),
+        days_week: fixedSlot.template?.days_of_week || [],
+      },
+    };
+  });
+  const combinedList = [
+    ...list.map((item: any) => ({ ...item, __type: "appointment" })),
+    ...fixedRows,
+  ];
+  const sortedList = sortByLastNameAndFirstName(combinedList);
 
   const studioOptions = [
     { value: "all", label: "Todos los estudios" },
@@ -255,6 +306,7 @@ const TableAppointments = ({
 
   const filteredItems = sortedList.filter((item: any) => {
     const matchesStudio =
+      isStudent ||
       selectedStudio.value === "all" ||
       normalizeText(getStudioName(item)) === normalizeText(selectedStudio.label);
     if (!matchesStudio) return false;
@@ -316,11 +368,11 @@ const TableAppointments = ({
   const toast = useToast();
 
   useEffect(() => {
-    dispatch(getAppointments());
     dispatch(getSlots());
     dispatch(getRooms());
     dispatch(getStudios());
     dispatch(getActivitySubType());
+    dispatch(getPeoples());
     setLoadingTable(true);
 
     const timer = setTimeout(() => {
@@ -330,9 +382,92 @@ const TableAppointments = ({
     return () => clearTimeout(timer);
   }, [dispatch]);
 
+  const refreshFixedSlots = async () => {
+    try {
+      const { data } = await axios.get(fixedSlotsUrl(), {
+        headers: { Authorization: `Bearer ${tokens?.access}` },
+      });
+      const results = Array.isArray(data) ? data : data?.results || [];
+      setFixedSlots(results.filter((item: any) => !item.deleted));
+    } catch (error: any) {
+      toast({
+        title: "No se pudieron cargar los turnos fijos",
+        description: error.response?.data?.detail,
+        status: "error",
+        position: "bottom-right",
+      });
+    }
+  };
+
+  const refreshAppointments = () => {
+    const studio =
+      isStudent || selectedStudio.value === "all"
+        ? undefined
+        : selectedStudio.value;
+
+    dispatch(getAppointments(studio))
+      .unwrap()
+      .then((response) => {
+        if (response?.detail) {
+          toast({
+            title: "Estudio dado de baja",
+            description: response.detail,
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+            position: "bottom-right",
+          });
+        }
+      })
+      .catch(() => {
+        // El estado global ya expone el error del request.
+      });
+  };
+
+  useEffect(() => {
+    refreshAppointments();
+    refreshFixedSlots();
+    // La consulta depende del estudio y del rol normalizados arriba.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStudio.value, isStudent]);
+
+  useEffect(() => {
+    if (refreshKey > 0 || localRefreshKey > 0) {
+      refreshAppointments();
+      refreshFixedSlots();
+    }
+    // Las claves cambian después de crear o editar un turno.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey, localRefreshKey]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStudio.value]);
+
   const handleDelete = async (code: string) => {
     setLoading(true);
     try {
+      if (selectedItem?.__type === "fixed") {
+        await axios.delete(`${fixedSlotsUrl()}${selectedItem.fixedSlotId}/`, {
+          headers: { Authorization: `Bearer ${tokens?.access}` },
+        });
+        toast({
+          title: "Turno fijo dado de baja",
+          description: "Se cancelaron las reservas automáticas futuras y se liberaron los cupos.",
+          status: "success",
+          duration: 4500,
+          isClosable: true,
+          position: "bottom-right",
+        });
+        onCloseAlertDialogDelete();
+        await Promise.all([
+          refreshFixedSlots(),
+          dispatch(getAppointments()),
+          dispatch(getSlots()),
+          dispatch(getCalendar()),
+        ]);
+        return;
+      }
       await axios.delete(
         `${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMENTS}${selectedItem.id}/`,
         {
@@ -356,7 +491,8 @@ const TableAppointments = ({
       });
 
       onCloseAlertDialogDelete();
-      dispatch(getAppointments());
+      refreshAppointments();
+      await Promise.all([dispatch(getSlots()), dispatch(getCalendar())]);
     } catch (error) {
       console.error(error);
       toast({
@@ -378,11 +514,13 @@ const TableAppointments = ({
   };
 
   const handleClickEdit = (item: any) => {
+    if (item.__type === "fixed") return;
     onOpenModalEdit();
     setSelectedItem(item);
   };
 
   const handleRowDoubleClick = (_index: number, item: any) => {
+    if (item.__type === "fixed") return;
     setSelectedItem(item);
     onOpenModalEdit();
   };
@@ -402,7 +540,10 @@ const TableAppointments = ({
         >
           <ModalCloseButton />
           <ModalAppointmentsEdit
-            onClose={onCloseModalEdit}
+            onClose={() => {
+              onCloseModalEdit();
+              setLocalRefreshKey((current) => current + 1);
+            }}
             product={selectedItem}
             getAppointments={getAppointments}
             appointments={appointments}
@@ -448,11 +589,15 @@ const TableAppointments = ({
             <AlertDialogContent>
               <AlertDialogCloseButton />
               <AlertDialogHeader>
-                Eliminar turno alumno
+                {selectedItem?.__type === "fixed" ? "Dar de baja turno fijo" : "Eliminar turno alumno"}
               </AlertDialogHeader>
               <AlertDialogBody>
                 {selectedItem ? (
-                  <>
+                  selectedItem.__type === "fixed" ? (
+                    <>
+                      ¿Dar de baja el turno fijo de <strong>{selectedItem.person?.name} {selectedItem.person?.last_name}</strong>? Se cancelarán las reservas automáticas futuras, se devolverán las sesiones y se liberarán los cupos. Las reservas pasadas y manuales no serán modificadas.
+                    </>
+                  ) : <>
                     ¿Está seguro que quiere eliminar el turno del alumno{" "}
                     <span style={{ fontWeight: 600 }}>
                       {selectedItem?.person?.name} {selectedItem?.person?.last_name}
@@ -488,13 +633,17 @@ const TableAppointments = ({
                 </Button>
                 <Button
                   onClick={() =>
-                    tipo === "Consultor" ? onOpenModalCode() : handleDelete(code)
+                    selectedItem?.__type === "fixed"
+                      ? handleDelete(code || "")
+                      : canUseAuthenticatedCode
+                        ? handleDelete(code || "")
+                        : onOpenModalCode()
                   }
                   ml={3}
                   w={["100%", "135px"]}
                   variant="danger"
                 >
-                  Eliminar
+                  {selectedItem?.__type === "fixed" ? "Dar de baja" : "Eliminar"}
                 </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -526,7 +675,7 @@ const TableAppointments = ({
             flexWrap={{ base: "wrap", md: "wrap", lg: "nowrap" }}
             pl={{ base: "", md: "10px" }}
           >
-            <Box w={{ base: "100%", md: "260px" }}>
+            {!isStudent && <Box w={{ base: "100%", md: "260px" }}>
               <Select2
                 options={studioOptions}
                 value={selectedStudio}
@@ -538,7 +687,7 @@ const TableAppointments = ({
                 selectedOptionStyle="check"
                 appearance="filter"
               />
-            </Box>
+            </Box>}
             <SearchField
                 w={{ base: "100%", md: "50%", lg: "350px", xl: "350px" }}
                 placeholder="Buscar por alumno, día, horario…"
@@ -550,6 +699,9 @@ const TableAppointments = ({
               leftIcon={<FiPlus />}
               onClick={onOpen}
               w={{ base: "100%", md: "auto" }}
+              flexBasis={{ base: "100%", md: "auto" }}
+              flexShrink={0}
+              whiteSpace="nowrap"
               variant="primary"
             >
               Registrar Turno
@@ -572,6 +724,7 @@ const TableAppointments = ({
         <Table size={"sm"} minW={{ base: "1080px", md: "100%" }} data-sticky-actions>
           <Thead>
             <Tr>
+              <Th>Tipo</Th>
               <Th>Alumno</Th>
               <Th>Dni</Th>
               <Th>Día</Th>
@@ -585,7 +738,7 @@ const TableAppointments = ({
           </Thead>
           <Tbody style={{ overflowY: "scroll" }}>
             {loadingTable ? (
-              <TableState kind="loading" colSpan={9} />
+              <TableState kind="loading" colSpan={10} />
             ) : currentItems.length > 0 ? (
               currentItems.map((item: any, index: number) => (
                 <Tr
@@ -596,16 +749,31 @@ const TableAppointments = ({
                     cursor="pointer"
                 >
                   <Td>
+                    <StatusBadge
+                      label={item.__type === "fixed" ? "Fijo" : "Individual"}
+                      tone={item.__type === "fixed" ? "brand" : "neutral"}
+                      showDot={false}
+                    />
+                    {item.__type === "fixed" && <Text fontSize="xs" color="text.muted">{item.reservas_count ?? 0} reservas</Text>}
+                  </Td>
+                  <Td>
                     {item?.person?.last_name} {item?.person?.name}
                   </Td>
                   <Td>{item?.person?.dni}</Td>
-                  <Td>{getDayAndDateLabel(item)}</Td>
+                  <Td>
+                    {getDayAndDateLabel(item)}
+                    {item.__type === "fixed" && (
+                      <Text fontSize="xs" color="text.muted">
+                        {formatDate(item.start_date)} – {item.end_date ? formatDate(item.end_date) : "sin vencimiento"}
+                      </Text>
+                    )}
+                  </Td>
                   <Td>{getStartTimeLabel(item)}</Td>
                   <Td>{getActivityName(item)}</Td>
                   <Td>{getRoomName(item)}</Td>
                   <Td>{getStudioName(item)}</Td>
                   <Td textAlign="center">
-                    <Checkbox
+                    {item.__type === "fixed" ? "—" : <Checkbox
                       isChecked={hasSignedClassDeclaration(item)}
                       isReadOnly
                       aria-label={
@@ -613,11 +781,11 @@ const TableAppointments = ({
                           ? "Declaración firmada"
                           : "Declaración no firmada"
                       }
-                    />
+                    />}
                   </Td>
                   <Td isNumeric>
                     <HStack justify="flex-start" spacing={1}>
-                      <Tooltip hasArrow label="Editar">
+                      {item.__type !== "fixed" && <Tooltip hasArrow label="Editar">
                         <IconButton
                           aria-label="Editar"
                           icon={<Icon path={mdiPencilOutline} size={0.9} />}
@@ -625,8 +793,8 @@ const TableAppointments = ({
                           onClick={() => handleClickEdit(item)}
                           variant="ghost"
                         />
-                      </Tooltip>
-                      <Tooltip hasArrow label="Eliminar">
+                      </Tooltip>}
+                      {(item.__type !== "fixed" || canDeleteFixed) && <Tooltip hasArrow label={item.__type === "fixed" ? "Dar de baja" : "Eliminar"}>
                         <IconButton
                           aria-label="Eliminar"
                           icon={<Icon path={mdiDeleteOutline} size={0.9} />}
@@ -634,7 +802,7 @@ const TableAppointments = ({
                           onClick={() => handleClickDelete(item)}
                           variant="ghostDanger"
                         />
-                      </Tooltip>
+                      </Tooltip>}
                     </HStack>
                   </Td>
                 </Tr>
@@ -642,18 +810,20 @@ const TableAppointments = ({
             ) : (
               !loadingTable &&
               currentItems.length === 0 && (
-                <TableState kind="empty" colSpan={9} title="No se encontraron datos" />
+                <TableState kind="empty" colSpan={10} title="No se encontraron datos" />
               )
             )}
           </Tbody>
         </Table>
       </Box>
 
-      <Box display="flex" justifyContent="center" mt={4}>
+      <Box display="flex" justifyContent="center" mt={4} w="100%">
         <Pagination
           count={countPagination}
           pageSize={ITEMS_PER_PAGE}
+          totalItems={filteredItems.length}
           defaultPage={1}
+          page={currentPage}
           onPageChange={setCurrentPage}
         />
       </Box>

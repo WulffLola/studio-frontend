@@ -22,7 +22,7 @@ import {
   IconButton,
   FormControl,
 } from "@chakra-ui/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isSelectableStudio } from "../utils/studios";
 import ModalAppointmentsAdd from "../components/ModalAppointmentsAdd";
 import TableAppointments from "../components/TableAppointments";
@@ -37,12 +37,18 @@ import { Select as Select2 } from "../components/ui/Select";
 import SearchField from "../components/ui/SearchField";
 import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
+import { useStudioStore } from "../stores/studio";
 
 const Appointments = () => {
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const { tipo } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
+  const [teachersTurnRefreshKey, setTeachersTurnRefreshKey] = useState(0);
+  const selectedStudioFromHeader = useStudioStore((state) => state.selectedStudio);
+  const studioStoreHasHydrated = useStudioStore((state) => state.hasHydrated);
+  const studioFilterInitialized = useRef(false);
   const [selectedStudio, setSelectedStudio] = useState<any>({
     value: "all",
     label: "Todos los estudios",
@@ -78,11 +84,22 @@ const Appointments = () => {
   ];
 
   useEffect(() => {
+    if (!studioStoreHasHydrated || studioFilterInitialized.current) return;
+
+    if (selectedStudioFromHeader?.id) {
+      setSelectedStudio({
+        value: selectedStudioFromHeader.id,
+        label: selectedStudioFromHeader.name,
+      });
+    }
+
+    studioFilterInitialized.current = true;
+  }, [selectedStudioFromHeader, studioStoreHasHydrated]);
+
+  useEffect(() => {
     let isMounted = true;
 
     Promise.all([
-      dispatch(getAppointments()),
-      dispatch(getTeachersTurn()),
       dispatch(getStudios()),
     ]).finally(() => {
       if (isMounted) setLoading(false);
@@ -128,6 +145,7 @@ const Appointments = () => {
                 <TableAppointments
                   list={appointments}
                   onOpen={onOpenAdd}
+                  refreshKey={appointmentsRefreshKey}
                 />
               </TabPanel>
 
@@ -171,11 +189,13 @@ const Appointments = () => {
                       {/* SELECT DE ESTUDIO PRIMERO EN TABLA */}
                       {viewTeachers === "table" && (
                         <HStack
-                          px={{ base: 3, md: 1 }}
+                          px={{ base: 0, md: 1 }}
                           py={1.5}
                           rounded="full"
                           order={1}
-                          flex={{ base: "1 1 0", md: "0 1 220px", lg: "0 1 230px", xl: "0 1 280px" }}
+                          flex={{ base: "1 1 100%", md: "0 0 180px", xl: "0 0 210px" }}
+                          w={{ base: "100%", md: "180px", xl: "210px" }}
+                          maxW={{ base: "100%", md: "180px", xl: "210px" }}
                           minW={0}
                         >
                           <Select2
@@ -211,11 +231,13 @@ const Appointments = () => {
                       {/* SELECT DE ESTUDIO EN SU LUGAR ACTUAL EN GRILLA */}
                       {viewTeachers === "grill" && (
                         <HStack
-                          px={3}
+                          px={{ base: 0, md: 1 }}
                           py={1.5}
                           rounded="full"
                           order={1}
-                          flex={{ base: "1 1 0", md: "0 1 220px", lg: "0 1 230px", xl: "0 1 280px" }}
+                          flex={{ base: "1 1 100%", md: "0 0 180px", xl: "0 0 210px" }}
+                          w={{ base: "100%", md: "180px", xl: "210px" }}
+                          maxW={{ base: "100%", md: "180px", xl: "210px" }}
                           minW={0}
                         >
                           <Select2
@@ -237,7 +259,7 @@ const Appointments = () => {
                         </HStack>
                       )}
 
-                      <HStack spacing={2} order={{ base: 2, xl: 3 }} flexShrink={0}>
+                      <HStack spacing={2} order={3} flexShrink={0}>
                         <IconButton
                           aria-label="Vista grilla"
                           icon={<FiGrid />}
@@ -258,13 +280,9 @@ const Appointments = () => {
                       <Button
                         leftIcon={<FiPlus />}
                         onClick={onOpenModalTeacherTurn}
-                        w={{ base: "100%", lg: "auto" }}
-                        flexBasis={{ base: "100%", lg: "auto" }}
+                        w={{ base: "100%", md: "auto" }}
+                        flexBasis={{ base: "100%", md: "auto" }}
                         flexShrink={0}
-                        minW={{ lg: "max-content" }}
-                        h={{ md: "36px" }}
-                        px={{ md: 3 }}
-                        fontSize={{ md: "xs", xl: "sm" }}
                         whiteSpace="nowrap"
                         order={{ base: 4, lg: 3, xl: 4 }}
                         variant="primary"
@@ -278,6 +296,8 @@ const Appointments = () => {
                     list={teachersTurn}
                     view={viewTeachers}
                     searchTerm={searchTeachers}
+                    selectedStudio={selectedStudio}
+                    refreshKey={teachersTurnRefreshKey}
                   />
                 </TabPanel>
               )}
@@ -292,7 +312,10 @@ const Appointments = () => {
               >
                 <ModalCloseButton />
                 <ModalAppointmentsAdd
-                  onClose={onCloseAdd}
+                  onClose={() => {
+                    onCloseAdd();
+                    setAppointmentsRefreshKey((current) => current + 1);
+                  }}
                   getAppointments={getAppointments}
                   appointments={appointments}
                 />
@@ -314,7 +337,10 @@ const Appointments = () => {
                 >
                   <ModalCloseButton />
                   <ModalTeacherTurnAdd
-                    onClose={onCloseModalTeacherTurn}
+                    onClose={() => {
+                      onCloseModalTeacherTurn();
+                      setTeachersTurnRefreshKey((current) => current + 1);
+                    }}
                     product={selectedRow}
                     getTeachersTurn={getTeachersTurn}
                   />

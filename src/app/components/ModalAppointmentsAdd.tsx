@@ -17,6 +17,11 @@ import {
     ModalOverlay,
     Spinner,
     Text,
+    Tabs,
+    TabList,
+    Tab,
+    TabPanels,
+    TabPanel,
 } from "@chakra-ui/react";
 import { Select as Select2 } from "./ui/Select";
 import DatePicker from "react-datepicker";
@@ -37,6 +42,9 @@ import {
     getCalendar,
 } from "../stores/studioSlice";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
+import { isSlotCapacityError, isSlotFull } from "../utils/slots";
+import ModalFixedSlotAdd from "./ModalFixedSlotAdd";
 
 const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any) => {
     const [student, setStudent] = useState("");
@@ -51,6 +59,7 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [selectedStudio, setSelectedStudio] = useState<any>(null);
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
+    const [turnType, setTurnType] = useState(0);
 
     const selectedStudioFromStore = useStudioStore((state: any) => state.selectedStudio);
     const { appointments, peoples, slots, activitySubType, studios, rooms } =
@@ -117,10 +126,10 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
 
         const selectedSlot = slots.find((slot: any) => String(slot.id) === String(selectedSlotId));
 
-        if (selectedSlot && selectedSlot.availability < 1) {
+        if (isSlotFull(selectedSlot)) {
             toast({
-                title: "Sin disponibilidad.",
-                description: "No hay disponibilidad en este día y horario.",
+                title: "Cupo completo.",
+                description: "Este horario alcanzó su capacidad máxima. Elegí otro horario.",
                 status: "error",
                 position: "bottom-right",
                 duration: 5000,
@@ -152,13 +161,30 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
             });
 
             onClose();
-            dispatch(getAppointments());
-            dispatch(getCalendar());
+            await Promise.all([
+                dispatch(getAppointments()),
+                dispatch(getCalendar()),
+                dispatch(getSlots()),
+            ]);
         } catch (error: any) {
             const errorMessage =
                 error.response?.data?.detail || "Ocurrió un error al registrar el turno.";
 
-            if (errorMessage === "La persona ya está registrada en ese turno.") {
+            if (isSlotCapacityError(errorMessage)) {
+                toast({
+                    title: "Cupo completo.",
+                    description: errorMessage,
+                    status: "error",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom-right",
+                });
+                await Promise.all([
+                    dispatch(getAppointments()),
+                    dispatch(getCalendar()),
+                    dispatch(getSlots()),
+                ]);
+            } else if (errorMessage === "La persona ya está registrada en ese turno.") {
                 toast({
                     title: "Error",
                     description: errorMessage,
@@ -231,12 +257,15 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
             label: item.name,
         })) || [];
 
-    const studioOptions = studios
-        ?.filter((studio: any) => studio.is_active !== false)
-        .map((studio: any) => ({
-            value: studio.id,
-            label: studio.name,
-        })) || [];
+    const studioOptions = React.useMemo(
+        () => studios
+            ?.filter(isSelectableStudio)
+            .map((studio: any) => ({
+                value: studio.id,
+                label: studio.name,
+            })) || [],
+        [studios]
+    );
 
     const roomOptions = rooms
         ?.filter((room: any) => {
@@ -368,7 +397,7 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
                         selectedActivity?.value &&
                         String(slotRoomId) === String(selectedRoom.value) &&
                         String(slotActivityId) === String(selectedActivity.value) &&
-                        Number(slot.availability) > 0
+                        !isSlotFull(slot)
                     );
                 })
                 .map((slot: any) => slot.date)
@@ -388,7 +417,7 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
 
         const matchingStudio = studios.find(
             (item: any) =>
-                item.is_active !== false &&
+                isSelectableStudio(item) &&
                 String(item.id) === String(studioIdFromStore)
         );
 
@@ -473,7 +502,7 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
             selectedActivity?.value &&
             String(slotRoomId) === String(selectedRoom.value) &&
             String(slotActivityId) === String(selectedActivity.value) &&
-            Number(slot.availability) > 0
+            !isSlotFull(slot)
         );
     });
 
@@ -555,6 +584,13 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
                         Nuevo turno
                     </Heading>
 
+                    <Tabs variant="enclosed" index={turnType} onChange={setTurnType}>
+                        <TabList>
+                            <Tab>Turno individual</Tab>
+                            <Tab>Turno fijo</Tab>
+                        </TabList>
+                        <TabPanels>
+                            <TabPanel px={0} pt={5}>
                     <SimpleGrid columns={[1, 1, 2]} spacing={4}>
                         <Box>
                             <FormControl id="student" isRequired>
@@ -757,6 +793,16 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
                             Guardar
                         </Button>
                     </HStack>
+                            </TabPanel>
+                            <TabPanel px={0} pt={5}>
+                                <ModalFixedSlotAdd
+                                    embedded
+                                    onClose={onClose}
+                                    onCreated={() => undefined}
+                                />
+                            </TabPanel>
+                        </TabPanels>
+                    </Tabs>
                 </Stack>
             </Box>
         </>

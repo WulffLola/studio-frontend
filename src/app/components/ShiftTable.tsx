@@ -1339,6 +1339,7 @@ import ModalAppointmentsAdd from "./ModalAppointmentsAdd";
 import ModalAppointmentsEdit from "./ModalAppointmentsEdit";
 import ModalWaitingListAdd from "./ModalWaitingListAdd";
 import ModalWaitingListView from "./ModalWaitingListView";
+import ModalCode from "./ModalCode";
 import {
     getAppointments,
     getSlots,
@@ -1348,6 +1349,7 @@ import {
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import { brandActivityColors, brandActivityPalette, paymentStatusColors } from "../../theme/brand";
 import { TableState } from "./ui/StateMessage";
+import { isSlotFull } from "../utils/slots";
 
 
 const DEFAULT_VISIBLE_SLOTS = 7;
@@ -1364,20 +1366,6 @@ const PAYMENT_STATUS_COLORS = {
 const PAYMENT_STATUS_ACCENT: Record<string, string> = Object.fromEntries(
     Object.values(paymentStatusColors).map(({ bg, accent }) => [bg, accent])
 );
-
-const DEMO_EXPIRING_APPOINTMENT = {
-    date: "2026-08-20",
-};
-
-const dateTomorrow = () => {
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-};
-
 const normalizeDay = (s: string) =>
     (s || "")
         .normalize("NFD")
@@ -1410,26 +1398,10 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     const [expandedHours, setExpandedHours] = useState<Record<string, boolean>>(
         {}
     );
-    const { tipo, tokens } = useAuthStore();
-    const [code] = useState("admin");
+    const { tipo, tokens, code } = useAuthStore();
     const dispatch = useAppDispatch();
     const toast = useToast();
     const cancelRef = React.useRef<any>(null);
-    const peoples = useSelector((state: any) => state.studio.peoples);
-
-    // Fallback temporal: /calendar todavía no incluye vencimiento ni plan.
-    // Se cruza por person_id con /people hasta que el backend entregue esos datos.
-    const peopleById = useMemo(() => {
-        const map = new Map<string, any>();
-        if (Array.isArray(peoples)) {
-            peoples.forEach((person: any) => {
-                if (person?.id != null) map.set(String(person.id), person);
-            });
-        }
-        return map;
-    }, [peoples]);
-
-
     const flattenedCalendarSlots = useMemo(() => {
         if (!calendar?.length) return [];
 
@@ -1454,21 +1426,11 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     const flattenedAppointments = useMemo(() => {
         if (!calendar?.length) return [];
 
-        let demoApplied = false;
-
         return calendar.flatMap((dayItem: any) =>
             (dayItem.slots || []).flatMap((slot: any) =>
                 (slot.appointments || []).map((appointment: any) => {
                     const fullName = appointment.person_name || "";
                     const [name, ...rest] = fullName.split(" ");
-                    const personFromPeople = peopleById.get(String(appointment.person_id));
-                    const isDemoAppointment =
-                        !demoApplied &&
-                        appointment.reserved !== true &&
-                        appointment.reserved !== "true" &&
-                        String(dayItem.date).slice(0, 10) === DEMO_EXPIRING_APPOINTMENT.date;
-
-                    if (isDemoAppointment) demoApplied = true;
 
                     return {
                         id: appointment.id,
@@ -1478,10 +1440,8 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                             name: name || "",
                             last_name: rest.join(" ") || "",
                             phone: appointment.person_phone || "",
-                            exp_date: isDemoAppointment
-                                ? dateTomorrow()
-                                : appointment.person_exp_date ?? personFromPeople?.exp_date ?? null,
-                            plan: appointment.person_plan ?? personFromPeople?.plan ?? null,
+                            exp_date: appointment.exp_date ?? null,
+                            plan: appointment.plan_sub_type ?? null,
                             photo: appointment.person_photo || null,
                         },
                         slot: {
@@ -1497,7 +1457,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                 })
             )
         );
-    }, [calendar, peopleById]);
+    }, [calendar]);
 
     const effectiveList = flattenedCalendarSlots.length
         ? flattenedCalendarSlots
@@ -1545,6 +1505,12 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
         isOpen: isAlertDialogDeleteOpen,
         onOpen: onOpenAlertDialogDelete,
         onClose: onCloseAlertDialogDelete,
+    } = useDisclosure();
+
+    const {
+        isOpen: isCodeModalOpen,
+        onOpen: onOpenCodeModal,
+        onClose: onCloseCodeModal,
     } = useDisclosure();
 
     const {
@@ -1910,6 +1876,21 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
             setSelectedItem(item);
             onOpenAlertDialogMethodDelete();
         } else {
+            const activeAppointments = Array.isArray(matchingSlot?.appointments)
+                ? matchingSlot.appointments.length
+                : undefined;
+
+            if (isSlotFull(matchingSlot, activeAppointments)) {
+                toast({
+                    title: "Cupo completo.",
+                    description: "Este horario alcanzó su capacidad máxima. Elegí otro horario.",
+                    status: "warning",
+                    duration: 4000,
+                    isClosable: true,
+                    position: "bottom-right",
+                });
+                return;
+            }
             setSelectedItem({
                 hour,
                 dayName: selectedDayName,
@@ -1921,13 +1902,13 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     };
 
     const handleEditAppointment = (appointment: any) => {
-        if (!appointment || tipo === "Consultor") return;
+        if (!appointment) return;
         setSelectedItem(appointment);
         onOpenModalAppointmentsEdit();
     };
 
     const handleDeleteAppointment = (appointment: any) => {
-        if (!appointment || tipo === "Consultor") return;
+        if (!appointment) return;
         setSelectedItem(appointment);
         onOpenAlertDialogDelete();
     };
@@ -1957,6 +1938,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
             onCloseAlertDialogDelete();
             dispatch(getAppointments());
             dispatch(getCalendar());
+            dispatch(getSlots());
         } catch (error) {
             toast({
                 title: "Error",
@@ -1967,6 +1949,30 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                 position: "bottom-right",
             });
         }
+    };
+
+    const handleConfirmDelete = () => {
+        const normalizedRole = (tipo || "").trim().toLowerCase();
+        const canUseOwnCode = ["super", "administrador", "admin"].includes(normalizedRole);
+
+        if (!canUseOwnCode) {
+            onOpenCodeModal();
+            return;
+        }
+
+        if (!code) {
+            toast({
+                title: "No se encontró el código del usuario.",
+                description: "Cerrá sesión y volvé a ingresar para actualizar tus datos.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+                position: "bottom-right",
+            });
+            return;
+        }
+
+        handleDelete(code);
     };
 
     const getBackgroundColor = (appointment: any, updatedAppointmentsList: any[]) => {
@@ -2075,9 +2081,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                 Cancelar
                             </Button>
                             <Button
-                                onClick={() =>
-                                    tipo === "Consultor" ? null : handleDelete(code)
-                                }
+                                onClick={handleConfirmDelete}
                                 w={["100%", "135px"]}
                                 variant="danger"
                             >
@@ -2087,6 +2091,25 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                     </AlertDialogContent>
                 </AlertDialogOverlay>
             </AlertDialog>
+
+            <Modal
+                onClose={onCloseCodeModal}
+                isOpen={isCodeModalOpen}
+                isCentered
+                size={{ base: "90%", md: "70%", lg: "80%" }}
+            >
+                <ModalOverlay w="100%" h="100%" />
+                <ModalContent maxW={{ base: "80%", md: "60%", lg: "50%", xl: "35%" }}>
+                    <ModalCloseButton />
+                    <ModalCode
+                        onClose={onCloseCodeModal}
+                        get={getAppointments}
+                        onCloseAlert={onCloseAlertDialogDelete}
+                        entityType={"appointmentsDelete" as any}
+                        action={handleDelete}
+                    />
+                </ModalContent>
+            </Modal>
 
             <Modal
                 isOpen={isModalAppointmentsAddOpen}
@@ -2325,6 +2348,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                 );
 
                                 const cupos = getCuposForHour(hour, slotForHour);
+                                const slotIsFull = isSlotFull(slotForHour, appsForHour.length);
                                 const isExpanded = !!expandedHours[hour];
                                 const visibleCupos = isExpanded ? cupos : DEFAULT_VISIBLE_SLOTS;
                                 const hasMore = cupos > DEFAULT_VISIBLE_SLOTS;
@@ -2449,6 +2473,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                             const appointment = isSlotReal
                                                                 ? appsForHour[i] ?? null
                                                                 : null;
+                                                            const isReservable = isSlotReal && !appointment && !slotIsFull;
 
                                                             return (
                                                                 <Box
@@ -2483,14 +2508,14 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                                     opacity={isSlotReal ? 1 : 0.4}
                                                                     transition="border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease"
                                                                     _hover={
-                                                                        isSlotReal
+                                                                        isSlotReal && (appointment || isReservable)
                                                                             ? appointment
                                                                                 ? { boxShadow: "sm", cursor: "pointer" }
                                                                                 : { borderColor: "brand.300", bg: "brand.50", color: "text.brand", cursor: "pointer" }
                                                                             : {}
                                                                     }
                                                                     onClick={() => {
-                                                                        if (!isSlotReal) return;
+                                                                        if (!isSlotReal || (!appointment && !isReservable)) return;
                                                                         if (appointment) {
                                                                             handleEditAppointment(appointment);
                                                                         } else {
@@ -2520,20 +2545,19 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                                             w="100%"
                                                                             lineHeight="1.25"
                                                                             display="grid"
-                                                                            gridTemplateColumns={tipo !== "Consultor" ? "34px minmax(0, 1fr) 34px" : "minmax(0, 1fr)"}
+                                                                            gridTemplateColumns="34px minmax(0, 1fr) 34px"
                                                                             gridTemplateRows="auto auto"
                                                                             alignItems="center"
                                                                             justifyContent="center"
                                                                             textAlign="center"
                                                                         >
-                                                                            <Text gridColumn={tipo !== "Consultor" ? "2" : "1"} gridRow="1" minW={0} fontSize="inherit" overflowWrap="anywhere" wordBreak="normal" whiteSpace="normal" textAlign="center">
+                                                                            <Text gridColumn="2" gridRow="1" minW={0} fontSize="inherit" overflowWrap="anywhere" wordBreak="normal" whiteSpace="normal" textAlign="center">
                                                                                 {appointment.person.name} {appointment.person?.last_name}
                                                                             </Text>
-                                                                            <Text gridColumn={tipo !== "Consultor" ? "2" : "1"} gridRow="2" minW={0} fontSize={{ base: "10px", md: "11px" }} noOfLines={1} mt={0.5} textAlign="center">
+                                                                            <Text gridColumn="2" gridRow="2" minW={0} fontSize={{ base: "10px", md: "11px" }} noOfLines={1} mt={0.5} textAlign="center">
                                                                                 {appointment.person.phone}
                                                                             </Text>
-                                                                            {tipo !== "Consultor" && (
-                                                                                <Menu placement="bottom-end">
+                                                                            <Menu placement="bottom-end">
                                                                                     <MenuButton
                                                                                         as={IconButton}
                                                                                         aria-label="Acciones del turno"
@@ -2576,12 +2600,15 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                                                             </MenuItem>
                                                                                         </MenuList>
                                                                                     </Portal>
-                                                                                </Menu>
-                                                                            )}
+                                                                            </Menu>
                                                                         </Box>
-                                                                    ) : isSlotReal ? (
+                                                                    ) : isReservable ? (
                                                                         <Text fontSize="xs" color="inherit" fontWeight={500}>
                                                                             + Reservar
+                                                                        </Text>
+                                                                    ) : isSlotReal ? (
+                                                                        <Text fontSize="xs" color="text.muted" fontWeight={500}>
+                                                                            Sin cupo
                                                                         </Text>
                                                                     ) : null}
                                                                 </Box>

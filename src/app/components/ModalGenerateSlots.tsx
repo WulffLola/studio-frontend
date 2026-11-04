@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
     Button,
     FormControl,
@@ -18,13 +18,6 @@ import {
     Tab,
     TabPanels,
     TabPanel,
-    useDisclosure,
-    AlertDialog,
-    AlertDialogOverlay,
-    AlertDialogContent,
-    AlertDialogCloseButton,
-    AlertDialogBody,
-    AlertDialogFooter,
     RadioGroup,
     Radio,
     Spinner,
@@ -35,10 +28,11 @@ import { AddIcon, MinusIcon } from "@chakra-ui/icons";
 import { IconButton } from "@chakra-ui/react";
 import axios from "axios";
 import { useAuthStore } from "../stores/auth";
-import { getSlots } from "../stores/studioSlice";
+import { getActivitySubType, getSlots, getSlotTemplates } from "../stores/studioSlice";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../stores/hooks";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
 const getRoomStudioId = (room: any) => {
     if (!room) return "";
@@ -46,6 +40,10 @@ const getRoomStudioId = (room: any) => {
     const studio = room.studio ?? room.studio_id;
     return String(typeof studio === "object" ? studio?.id ?? "" : studio ?? "");
 };
+
+const slotTemplatesUrl =
+    process.env.NEXT_PUBLIC_URL_BACKEND_SLOT_TEMPLATES ||
+    `${process.env.NEXT_PUBLIC__URL_BACKEND}slot-templates/`;
 
 const ModalGenerateSlots = ({ onClose, isCancel }: { onClose: () => void; isCancel?: boolean }) => {
     const [selectedDays, setSelectedDays] = useState<string[]>([]);
@@ -55,6 +53,7 @@ const ModalGenerateSlots = ({ onClose, isCancel }: { onClose: () => void; isCanc
     const [roomIdUnique, setRoomIdUnique] = useState("");
     const [studioId, setStudioId] = useState("");
     const [studioIdUnique, setStudioIdUnique] = useState("");
+    const [activitySubtypeId, setActivitySubtypeId] = useState("");
 
     const [multipleSchedules, setMultipleSchedules] = useState([
         { start_time: "", end_time: "", availability: "" },
@@ -70,7 +69,7 @@ const ModalGenerateSlots = ({ onClose, isCancel }: { onClose: () => void; isCanc
     const { tokens } = useAuthStore();
     const [loading, setLoading] = useState(false);
 
-    const { rooms, studios } = useSelector((state: any) => state.studio);
+    const { rooms, studios, activitySubType } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
     const filteredRooms = useMemo(
@@ -84,29 +83,22 @@ const ModalGenerateSlots = ({ onClose, isCancel }: { onClose: () => void; isCanc
     );
 
     const toast = useToast();
-    const cancelRef = React.useRef<HTMLButtonElement | null>(null);
+    const week = [
+        { id: 1, day: "Lunes" },
+        { id: 2, day: "Martes" },
+        { id: 3, day: "Miércoles" },
+        { id: 4, day: "Jueves" },
+        { id: 5, day: "Viernes" },
+        { id: 6, day: "Sábado" },
+        { id: 7, day: "Domingo" },
+    ];
 
-const week = [
-    { id: 1, day: "Lunes" },
-    { id: 2, day: "Martes" },
-    { id: 3, day: "Miércoles" },
-    { id: 4, day: "Jueves" },
-    { id: 5, day: "Viernes" },
-    { id: 6, day: "Sábado" },
-    { id: 7, day: "Domingo" },
-];
-
-    const {
-        isOpen: isAlertDialogOpenExists,
-        onOpen: onOpenAlertDialogExists,
-        onClose: onCloseAlertDialogExists,
-    } = useDisclosure();
-
-    const {
-        isOpen: isAlertDialogOpenExistsUnique,
-        onOpen: onOpenAlertDialogExistsUnique,
-        onClose: onCloseAlertDialogExistsUnique,
-    } = useDisclosure();
+    const availableActivitySubtypes = useMemo(
+        () => (activitySubType || []).filter(
+            (activity: any) => activity.is_active !== false && !activity.deleted
+        ),
+        [activitySubType]
+    );
 
     const handleCheckboxChange = (value: string[]) => {
         setSelectedDays(value);
@@ -153,13 +145,75 @@ const week = [
         return time.length === 5 ? `${time}:00` : time;
     };
 
+    useEffect(() => {
+        dispatch(getActivitySubType());
+    }, [dispatch]);
+
+    const getErrorMessage = (error: any) => {
+        const data = error?.response?.data;
+        if (typeof data?.detail === "string") return data.detail;
+
+        const firstError = data && Object.values(data).find(Boolean);
+        if (Array.isArray(firstError)) return String(firstError[0]);
+        if (typeof firstError === "string") return firstError;
+
+        return "No se pudo crear y generar la plantilla de horario.";
+    };
+
+    const createTemplateAndGenerate = async (payload: any) => {
+        const templateResponse = await axios.post(
+            slotTemplatesUrl,
+            payload,
+            {
+                headers: {
+                    Authorization: `Bearer ${tokens?.access}`,
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+
+        try {
+            await axios.post(
+                `${process.env.NEXT_PUBLIC_URL_BACKEND_GENERATE_SLOTS}`,
+                { template_id: templateResponse.data.id },
+                {
+                    headers: {
+                        Authorization: `Bearer ${tokens?.access}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+        } catch (error: any) {
+            error.templateCreated = true;
+            throw error;
+        }
+
+        return templateResponse.data;
+    };
+
+    const refreshTemplatesAndSlots = async () => {
+        await Promise.all([
+            dispatch(getSlotTemplates()),
+            dispatch(getSlots()),
+        ]);
+    };
+
     const handleSubmitMultiple = async () => {
         setLoading(true);
 
-        if (!selectedDays.length || !studioId || !roomId) {
+        const invalidSchedule = multipleSchedules.some(
+            (schedule) =>
+                !schedule.start_time ||
+                !schedule.end_time ||
+                schedule.availability === "" ||
+                Number(schedule.availability) < 0 ||
+                schedule.end_time <= schedule.start_time
+        );
+
+        if (!selectedDays.length || !studioId || !roomId || !activitySubtypeId || invalidSchedule) {
             toast({
                 title: "Faltan completar campos.",
-                description: "Seleccioná días, estudio y sala.",
+                description: "Completá días, estudio, sala, actividad y todos los rangos horarios.",
                 status: "error",
                 position: "bottom-right",
             });
@@ -167,52 +221,65 @@ const week = [
             return;
         }
 
+        let createdTemplates = 0;
+        let generatedTemplates = 0;
+
         try {
-            for (const day of selectedDays) {
-                for (const schedule of multipleSchedules) {
+            for (const schedule of multipleSchedules) {
+                const payload = {
+                    days_of_week_ids: selectedDays.map(Number),
+                    start_time: formatTime(schedule.start_time),
+                    end_time: formatTime(schedule.end_time),
+                    availability: Number(schedule.availability),
+                    room: Number(roomId),
+                    activity_subtype: Number(activitySubtypeId),
+                    is_active: true,
+                };
 
-                    const payload = {
-                        week_day: Number(day),
-                        start_time: formatTime(schedule.start_time),
-                        end_time: formatTime(schedule.end_time),
-                        availability: Number(schedule.availability),
-                        room: Number(roomId),
-                        /* activity_subtype: 4, // ⚠️ ajustar si cambia
-                        status: 1, */
-                    };
+                const templateResponse = await axios.post(
+                    slotTemplatesUrl,
+                    payload,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokens?.access}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+                createdTemplates += 1;
 
-                    await axios.post(
-                        `${process.env.NEXT_PUBLIC_URL_BACKEND_SLOTS}`,
-                        payload,
-                        {
-                            headers: {
-                                Authorization: `Bearer ${tokens?.access}`,
-                            },
-                        }
-                    );
-                }
+                await axios.post(
+                    `${process.env.NEXT_PUBLIC_URL_BACKEND_GENERATE_SLOTS}`,
+                    { template_id: templateResponse.data.id },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokens?.access}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+                generatedTemplates += 1;
             }
 
             toast({
-                title: "Horarios creados correctamente.",
+                title: "Plantillas creadas correctamente.",
+                description: `${createdTemplates} plantilla(s) creada(s) y sus horarios generados para los próximos tres meses.`,
                 status: "success",
                 position: "bottom-right",
             });
 
+            await refreshTemplatesAndSlots();
             onClose();
-            dispatch(getSlots());
-
         } catch (error: any) {
-            if (error.response?.data?.detail?.includes("slot")) {
-                onOpenAlertDialogExists();
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Error al crear horarios",
-                    status: "error",
-                    position: "bottom-right",
-                });
-            }
+            await refreshTemplatesAndSlots();
+            toast({
+                title: createdTemplates ? "Creación incompleta" : "No se pudo crear la plantilla",
+                description: `${getErrorMessage(error)} Creadas: ${createdTemplates}. Generadas: ${generatedTemplates}.`,
+                status: "error",
+                position: "bottom-right",
+                duration: 7000,
+                isClosable: true,
+            });
         } finally {
             setLoading(false);
         }
@@ -223,10 +290,20 @@ const week = [
 
         const { start_time, end_time, availability } = uniqueSchedule;
 
-        if (!selectedDayUnique || !studioIdUnique || !roomIdUnique || !start_time || !end_time) {
+        if (
+            !selectedDayUnique ||
+            !studioIdUnique ||
+            !roomIdUnique ||
+            !activitySubtypeId ||
+            !start_time ||
+            !end_time ||
+            availability === "" ||
+            Number(availability) < 0 ||
+            end_time <= start_time
+        ) {
             toast({
                 title: "Faltan completar campos.",
-                description: "Seleccioná día, estudio, sala y horarios.",
+                description: "Completá día, estudio, sala, actividad, horarios y disponibilidad.",
                 status: "error",
                 position: "bottom-right",
             });
@@ -236,45 +313,40 @@ const week = [
 
         try {
             const payload = {
-                week_day: Number(selectedDayUnique),
+                days_of_week_ids: [Number(selectedDayUnique)],
                 start_time: formatTime(start_time),
                 end_time: formatTime(end_time),
                 availability: Number(availability),
                 room: Number(roomIdUnique),
-                activity_subtype: 4,
-                status: 1,
+                activity_subtype: Number(activitySubtypeId),
+                is_active: true,
             };
 
-            await axios.post(
-                `${process.env.NEXT_PUBLIC_URL_BACKEND_SLOTS}`,
-                payload,
-                {
-                    headers: {
-                        Authorization: `Bearer ${tokens?.access}`,
-                    },
-                }
-            );
+            await createTemplateAndGenerate(payload);
 
             toast({
-                title: "Horario creado correctamente.",
+                title: "Plantilla creada correctamente.",
+                description: "Los horarios se generaron para los próximos tres meses.",
                 status: "success",
                 position: "bottom-right",
             });
 
+            await refreshTemplatesAndSlots();
             onClose();
-            dispatch(getSlots());
-
         } catch (error: any) {
-            if (error.response?.data?.detail?.includes("slot")) {
-                onOpenAlertDialogExistsUnique();
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Error al crear horario",
-                    status: "error",
-                    position: "bottom-right",
-                });
-            }
+            await refreshTemplatesAndSlots();
+            toast({
+                title: error.templateCreated
+                    ? "Plantilla creada sin generar horarios"
+                    : "No se pudo crear la plantilla",
+                description: error.templateCreated
+                    ? `${getErrorMessage(error)} La plantilla quedó guardada, pero sus horarios no se generaron.`
+                    : getErrorMessage(error),
+                status: "error",
+                position: "bottom-right",
+                duration: 7000,
+                isClosable: true,
+            });
         } finally {
             setLoading(false);
         }
@@ -286,56 +358,6 @@ const week = [
 
     return (
         <>
-            <AlertDialog
-                isOpen={isAlertDialogOpenExistsUnique}
-                onClose={onCloseAlertDialogExistsUnique}
-                leastDestructiveRef={cancelRef}
-                isCentered
-            >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogCloseButton />
-                        <AlertDialogBody fontStyle="Source Sans Pro">
-                            Ya existe un horario en este día y hora.
-                        </AlertDialogBody>
-                        <AlertDialogFooter gap={3}>
-                            <Button
-                                onClick={onCloseAlertDialogExistsUnique}
-                                w={["100%", "135px"]}
-                                variant="secondary"
-                            >
-                                Cerrar
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
-
-            <AlertDialog
-                isOpen={isAlertDialogOpenExists}
-                onClose={onCloseAlertDialogExists}
-                leastDestructiveRef={cancelRef}
-                isCentered
-            >
-                <AlertDialogOverlay>
-                    <AlertDialogContent>
-                        <AlertDialogCloseButton />
-                        <AlertDialogBody fontStyle="Source Sans Pro">
-                            Ya existen horarios en estos días y horas.
-                        </AlertDialogBody>
-                        <AlertDialogFooter gap={3}>
-                            <Button
-                                onClick={onCloseAlertDialogExists}
-                                w={["100%", "135px"]}
-                                variant="secondary"
-                            >
-                                Cerrar
-                            </Button>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialogOverlay>
-            </AlertDialog>
-
             <Box>
                 {loading && (
                     <LoadingOverlay />
@@ -378,7 +400,7 @@ const week = [
                                         </FormControl>
                                     </Box>
 
-                                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                                     <Box>
                                         <FormControl isRequired>
                                             <FormLabel>Estudio</FormLabel>
@@ -390,7 +412,7 @@ const week = [
                                                     setRoomId("");
                                                 }}
                                             >
-                                                {studios?.map((studio: any) => (
+                                                {studios?.filter(isSelectableStudio).map((studio: any) => (
                                                     <option key={studio.id} value={studio.id}>
                                                         {studio.name}
                                                     </option>
@@ -411,6 +433,23 @@ const week = [
                                                 {filteredRooms.map((room: any) => (
                                                     <option key={room.id} value={room.id}>
                                                         {room.name}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
+
+                                    <Box>
+                                        <FormControl isRequired>
+                                            <FormLabel>Actividad</FormLabel>
+                                            <Select
+                                                placeholder="Seleccionar..."
+                                                value={activitySubtypeId}
+                                                onChange={(e) => setActivitySubtypeId(e.target.value)}
+                                            >
+                                                {availableActivitySubtypes.map((activity: any) => (
+                                                    <option key={activity.id} value={activity.id}>
+                                                        {activity.name}
                                                     </option>
                                                 ))}
                                             </Select>
@@ -523,7 +562,7 @@ const week = [
                                         </FormControl>
                                     </Box>
 
-                                    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
                                     <Box>
                                         <FormControl isRequired>
                                             <FormLabel>Estudio</FormLabel>
@@ -535,7 +574,7 @@ const week = [
                                                     setRoomIdUnique("");
                                                 }}
                                             >
-                                                {studios?.map((studio: any) => (
+                                                {studios?.filter(isSelectableStudio).map((studio: any) => (
                                                     <option key={studio.id} value={studio.id}>
                                                         {studio.name}
                                                     </option>
@@ -556,6 +595,23 @@ const week = [
                                                 {filteredRoomsUnique.map((room: any) => (
                                                     <option key={room.id} value={room.id}>
                                                         {room.name}
+                                                    </option>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
+                                    </Box>
+
+                                    <Box>
+                                        <FormControl isRequired>
+                                            <FormLabel>Actividad</FormLabel>
+                                            <Select
+                                                placeholder="Seleccionar..."
+                                                value={activitySubtypeId}
+                                                onChange={(e) => setActivitySubtypeId(e.target.value)}
+                                            >
+                                                {availableActivitySubtypes.map((activity: any) => (
+                                                    <option key={activity.id} value={activity.id}>
+                                                        {activity.name}
                                                     </option>
                                                 ))}
                                             </Select>

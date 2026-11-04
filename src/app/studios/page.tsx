@@ -20,7 +20,6 @@ import TableDiscounts from "../components/TableDiscounts";
 import { useAppDispatch } from "../stores/hooks";
 import { useSelector } from "react-redux";
 import {
-    getPlans,
     getSlots,
     getStudios,
     getPaymentAmount,
@@ -49,11 +48,10 @@ const Studios = () => {
     const [selectedSlotTemplate, setSelectedSlotTemplate] = useState<any>(null);
 
     // const [paymentsAmount, setPaymentsAmount] = useState([])
-    // const [plans, setPlans] = useState([])
     // const [slots, setSlots] = useState([])
     // const [studios, setStudios] = useState([])
 
-    const { studios, slots, plans, paymentAmount, typePlans, rooms, holidays, discounts, slotTemplates } = useSelector((state: any) => state.studio);
+    const { studios, slots, paymentAmount, typePlans, rooms, holidays, discounts, slotTemplates } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -137,7 +135,6 @@ const Studios = () => {
     useEffect(() => {
         if (!loading) {
             dispatch(getPaymentAmount());
-            dispatch(getPlans());
             dispatch(getSlots());
             dispatch(getStudios());
             dispatch(getTypePlans());
@@ -237,7 +234,7 @@ const Studios = () => {
                         <ModalOverlay w={"100%"} h={"100%"} />
                         <ModalContent maxW={{ base: "90%", md: "70%", lg: "50%", xl: "40%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
                             <ModalCloseButton />
-                            <ModalPlansSubTypeAdd onClose={onCloseAddPlans} getPlans={getPlans} isCancel={false} plans={plans} />
+                            <ModalPlansSubTypeAdd onClose={onCloseAddPlans} isCancel={false} />
                         </ModalContent>
                     </Modal>
 
