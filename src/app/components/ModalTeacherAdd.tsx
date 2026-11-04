@@ -253,8 +253,8 @@ const ModalTeacherAdd = ({ product, onClose }: any) => {
             )
 
             toast({
-                title: "Profesora creado correctamente.",
-                description: "La profesora fue creado con éxito.",
+                title: "Profesora creada correctamente.",
+                description: "La profesora fue creada con éxito.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,

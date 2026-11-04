@@ -327,7 +327,7 @@ const ModalNotesAdd = ({ product, onClose }: any) => {
 
                 <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
                     <Box>
-                        <FormControl isRequired>
+                        <FormControl>
                             <FormLabel>Agregar imagen</FormLabel>
 
                             <Input

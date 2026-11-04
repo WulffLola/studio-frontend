@@ -161,15 +161,15 @@ export default function Login() {
 
                     <Stack spacing={5} as="form" onSubmit={handleSubmit}>
                         <FormControl isRequired>
-                            <FormLabel requiredIndicator={<></>}>Email</FormLabel>
+                            <FormLabel requiredIndicator={<></>}>Email o DNI</FormLabel>
                             <InputGroup size="lg">
                                 <InputLeftElement pointerEvents="none" color="text.muted">
                                     <EmailOutlineIcon />
                                 </InputLeftElement>
                                 <Input
-                                    type="email"
-                                    autoComplete="email"
-                                    placeholder="ejemplo@correo.com"
+                                    type="text"
+                                    autoComplete="username"
+                                    placeholder="ejemplo@correo.com o DNI"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     isRequired
