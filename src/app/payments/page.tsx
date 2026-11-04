@@ -1,7 +1,7 @@
 'use client'
 import { Button, Container, Modal, ModalCloseButton, ModalContent, ModalOverlay, Stack, Tabs, TabList, TabPanels, Tab, TabPanel, useDisclosure, Spinner } from "@chakra-ui/react";
 import ModalStudentAdd from "../components/ModalStudentAdd";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import TablePayments from "../components/TablePayments";
 import ModalPaymentAdd from '../components/ModalPaymentAdd';
@@ -15,6 +15,7 @@ import { useSelector } from "react-redux";
 import { getPayments, getPaymentsLastMonth, getPaymentsToday, getExpenseType, getExpensesTodayTeachers, getExpenses } from '../stores/studioSlice';
 import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
+import { useStudioStore } from "../stores/studio";
 
 const Payments = () => {
   // const [payments, setPayments] = useState([]);
@@ -26,11 +27,46 @@ const Payments = () => {
   const [loading, setLoading] = useState(true);
   // const [paymentsLastMonth, setPaymentsLastMonth] = useState([]);
   const [updatedAppointments, setUpdatedAppointments] = useState([]);
+  const [selectedExpenseStudio, setSelectedExpenseStudio] = useState<any>({
+    value: "all",
+    label: "Todos los estudios",
+  });
+  const selectedStudioFromHeader = useStudioStore((state) => state.selectedStudio);
+  const studioStoreHasHydrated = useStudioStore((state) => state.hasHydrated);
+  const expenseStudioFilterInitialized = useRef(false);
+  const [expenseRefreshKey, setExpenseRefreshKey] = useState(0);
 
   const { payments, paymentsToday, paymentsLastMonth, expenseType, expensesTodayTeachers, expenses } = useSelector((state: any) => state.studio);
   const dispatch = useAppDispatch();
 
   const { tipo, tokens } = useAuthStore();
+
+  useEffect(() => {
+    if (!studioStoreHasHydrated) return;
+
+    if (tipo === "Consultor") {
+      setSelectedExpenseStudio(
+        selectedStudioFromHeader?.id
+          ? {
+              value: selectedStudioFromHeader.id,
+              label: selectedStudioFromHeader.name,
+            }
+          : { value: "all", label: "Todos los estudios" }
+      );
+      return;
+    }
+
+    if (expenseStudioFilterInitialized.current) return;
+
+    if (selectedStudioFromHeader?.id) {
+      setSelectedExpenseStudio({
+        value: selectedStudioFromHeader.id,
+        label: selectedStudioFromHeader.name,
+      });
+    }
+
+    expenseStudioFilterInitialized.current = true;
+  }, [selectedStudioFromHeader, studioStoreHasHydrated, tipo]);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -146,13 +182,11 @@ const Payments = () => {
   useEffect(() => {
     if (!loading) {
       // getPaymentsToday();
-      dispatch(getPayments());
-      dispatch(getExpenses());
       dispatch(getExpenseType());
       dispatch(getExpensesTodayTeachers());
       dispatch(getPaymentsLastMonth());
     }
-  }, [loading]); // Este useEffect depende de `loading`
+  }, [dispatch, loading]); // Este useEffect depende de `loading`
 
   if (loading) {
     return (
@@ -184,9 +218,9 @@ const Payments = () => {
               {/* Panel de Pagos */}
               <TabPanel>
                 <TablePayments
-                  list={tipo !== "Administrador" ? paymentsLastMonth : payments}
+                  list={payments}
                   onOpen={onOpenAddPayment}
-                  getPayments={tipo !== "Consultor" ? getPayments : getPaymentsLastMonth}
+                  getPayments={getPayments}
                 />
               </TabPanel>
 
@@ -215,9 +249,11 @@ const Payments = () => {
                     {/* Panel de Gastos */}
                     <TabPanel>
                       <TableExpenses
-                        list={tipo === "Consultor" ? expensesTodayTeachers : expenses}
+                        list={expenses}
                         onOpen={onOpenAddExpense}
-                        getExpenses={tipo !== "Consultor" ? getExpenses : getExpenseType}
+                        selectedStudio={selectedExpenseStudio}
+                        setSelectedStudio={setSelectedExpenseStudio}
+                        refreshKey={expenseRefreshKey}
                       />
                     </TabPanel>
 
@@ -251,7 +287,13 @@ const Payments = () => {
             <ModalOverlay w={"100%"} h={"100%"} />
             <ModalContent maxW={{ base: "90%", md: "90%", lg: "80%", xl: "800px" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
               <ModalCloseButton />
-              <ModalExpenseAdd onClose={onCloseAddExpense} getExpenses={tipo === "Consultor" ? getExpensesTodayTeachers : getExpenses} />
+              <ModalExpenseAdd
+                onClose={() => {
+                  onCloseAddExpense();
+                  setExpenseRefreshKey((current) => current + 1);
+                }}
+                getExpenses={getExpenses}
+              />
             </ModalContent>
           </Modal>
 

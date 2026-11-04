@@ -20,7 +20,7 @@ import {
     SimpleGrid,
 } from "@chakra-ui/react";
 import { Select as Select2 } from "./ui/Select";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import ModalCode from "./ModalCode";
 import { useAuthStore } from "../stores/auth";
@@ -28,6 +28,7 @@ import { useAppDispatch } from "../stores/hooks";
 import { useSelector } from "react-redux";
 import { useStudioStore } from "../stores/studio";
 import { formatAmount, formatCurrency } from "../utils/amount";
+import { isSelectableStudio } from "../utils/studios";
 import {
     getTeachers,
     getTeacherHours,
@@ -69,6 +70,21 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
         name: product?.type?.name || "",
     });
     const [studio, setStudio] = useState({ id: "", name: "" });
+
+    const originalStudioId =
+        typeof product?.studio === "object"
+            ? product?.studio?.id
+            : product?.studio_id ?? product?.studio;
+    const originalStudio = useMemo(
+        () =>
+            studios?.find(
+                (item: any) => String(item.id) === String(originalStudioId)
+            ),
+        [originalStudioId, studios]
+    );
+    const hasHistoricalUnavailableStudio = Boolean(
+        originalStudio && !isSelectableStudio(originalStudio)
+    );
     const [leftHours, setLeftHours] = useState<any>(null);
     const [code] = useState("admin");
     const [idExpense] = useState(product?.id);
@@ -80,6 +96,13 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
     ];
 
     const isSalaryType = type.name?.includes("Sueldo");
+    const effectiveStudio =
+        tipo === "Consultor" && selectedStudioFromStore?.id
+            ? {
+                id: selectedStudioFromStore.id,
+                name: selectedStudioFromStore.name,
+            }
+            : studio;
 
     const handleSelectChange = (selectedOption: any) => {
         if (selectedOption) {
@@ -137,10 +160,26 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
             return false;
         }
 
-        if (!studio?.id) {
+        if (!effectiveStudio?.id) {
             toast({
                 title: "Faltan completar campos.",
                 description: "Por favor, seleccioná un estudio.",
+                status: "error",
+                position: "bottom-right",
+                duration: 5000,
+                isClosable: true,
+            });
+            return false;
+        }
+
+        if (
+            tipo === "Consultor" &&
+            originalStudioId &&
+            String(originalStudioId) !== String(effectiveStudio.id)
+        ) {
+            toast({
+                title: "No se puede editar este gasto.",
+                description: "El gasto pertenece a otro estudio.",
                 status: "error",
                 position: "bottom-right",
                 duration: 5000,
@@ -213,7 +252,7 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
         formData.append("method", method);
         formData.append("observation", observation || "");
         formData.append("code", codeValue);
-        formData.append("studio", String(studio.id));
+        formData.append("studio", String(effectiveStudio.id));
 
         if (isSalaryType) {
             formData.append("teacher", String(teacher.id));
@@ -329,16 +368,13 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
     useEffect(() => {
         if (!studios?.length) return;
 
-        // product.studio trae solo el id
-        if (product?.studio) {
-            const matchedStudio = studios.find(
-                (s: any) => String(s.id) === String(product.studio)
-            );
-
-            if (matchedStudio) {
+        // Se conserva el estudio original aunque ya no esté disponible para
+        // nuevas asignaciones.
+        if (originalStudioId !== undefined && originalStudioId !== null) {
+            if (originalStudio) {
                 setStudio({
-                    id: matchedStudio.id,
-                    name: matchedStudio.name,
+                    id: originalStudio.id,
+                    name: originalStudio.name,
                 });
                 return;
             }
@@ -346,7 +382,7 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
 
         // fallback al store si no vino en product o no matcheó
         if (selectedStudioFromStore) {
-            const matchedStudioFromStore = studios.find(
+            const matchedStudioFromStore = studios.filter(isSelectableStudio).find(
                 (s: any) => String(s.id) === String(selectedStudioFromStore.id)
             );
 
@@ -357,7 +393,7 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
                 });
             }
         }
-    }, [product, selectedStudioFromStore, studios]);
+    }, [originalStudio, originalStudioId, selectedStudioFromStore, studios]);
 
     useEffect(() => {
         if (product?.teacher) {
@@ -513,13 +549,14 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
                         )}
                     </Box>
 
-                    <Box>
+                    {tipo !== "Consultor" && <Box>
                         <FormControl id="studio" isRequired>
                             <FormLabel>Estudio</FormLabel>
                             <Select2
                                 placeholder="Seleccionar estudio..."
+                                isDisabled={hasHistoricalUnavailableStudio}
                                 options={studios
-                                    .filter((s: any) => s.is_active)
+                                    .filter(isSelectableStudio)
                                     .map((s: any) => ({
                                         label: s.name,
                                         value: s.id,
@@ -540,8 +577,13 @@ const ModalExpenseEdit = ({ product, onClose }: any) => {
                                     })
                                 }
                             />
+                            {hasHistoricalUnavailableStudio && (
+                                <Text color="orange.600" fontSize="sm" mt={1}>
+                                    El estudio histórico no está habilitado y no puede cambiarse.
+                                </Text>
+                            )}
                         </FormControl>
-                    </Box>
+                    </Box>}
                 </SimpleGrid>
 
                 <HStack spacing={3} justify="flex-end" mt={6}>

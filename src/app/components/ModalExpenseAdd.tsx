@@ -52,6 +52,7 @@ import {
 } from '../stores/studioSlice';
 import { useStudioStore } from "../stores/studio";
 import { formatAmount, formatCurrency } from "../utils/amount";
+import { isSelectableStudio } from "../utils/studios";
 import { LoadingOverlay } from "./ui/Loaders";
 
 const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
@@ -74,9 +75,6 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
     const selectedStudioFromStore = useStudioStore((state: any) => state.selectedStudio);
     const [studio, setStudio] = useState({ id: "", name: "" });
 
-
-    console.log(selectedStudioFromStore)
-
     const dispatch = useAppDispatch();
 
     const toast = useToast();
@@ -98,14 +96,21 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
     const handleSubmitExpense = async (code) => {
         setLoading(true)
 
-        console.log(studio.id)
+        const effectiveStudio =
+            tipo === "Consultor" && selectedStudioFromStore?.id
+                ? {
+                    id: selectedStudioFromStore.id,
+                    name: selectedStudioFromStore.name,
+                }
+                : studio;
+
         const formData = new FormData();
         formData.append('type_id', type.id);
         formData.append('amount', amount);
         formData.append('method', method);
         formData.append('code', code);
         formData.append('observation', observation);
-        formData.append("studio", String(studio.id));
+        formData.append("studio", String(effectiveStudio.id));
 
         if (type.name.includes("Sueldo")) {
             formData.append('teacher', teacher.id);
@@ -186,7 +191,7 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
             return;
         }
 
-        if (!studio.id) {
+        if (!effectiveStudio.id) {
             toast({
                 title: "Faltan completar campos.",
                 description: "Por favor, seleccioná un estudio.",
@@ -308,7 +313,7 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
     }, [dispatch]);
 
     useEffect(() => {
-        if (selectedStudioFromStore) {
+        if (selectedStudioFromStore && isSelectableStudio(selectedStudioFromStore)) {
             setStudio({
                 id: selectedStudioFromStore.id,
                 name: selectedStudioFromStore.name,
@@ -506,13 +511,13 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
                     </Box>
 
                     {/*                     {!type.name.includes("Sueldo") && (
- */}                  <Box>
+ */}                  {tipo !== "Consultor" && <Box>
                         <FormControl id="studio" isRequired>
                             <FormLabel>Estudio</FormLabel>
                             <Select2
                                 placeholder="Seleccionar estudio..."
                                 options={studios
-                                    .filter((s: any) => s.is_active)
+                                    .filter(isSelectableStudio)
                                     .map((s: any) => ({
                                         label: s.name,
                                         value: s.id,
@@ -534,7 +539,7 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
                                 }
                             />
                         </FormControl>
-                    </Box>
+                    </Box>}
                     {/*                     )}
  */}                </SimpleGrid>
 
