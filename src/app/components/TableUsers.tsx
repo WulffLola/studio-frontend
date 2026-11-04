@@ -62,6 +62,7 @@ const TableUsers = ({ list, onOpen }: { list: Array<any>; onOpen: () => void; ge
     const [selectedRow, setSelectedRow] = useState([]);
     const [selectedItem, setSelectedItem] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [activeTab, setActiveTab] = useState(0);
     const [code, setCode] = useState("admin");
     const { login, tipo, tokens, id } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState("");
@@ -713,7 +714,15 @@ const TableUsers = ({ list, onOpen }: { list: Array<any>; onOpen: () => void; ge
 
                 </Table> */}
 
-                <Tabs variant="line" mt={4}>
+                <Tabs
+                    variant="line"
+                    mt={4}
+                    index={activeTab}
+                    onChange={(index) => {
+                        setActiveTab(index);
+                        setCurrentPage(1);
+                    }}
+                >
                     <TabList>
                         <Tab
                         >
@@ -731,33 +740,33 @@ const TableUsers = ({ list, onOpen }: { list: Array<any>; onOpen: () => void; ge
                         {/* TAB OTROS USUARIOS */}
                         <TabPanel px={0}>
                             {renderTable(otherUsersItems)}
-
-                            <Flex justify="center" mt={4}>
-                                <Pagination
-                                    count={Math.max(Math.ceil(otherUsersItems.length / ITEMS_PER_PAGE), 1)}
-                                    pageSize={ITEMS_PER_PAGE}
-                                    defaultPage={1}
-                                    onPageChange={setCurrentPage}
-                                />
-                            </Flex>
                         </TabPanel>
 
                         {/* TAB STUDENTS */}
                         <TabPanel px={0}>
                             {renderTable(studentItems)}
-                            <Flex justify="center" mt={4}>
-                                <Pagination
-                                    count={Math.max(Math.ceil(studentItems.length / ITEMS_PER_PAGE), 1)}
-                                    pageSize={ITEMS_PER_PAGE}
-                                    defaultPage={1}
-                                    onPageChange={setCurrentPage}
-                                />
-                            </Flex>
                         </TabPanel>
 
                     </TabPanels>
                 </Tabs>
             </Box >
+
+            <Box w="100%" mt={4}>
+                <Pagination
+                    count={Math.max(
+                        Math.ceil(
+                            (activeTab === 0 ? otherUsersItems.length : studentItems.length) /
+                            ITEMS_PER_PAGE
+                        ),
+                        1
+                    )}
+                    pageSize={ITEMS_PER_PAGE}
+                    totalItems={activeTab === 0 ? otherUsersItems.length : studentItems.length}
+                    defaultPage={1}
+                    page={currentPage}
+                    onPageChange={setCurrentPage}
+                />
+            </Box>
         </>
     );
 };

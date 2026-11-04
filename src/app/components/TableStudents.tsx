@@ -704,57 +704,26 @@ const TableStudents = ({ list, onOpen }: { list: Array<any>; onOpen: () => void;
                 </Table>
             </Box>
 
-            <Flex
-                w="100%"
-                px={4}
-                py={2}
-                align="center"
-                justify="space-between"
-                direction={{ base: "column", md: "row", lg: "row" }}
-                gap={{ base: 3, md: 4, lg: 0 }}
-            >
-                {/* ESPACIO IZQUIERDO SOLO EN DESKTOP */}
-                <Box
-                    w={{ base: "100%", md: "100%", lg: "33%" }}
-                    display={{ base: "none", md: "block" }}
+            <Box w="100%" px={4} py={2}>
+                <Pagination
+                    count={countPagination}
+                    pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredItems.length}
+                    defaultPage={1}
+                    page={currentPage}
+                    onPageChange={setCurrentPage}
+                    leftContent={
+                        <HStack spacing={4} display="flex">
+                            <Text fontSize="sm" whiteSpace="nowrap">
+                                <Text as="span" color="green.500">🟢</Text> Activos: {activeCount}
+                            </Text>
+                            <Text fontSize="sm" whiteSpace="nowrap">
+                                <Text as="span" color="error.fg">🔴</Text> De Baja: {inactiveCount}
+                            </Text>
+                        </HStack>
+                    }
                 />
-
-                {/* 📌 CONTADOR */}
-                <Box
-                    w={{ base: "100%", md: "33%", lg: "33%" }}
-                    order={{ base: 1, md: 3, lg: 3 }}
-                    display="flex"
-                    justifyContent={{ base: "center", md: "flex-end", lg: "flex-end" }}
-                >
-                    {/* AHORA: siempre en fila salvo en mobile */}
-                    <HStack
-                        spacing={4}
-                        display="flex"
-                    >
-                        <Text fontSize="sm" whiteSpace="nowrap">
-                            <Text as="span" color="green.500">🟢</Text> Activos: {activeCount}
-                        </Text>
-                        <Text fontSize="sm" whiteSpace="nowrap">
-                            <Text as="span" color="error.fg">🔴</Text> De Baja: {inactiveCount}
-                        </Text>
-                    </HStack>
-                </Box>
-
-                {/* 📌 PAGINACIÓN */}
-                <Box
-                    w={{ base: "100%", md: "100%", lg: "33%" }}
-                    order={{ base: 2, md: 2, lg: 2 }}
-                    display="flex"
-                    justifyContent="center"
-                >
-                    <Pagination
-                        count={countPagination}
-                        pageSize={ITEMS_PER_PAGE}
-                        defaultPage={1}
-                        onPageChange={setCurrentPage}
-                    />
-                </Box>
-            </Flex>
+            </Box>
 
         </>
     );

@@ -687,11 +687,13 @@ const TablePlansSubType = ({
         </Table>
       </Box>
 
-      <Box display="flex" justifyContent="center" mt={4}>
+      <Box display="flex" justifyContent="center" mt={4} w="100%">
         <Pagination
           count={countPagination}
           pageSize={ITEMS_PER_PAGE}
+          totalItems={filteredItems.length}
           defaultPage={1}
+          page={currentPage}
           onPageChange={setCurrentPage}
         />
       </Box>
