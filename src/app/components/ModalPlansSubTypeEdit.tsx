@@ -18,7 +18,6 @@ import { useAuthStore } from "../stores/auth";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../stores/hooks";
 import {
-  getPlans,
   getTypePlans,
   getActivitySubType,
   getPlanSubType,
@@ -48,7 +47,6 @@ const ModalPlansSubTypeEdit = ({ onClose, isCancel, product }: any) => {
   useEffect(() => {
     dispatch(getTypePlans());
     dispatch(getActivitySubType());
-    dispatch(getPlans());
   }, [dispatch]);
 
   useEffect(() => {

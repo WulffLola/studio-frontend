@@ -49,7 +49,6 @@ const Plans = () => {
     const isSuper = tipo === "Super" || tipo === "SUPER";
 
     // const [paymentsAmount, setPaymentsAmount] = useState([])
-    // const [plans, setPlans] = useState([])
     // const [slots, setSlots] = useState([])
     // const [studios, setStudios] = useState([])
 
@@ -230,7 +229,7 @@ const Plans = () => {
                         <ModalOverlay w={"100%"} h={"100%"} />
                         <ModalContent maxW={{ base: "90%", md: "70%", lg: "50%", xl: "40%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
                             <ModalCloseButton />
-                            <ModalPlansSubTypeAdd onClose={onCloseAddPlansSubType} getPlans={getPlanSubType} isCancel={false} plansSubType={plansSubType} />
+                            <ModalPlansSubTypeAdd onClose={onCloseAddPlansSubType} isCancel={false} />
                         </ModalContent>
                     </Modal>
 

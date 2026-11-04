@@ -56,7 +56,6 @@ const ModalStudentAdd = ({ product, onClose }: any) => {
     const dispatch = useAppDispatch();
 
 
-    const [plans, setPlans] = useState([])
     const { tipo, tokens } = useAuthStore();
 
     const toast = useToast();

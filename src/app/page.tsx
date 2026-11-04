@@ -55,7 +55,6 @@ import { useRouter } from "next/navigation";
 import { useAppDispatch } from "./stores/hooks";
 import { useSelector } from "react-redux";
 import {
-  getPlans,
   getAppointments,
   getPayments,
   getSlots,
@@ -82,7 +81,6 @@ export default function Home() {
   const [reloadTable, setReloadTable] = useState(false);
 
   // flags informativos (opcional)
-  const [wasPlansEmptyOnOpen, setWasPlansEmptyOnOpen] = useState<boolean | null>(null);
   const [wasPaymentAmountEmptyOnOpen, setWasPaymentAmountEmptyOnOpen] = useState<boolean | null>(null);
   const [wasSlotsEmptyOnOpen, setWasSlotsEmptyOnOpen] = useState<boolean | null>(null);
   const [wasStudiosEmptyOnOpen, setWasStudiosEmptyOnOpen] = useState<boolean | null>(null);
@@ -110,7 +108,6 @@ export default function Home() {
     payments,
     paymentsToday,
     appointments,
-    plans,
     peoples,
     statusClients,
     paymentsStatusCurrentMonth,
@@ -211,7 +208,6 @@ export default function Home() {
     let isMounted = true;
 
     Promise.all([
-      dispatch(getPlans()),
       dispatch(getSlots()),
       dispatch(getPaymentsToday()),
       dispatch(getPayments()),
@@ -315,17 +311,6 @@ export default function Home() {
     }
   };
 
-  const getPlansAndCheck = async (): Promise<any[]> => {
-    try {
-      const list = await dispatch(getPlans() as any).unwrap();
-      setWasPlansEmptyOnOpen(list.length === 0);
-      return Array.isArray(list) ? list : [];
-    } catch {
-      setWasPlansEmptyOnOpen(true);
-      return [];
-    }
-  };
-
   const getPaymentsAmountAndCheck = async (): Promise<any[]> => {
     try {
       const list = await dispatch(getPaymentAmount() as any).unwrap();
@@ -341,12 +326,6 @@ export default function Home() {
   const getRoomsForCurrentStudio = async (): Promise<any[]> => {
     if (!studioId) return [];
     const list = await getRoomsAndCheck();
-    return filterListByStudio(list, studioId);
-  };
-
-  const getPlansForCurrentStudio = async (): Promise<any[]> => {
-    if (!studioId) return [];
-    const list = await getPlansAndCheck();
     return filterListByStudio(list, studioId);
   };
 
@@ -385,12 +364,6 @@ export default function Home() {
     return await getSlotsForCurrentStudio();
   };
 
-  const safeGetPlans = async () => {
-    const studiosList = Array.isArray(studios) ? studios : [];
-    if (studiosList.length === 0 || !studioId) return [];
-    return await getPlansForCurrentStudio();
-  };
-
   const safeGetPaymentsAmount = async () => {
     const studiosList = Array.isArray(studios) ? studios : [];
     if (studiosList.length === 0 || !studioId) return [];
@@ -403,7 +376,6 @@ export default function Home() {
     | "awaiting-studio"
     | "awaiting-rooms"
     | "awaiting-slots"
-    | "awaiting-plans"
     | "awaiting-payments-amount"
     | "ready";
 
@@ -446,15 +418,6 @@ export default function Home() {
         return;
       }
 
-      const plansList = await getPlansForCurrentStudio();
-      if (!alive) return;
-
-      // if (plansList.length === 0) {
-      // setFlowStep("awaiting-plans");
-      // onOpenModalPlans();
-      // return;
-      // }
-
       // const paymentsAmountList = await getPaymentsAmountForCurrentStudio();
       // if (!alive) return;
 
@@ -475,84 +438,63 @@ export default function Home() {
   // ===== Handlers encadenados =====
 
   // const handleCloseStudiosModal = async () => {
-  // onCloseModalStudios();
+  //   onCloseModalStudios();
 
-  // const roomsList = await safeGetRooms();
-  // if (roomsList.length === 0) {
-  // setFlowStep("awaiting-rooms");
-  // onOpenModalRooms();
-  // return;
-  // }
+  //   const roomsList = await safeGetRooms();
+  //   if (roomsList.length === 0) {
+  //     setFlowStep("awaiting-rooms");
+  //     onOpenModalRooms();
+  //     return;
+  //   }
 
-  // const slotsList = await safeGetSlots();
-  // if (slotsList.length === 0) {
-  // setFlowStep("awaiting-slots");
-  // onOpenModalSlots();
-  // return;
-  // }
+  //   const slotsList = await safeGetSlots();
+  //   if (slotsList.length === 0) {
+  //     setFlowStep("awaiting-slots");
+  //     onOpenModalSlots();
+  //     return;
+  //   }
 
-  // const plansList = await safeGetPlans();
-  // if (plansList.length === 0) {
-  // setFlowStep("awaiting-plans");
-  // onOpenModalPlans();
-  // return;
-  // }
+  //   const paymentsAmountList = await safeGetPaymentsAmount();
+  //   if (paymentsAmountList.length === 0) {
+  //     setFlowStep("awaiting-payments-amount");
+  //     onOpenModalPaymentsAmount();
+  //     return;
+  //   }
 
-  // const paymentsAmountList = await safeGetPaymentsAmount();
-  // if (paymentsAmountList.length === 0) {
-  // setFlowStep("awaiting-payments-amount");
-  // onOpenModalPaymentsAmount();
-  // return;
-  // }
-
-  // setFlowStep("ready");
+  //   setFlowStep("ready");
   // };
 
   // const handleCloseRoomsModal = async () => {
-  // onCloseModalRooms();
+  //   onCloseModalRooms();
 
-  // const slotsList = await safeGetSlots();
-  // if (slotsList.length === 0) {
-  // setFlowStep("awaiting-slots");
-  // onOpenModalSlots();
-  // return;
-  // }
+  //   const slotsList = await safeGetSlots();
+  //   if (slotsList.length === 0) {
+  //     setFlowStep("awaiting-slots");
+  //     onOpenModalSlots();
+  //     return;
+  //   }
 
-  // const plansList = await safeGetPlans();
-  // if (plansList.length === 0) {
-  // setFlowStep("awaiting-plans");
-  // onOpenModalPlans();
-  // return;
-  // }
+  //   const paymentsAmountList = await safeGetPaymentsAmount();
+  //   if (paymentsAmountList.length === 0) {
+  //     setFlowStep("awaiting-payments-amount");
+  //     onOpenModalPaymentsAmount();
+  //     return;
+  //   }
 
-  // const paymentsAmountList = await safeGetPaymentsAmount();
-  // if (paymentsAmountList.length === 0) {
-  // setFlowStep("awaiting-payments-amount");
-  // onOpenModalPaymentsAmount();
-  // return;
-  // }
-
-  // setFlowStep("ready");
+  //   setFlowStep("ready");
   // };
 
   // const handleCloseSlotsModal = async () => {
-  // onCloseModalSlots();
+  //   onCloseModalSlots();
 
-  // const plansList = await safeGetPlans();
-  // if (plansList.length === 0) {
-  // setFlowStep("awaiting-plans");
-  // onOpenModalPlans();
-  // return;
-  // }
+  //   const paymentsAmountList = await safeGetPaymentsAmount();
+  //   if (paymentsAmountList.length === 0) {
+  //     setFlowStep("awaiting-payments-amount");
+  //     onOpenModalPaymentsAmount();
+  //     return;
+  //   }
 
-  // const paymentsAmountList = await safeGetPaymentsAmount();
-  // if (paymentsAmountList.length === 0) {
-  // setFlowStep("awaiting-payments-amount");
-  // onOpenModalPaymentsAmount();
-  // return;
-  // }
-
-  // setFlowStep("ready");
+  //   setFlowStep("ready");
   // };
 
   // const handleClosePlansModal = async () => {

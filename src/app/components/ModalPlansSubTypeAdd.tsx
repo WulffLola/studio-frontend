@@ -18,7 +18,6 @@ import { useAuthStore } from "../stores/auth";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../stores/hooks";
 import {
-  getPlans,
   getTypePlans,
   getActivitySubType,
   getPlanSubType,
@@ -44,7 +43,6 @@ const ModalPlansSubTypeAdd = ({ onClose, isCancel }: any) => {
   useEffect(() => {
     dispatch(getTypePlans());
     dispatch(getActivitySubType());
-    dispatch(getPlans());
   }, [dispatch]);
 
   const normalizeText = (text: string) =>
@@ -139,7 +137,6 @@ const ModalPlansSubTypeAdd = ({ onClose, isCancel }: any) => {
   useEffect(() => {
     dispatch(getTypePlans());
     dispatch(getActivitySubType());
-    dispatch(getPlans());
     dispatch(getPlanSubType());
   }, [dispatch]);
 

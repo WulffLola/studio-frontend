@@ -404,11 +404,13 @@ const sortedData = Object.entries(list || {})
                 </Table>
             </Box>
 
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box display="flex" justifyContent="center" mt={4} w="100%">
                 <Pagination
                     count={countPagination}
                     pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredData.length}
                     defaultPage={1}
+                    page={currentPage}
                     onPageChange={setCurrentPage}
                 />
             </Box>

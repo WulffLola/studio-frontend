@@ -30,7 +30,6 @@ const LowsHistory = () => {
     const dispatch = useAppDispatch();
 
     // const [deletedPeople, setDeletedPeople] = useState([])
-    // // const [plans, setPlans] = useState([])
     // const [slots, setSlots] = useState([])
 
     const { isOpen, onOpen, onClose } = useDisclosure();
@@ -68,20 +67,6 @@ const LowsHistory = () => {
     // }
     // };
 
-    // async function getPlans() {
-    // try {
-    // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PLAN}`, {
-    // headers: {
-    // 'Authorization': `Bearer ${tokens?.access}`, // Incluir el token si es necesario
-    // 'Content-Type': 'multipart/form-data', // Si estás usando FormData
-    // },
-    // });
-    // setPlans(response.data)
-    // } catch (error) {
-    // console.log(error);
-    // }
-    // };
-
     // async function getSlots() {
     // try {
     // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_SLOTS}`, {
@@ -109,7 +94,6 @@ const LowsHistory = () => {
     useEffect(() => {
         if (!loading) {
             dispatch(getDeletedPeople());
-            // getPlans();
             dispatch(getSlots());
         }
     }, [loading]);
