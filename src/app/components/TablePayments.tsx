@@ -553,11 +553,26 @@ const TablePayments = ({
     onOpenModalEdit();
   };
 
-  const handleClickDocument = (item) => {
-    if (item.pdf_file) {
+  const handleClickDocument = async (item) => {
+    if (!item.pdf_file) {
+      onOpenAlertDialogDocument();
+      return;
+    }
+    // El comprobante ya no es público: se descarga por la API con el token
+    // (el interceptor agrega Authorization) y se abre como blob.
+    const win = window.open("", "_blank");
+    try {
       const pdfUrl = getPaymentPdfUrl(String(item.pdf_file));
-      window.open(pdfUrl, "_blank");
-    } else {
+      const res = await axios.get(pdfUrl, { responseType: "blob" });
+      const blobUrl = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      if (win) {
+        win.location.href = blobUrl;
+      } else {
+        window.open(blobUrl, "_blank");
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    } catch {
+      win?.close();
       onOpenAlertDialogDocument();
     }
   };

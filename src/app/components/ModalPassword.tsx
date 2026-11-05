@@ -21,13 +21,16 @@ const ModalPassword = ({
     onCloseAlert,
     action,
     entityType,
+    requireCurrent = false,
 }: {
     onClose: () => void;
     get: () => void;
     onCloseAlert: () => void;
-    action: (password: string) => void;
+    action: (password: string, currentPassword?: string) => void;
     entityType: () => string;
+    requireCurrent?: boolean;
 }) => {
+    const [currentPassword, setCurrentPassword] = useState("");
     const [email, setEmail] = useState(product.email);
     const [password, setPassword] = useState("");
     const [password2, setPassword2] = useState("");
@@ -70,8 +73,20 @@ const ModalPassword = ({
             return;
         }
 
+        if (requireCurrent && !currentPassword) {
+            toast({
+                title: "Falta la contraseña actual",
+                description: "Para cambiar tu propia contraseña ingresá la actual.",
+                status: "warning",
+                duration: 3000,
+                isClosable: true,
+                position: "bottom-right",
+            });
+            return;
+        }
+
         onClose();
-        action(password);
+        action(password, requireCurrent ? currentPassword : undefined);
     };
 
     return (
@@ -102,6 +117,22 @@ const ModalPassword = ({
                     />
                 </FormControl>
             </Box>
+
+            {requireCurrent && (
+                <Box>
+                    <FormControl id="current_password" isRequired>
+                        <Input
+                            w="100%"
+                            type="password"
+                            placeholder="Contraseña actual..."
+                            h={"40px"}
+                            autoComplete="current-password"
+                            value={currentPassword}
+                            onChange={(event) => setCurrentPassword(event.target.value)}
+                        />
+                    </FormControl>
+                </Box>
+            )}
 
             <Box>
                 <FormControl id="password" isRequired>
