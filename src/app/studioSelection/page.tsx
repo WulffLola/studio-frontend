@@ -73,9 +73,15 @@ export default function StudioSelection() {
   const count = activeStudios.length;
 
   useEffect(() => {
-    dispatch(getStudios());
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+
+    dispatch(getStudios()).finally(() => {
+      if (isMounted) setLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
   }, [dispatch]);
 
   const columns = count === 1 ? 1 : count === 2 ? 2 : 3;
@@ -143,7 +149,7 @@ export default function StudioSelection() {
 
   if (loading) {
     return (
-      <FullPageLoader />
+      <FullPageLoader message="Cargando selección de estudio" />
     );
   }
 

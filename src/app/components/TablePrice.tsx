@@ -1,39 +1,39 @@
 // import {
-// AlertDialog,
-// AlertDialogBody,
-// AlertDialogCloseButton,
-// AlertDialogContent,
-// AlertDialogFooter,
-// AlertDialogOverlay,
-// Box,
-// Button,
-// HStack,
-// Modal,
-// ModalContent,
-// ModalOverlay,
-// Table,
-// Tbody,
-// Td,
-// Th,
-// Thead,
-// useToast,
-// Tooltip,
-// Tr,
-// useDisclosure,
-// Stack,
-// Input,
-// Flex,
-// Spinner,
-// AlertDialogHeader,
-// Text,
-// IconButton,
+//     AlertDialog,
+//     AlertDialogBody,
+//     AlertDialogCloseButton,
+//     AlertDialogContent,
+//     AlertDialogFooter,
+//     AlertDialogOverlay,
+//     Box,
+//     Button,
+//     HStack,
+//     Modal,
+//     ModalContent,
+//     ModalOverlay,
+//     Table,
+//     Tbody,
+//     Td,
+//     Th,
+//     Thead,
+//     useToast,
+//     Tooltip,
+//     Tr,
+//     useDisclosure,
+//     Stack,
+//     Input,
+//     Flex,
+//     Spinner,
+//     AlertDialogHeader,
+//     Text,
+//     IconButton,
 // } from "@chakra-ui/react";
 // import axios from "axios";
 // import React, { useEffect, useMemo, useState } from "react";
 // import Icon from "@mdi/react";
 // import {
-// mdiPencilOutline,
-// mdiDeleteOutline,
+//     mdiPencilOutline,
+//     mdiDeleteOutline,
 // } from "@mdi/js";
 // import ModalPaymentsAmountEdit from "./ModalPaymentsAmountEdit";
 // import Pagination from "./Pagination";
@@ -41,658 +41,657 @@
 // import { useAppDispatch } from "../stores/hooks";
 // import { useSelector } from "react-redux";
 // import {
-// getPaymentAmount,
+//     getPaymentAmount,
 // } from "../stores/studioSlice";
 // import { FiPlus, FiSearch } from "react-icons/fi";
 
 // const ITEMS_PER_PAGE = 10;
 
 // const TablePrice = ({
-// list,
-// onOpen,
+//     list,
+//     onOpen,
 // }: {
-// list: Array<any>;
-// onOpen: () => void;
+//     list: Array<any>;
+//     onOpen: () => void;
 // }) => {
-// const [selectedRow, setSelectedRow] = useState<any>(null);
-// const [selectedItem, setSelectedItem] = useState<any>(null);
-// const [currentPage, setCurrentPage] = useState(1);
-// const [searchTerm, setSearchTerm] = useState("");
-// const { tokens } = useAuthStore();
-// const [loading, setLoading] = useState(false);
-// const [loadingTable, setLoadingTable] = useState(false);
+//     const [selectedRow, setSelectedRow] = useState<any>(null);
+//     const [selectedItem, setSelectedItem] = useState<any>(null);
+//     const [currentPage, setCurrentPage] = useState(1);
+//     const [searchTerm, setSearchTerm] = useState("");
+//     const { tokens } = useAuthStore();
+//     const [loading, setLoading] = useState(false);
+//     const [loadingTable, setLoadingTable] = useState(false);
 
-// const { plans } = useSelector((state: any) => state.studio);
-// const dispatch = useAppDispatch();
-// const toast = useToast();
-// const cancelRef = React.useRef<any>(null);
+//     const dispatch = useAppDispatch();
+//     const toast = useToast();
+//     const cancelRef = React.useRef<any>(null);
 
-// const {
-// isOpen: isAlertEditOpen,
-// onOpen: onOpenModalEdit,
-// onClose: onCloseModalEdit,
-// } = useDisclosure();
+//     const {
+//         isOpen: isAlertEditOpen,
+//         onOpen: onOpenModalEdit,
+//         onClose: onCloseModalEdit,
+//     } = useDisclosure();
 
-// const {
-// isOpen: isAlertDialogDeleteOpen,
-// onOpen: onOpenAlertDialogDelete,
-// onClose: onCloseAlertDialogDelete,
-// } = useDisclosure();
+//     const {
+//         isOpen: isAlertDialogDeleteOpen,
+//         onOpen: onOpenAlertDialogDelete,
+//         onClose: onCloseAlertDialogDelete,
+//     } = useDisclosure();
 
-// const {
-// isOpen: isAlertDialogMethodDeleteOpen,
-// onOpen: onOpenAlertDialogMethodDelete,
-// onClose: onCloseAlertDialogMethodDelete,
-// } = useDisclosure();
+//     const {
+//         isOpen: isAlertDialogMethodDeleteOpen,
+//         onOpen: onOpenAlertDialogMethodDelete,
+//         onClose: onCloseAlertDialogMethodDelete,
+//     } = useDisclosure();
 
-// const {
-// isOpen: isAlertDialogMethodOpen,
-// onOpen: onOpenAlertDialogMethod,
-// onClose: onCloseAlertDialogMethod,
-// } = useDisclosure();
+//     const {
+//         isOpen: isAlertDialogMethodOpen,
+//         onOpen: onOpenAlertDialogMethod,
+//         onClose: onCloseAlertDialogMethod,
+//     } = useDisclosure();
 
-// const {
-// isOpen: isAlertDialogOpenNoExist,
-// onOpen: onOpenAlertDialogNoExist,
-// onClose: onCloseAlertDialogNoExist,
-// } = useDisclosure();
+//     const {
+//         isOpen: isAlertDialogOpenNoExist,
+//         onOpen: onOpenAlertDialogNoExist,
+//         onClose: onCloseAlertDialogNoExist,
+//     } = useDisclosure();
 
-// const normalizeText = (value: any) =>
-// String(value ?? "")
-// .toLowerCase()
-// .normalize("NFD")
-// .replace(/[\u0300-\u036f]/g, "");
+//     const normalizeText = (value: any) =>
+//         String(value ?? "")
+//             .toLowerCase()
+//             .normalize("NFD")
+//             .replace(/[\u0300-\u036f]/g, "");
 
-// // 1) Primero agrupamos por plan como ya hacías
-// const groupedItems = useMemo(() => {
-// return (list ?? []).reduce((acc, item) => {
-// if (!acc[item.plan]) {
-// const planFound = plans.find(
-// (plan: any) => Number(plan.id) === Number(item.plan)
-// );
+//     // 1) Primero agrupamos por plan como ya hacías
+//     const groupedItems = useMemo(() => {
+//         return (list ?? []).reduce((acc, item) => {
+//             if (!acc[item.plan]) {
+//                 const planFound = plans.find(
+//                     (plan: any) => Number(plan.id) === Number(item.plan)
+//                 );
 
-// // MOCKS VISUALES
-// // Reemplazá esto con tus campos reales después
-// const mockActivityType =
-// planFound?.activity_type_name || "PILATES";
-// const mockActivitySubType =
-// planFound?.activity_subtype_name || "REFORMER";
+//                 // MOCKS VISUALES
+//                 // Reemplazá esto con tus campos reales después
+//                 const mockActivityType =
+//                     planFound?.activity_type_name || "PILATES";
+//                 const mockActivitySubType =
+//                     planFound?.activity_subtype_name || "REFORMER";
 
-// acc[item.plan] = {
-// plan: item.plan,
-// planDays:
-// planFound?.days ||
-// item.plan_days ||
-// item.plan_name ||
-// `Plan ${item.plan}`,
-// efectivo: "",
-// transferencia: "",
-// ids: { efectivo: null, transferencia: null },
-// activityType: mockActivityType,
-// activitySubType: mockActivitySubType,
-// };
-// }
+//                 acc[item.plan] = {
+//                     plan: item.plan,
+//                     planDays:
+//                         planFound?.days ||
+//                         item.plan_days ||
+//                         item.plan_name ||
+//                         `Plan ${item.plan}`,
+//                     efectivo: "",
+//                     transferencia: "",
+//                     ids: { efectivo: null, transferencia: null },
+//                     activityType: mockActivityType,
+//                     activitySubType: mockActivitySubType,
+//                 };
+//             }
 
-// if (item.method === "Efectivo") {
-// acc[item.plan].efectivo = item.amount;
-// acc[item.plan].ids.efectivo = item.id;
-// } else if (item.method === "Transferencia") {
-// acc[item.plan].transferencia = item.amount;
-// acc[item.plan].ids.transferencia = item.id;
-// }
+//             if (item.method === "Efectivo") {
+//                 acc[item.plan].efectivo = item.amount;
+//                 acc[item.plan].ids.efectivo = item.id;
+//             } else if (item.method === "Transferencia") {
+//                 acc[item.plan].transferencia = item.amount;
+//                 acc[item.plan].ids.transferencia = item.id;
+//             }
 
-// return acc;
-// }, {} as any);
-// }, [list, plans]);
+//             return acc;
+//         }, {} as any);
+//     }, [list, plans]);
 
-// const groupedArray = useMemo(() => Object.values(groupedItems), [groupedItems]);
+//     const groupedArray = useMemo(() => Object.values(groupedItems), [groupedItems]);
 
-// // 2) Filtrado
-// const filteredItems = useMemo(() => {
-// const searchLower = normalizeText(searchTerm);
+//     // 2) Filtrado
+//     const filteredItems = useMemo(() => {
+//         const searchLower = normalizeText(searchTerm);
 
-// return groupedArray.filter((item: any) => {
-// return (
-// normalizeText(item.planDays).includes(searchLower) ||
-// normalizeText(item.activityType).includes(searchLower) ||
-// normalizeText(item.activitySubType).includes(searchLower) ||
-// normalizeText(item.efectivo).includes(searchLower) ||
-// normalizeText(item.transferencia).includes(searchLower)
-// );
-// });
-// }, [groupedArray, searchTerm]);
+//         return groupedArray.filter((item: any) => {
+//             return (
+//                 normalizeText(item.planDays).includes(searchLower) ||
+//                 normalizeText(item.activityType).includes(searchLower) ||
+//                 normalizeText(item.activitySubType).includes(searchLower) ||
+//                 normalizeText(item.efectivo).includes(searchLower) ||
+//                 normalizeText(item.transferencia).includes(searchLower)
+//             );
+//         });
+//     }, [groupedArray, searchTerm]);
 
-// // 3) Agrupar para render por type/subtype
-// const groupedForRender = useMemo(() => {
-// const result: any[] = [];
+//     // 3) Agrupar para render por type/subtype
+//     const groupedForRender = useMemo(() => {
+//         const result: any[] = [];
 
-// const map = filteredItems.reduce((acc: any, item: any) => {
-// if (!acc[item.activityType]) {
-// acc[item.activityType] = {};
-// }
+//         const map = filteredItems.reduce((acc: any, item: any) => {
+//             if (!acc[item.activityType]) {
+//                 acc[item.activityType] = {};
+//             }
 
-// if (!acc[item.activityType][item.activitySubType]) {
-// acc[item.activityType][item.activitySubType] = [];
-// }
+//             if (!acc[item.activityType][item.activitySubType]) {
+//                 acc[item.activityType][item.activitySubType] = [];
+//             }
 
-// acc[item.activityType][item.activitySubType].push(item);
-// return acc;
-// }, {});
+//             acc[item.activityType][item.activitySubType].push(item);
+//             return acc;
+//         }, {});
 
-// Object.entries(map).forEach(([activityType, subtypes]: any) => {
-// result.push({
-// rowType: "activityType",
-// label: activityType,
-// });
+//         Object.entries(map).forEach(([activityType, subtypes]: any) => {
+//             result.push({
+//                 rowType: "activityType",
+//                 label: activityType,
+//             });
 
-// Object.entries(subtypes).forEach(([activitySubType, items]: any) => {
-// result.push({
-// rowType: "activitySubType",
-// label: activitySubType,
-// });
+//             Object.entries(subtypes).forEach(([activitySubType, items]: any) => {
+//                 result.push({
+//                     rowType: "activitySubType",
+//                     label: activitySubType,
+//                 });
 
-// items.forEach((item: any) => {
-// result.push({
-// rowType: "item",
-// ...item,
-// });
-// });
-// });
-// });
+//                 items.forEach((item: any) => {
+//                     result.push({
+//                         rowType: "item",
+//                         ...item,
+//                     });
+//                 });
+//             });
+//         });
 
-// return result;
-// }, [filteredItems]);
+//         return result;
+//     }, [filteredItems]);
 
-// // 4) Paginación sobre las filas finales
-// const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
-// const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
-// const currentItems = groupedForRender.slice(indexOfFirstItem, indexOfLastItem);
+//     // 4) Paginación sobre las filas finales
+//     const indexOfLastItem = currentPage * ITEMS_PER_PAGE;
+//     const indexOfFirstItem = indexOfLastItem - ITEMS_PER_PAGE;
+//     const currentItems = groupedForRender.slice(indexOfFirstItem, indexOfLastItem);
 
-// const countPagination = Math.max(
-// Math.ceil(groupedForRender.length / ITEMS_PER_PAGE),
-// 1
-// );
+//     const countPagination = Math.max(
+//         Math.ceil(groupedForRender.length / ITEMS_PER_PAGE),
+//         1
+//     );
 
-// const handleClickDeleteMethod = (item: any) => {
-// setSelectedItem(item);
-// onOpenAlertDialogMethodDelete();
-// };
+//     const handleClickDeleteMethod = (item: any) => {
+//         setSelectedItem(item);
+//         onOpenAlertDialogMethodDelete();
+//     };
 
-// const handleRowDoubleClick = (itemId: number) => {
-// const payment = list.find((payment: any) => payment.id === itemId);
+//     const handleRowDoubleClick = (itemId: number) => {
+//         const payment = list.find((payment: any) => payment.id === itemId);
 
-// if (payment) {
-// setSelectedItem(payment);
-// onOpenModalEdit();
-// onCloseAlertDialogMethod();
-// } else {
-// onOpenAlertDialogNoExist();
-// onCloseAlertDialogMethod();
-// }
-// };
+//         if (payment) {
+//             setSelectedItem(payment);
+//             onOpenModalEdit();
+//             onCloseAlertDialogMethod();
+//         } else {
+//             onOpenAlertDialogNoExist();
+//             onCloseAlertDialogMethod();
+//         }
+//     };
 
-// const handleRowDoubleClickMethod = (item: any) => {
-// setSelectedItem(item);
-// onOpenAlertDialogMethod();
-// };
+//     const handleRowDoubleClickMethod = (item: any) => {
+//         setSelectedItem(item);
+//         onOpenAlertDialogMethod();
+//     };
 
-// const handleRowDelete = (itemId: number) => {
-// const payment = list.find((payment: any) => payment.id === itemId);
+//     const handleRowDelete = (itemId: number) => {
+//         const payment = list.find((payment: any) => payment.id === itemId);
 
-// if (payment) {
-// setSelectedItem(payment);
-// onOpenAlertDialogDelete();
-// onCloseAlertDialogMethodDelete();
-// } else {
-// onOpenAlertDialogNoExist();
-// onCloseAlertDialogMethodDelete();
-// }
-// };
+//         if (payment) {
+//             setSelectedItem(payment);
+//             onOpenAlertDialogDelete();
+//             onCloseAlertDialogMethodDelete();
+//         } else {
+//             onOpenAlertDialogNoExist();
+//             onCloseAlertDialogMethodDelete();
+//         }
+//     };
 
-// const handleDelete = () => {
-// setLoading(true);
+//     const handleDelete = () => {
+//         setLoading(true);
 
-// axios
-// .delete(
-// `${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENT_AMOUNT}${selectedItem.id}/`,
-// {
-// headers: {
-// Authorization: `Bearer ${tokens?.access}`,
-// "Content-Type": "application/json",
-// },
-// }
-// )
-// .then(() => {
-// toast({
-// title: "Precio eliminado correctamente.",
-// description: "El precio fue eliminado con éxito.",
-// status: "success",
-// duration: 3000,
-// isClosable: true,
-// position: "bottom-right",
-// });
-// onCloseAlertDialogDelete();
-// dispatch(getPaymentAmount());
-// })
-// .catch((error) => {
-// console.error(error);
-// toast({
-// title: "Error",
-// description: "Ocurrió un error al eliminar un precio.",
-// status: "error",
-// duration: 5000,
-// isClosable: true,
-// position: "bottom-right",
-// });
-// })
-// .finally(() => {
-// setLoading(false);
-// });
-// };
+//         axios
+//             .delete(
+//                 `${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENT_AMOUNT}${selectedItem.id}/`,
+//                 {
+//                     headers: {
+//                         Authorization: `Bearer ${tokens?.access}`,
+//                         "Content-Type": "application/json",
+//                     },
+//                 }
+//             )
+//             .then(() => {
+//                 toast({
+//                     title: "Precio eliminado correctamente.",
+//                     description: "El precio fue eliminado con éxito.",
+//                     status: "success",
+//                     duration: 3000,
+//                     isClosable: true,
+//                     position: "bottom-right",
+//                 });
+//                 onCloseAlertDialogDelete();
+//                 dispatch(getPaymentAmount());
+//             })
+//             .catch((error) => {
+//                 console.error(error);
+//                 toast({
+//                     title: "Error",
+//                     description: "Ocurrió un error al eliminar un precio.",
+//                     status: "error",
+//                     duration: 5000,
+//                     isClosable: true,
+//                     position: "bottom-right",
+//                 });
+//             })
+//             .finally(() => {
+//                 setLoading(false);
+//             });
+//     };
 
-// useEffect(() => {
-// setLoadingTable(true);
+//     useEffect(() => {
+//         setLoadingTable(true);
 
-// const timer = setTimeout(() => {
-// setLoadingTable(false);
-// }, 800);
+//         const timer = setTimeout(() => {
+//             setLoadingTable(false);
+//         }, 800);
 
-// return () => clearTimeout(timer);
-// }, []);
+//         return () => clearTimeout(timer);
+//     }, []);
 
-// useEffect(() => {
-// dispatch(getPaymentAmount());
-// }, [dispatch]);
+//     useEffect(() => {
+//         dispatch(getPaymentAmount());
+//     }, [dispatch]);
 
-// return (
-// <>
-// <Modal
-// onClose={onCloseModalEdit}
-// isOpen={isAlertEditOpen}
-// isCentered
-// size={{ base: "90%", md: "70%", lg: "80%" }}
-// >
-// <ModalOverlay w={"100%"} h={"100%"} />
-// <ModalContent
-// maxW={{ base: "90%", md: "90%", lg: "80%", xl: "60%" }}
-// maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}
-// >
-// <ModalPaymentsAmountEdit
-// onClose={onCloseModalEdit}
-// product={selectedItem}
-// onCloseAlertDialogMethod={onCloseAlertDialogMethod}
-// />
-// </ModalContent>
-// </Modal>
+//     return (
+//         <>
+//             <Modal
+//                 onClose={onCloseModalEdit}
+//                 isOpen={isAlertEditOpen}
+//                 isCentered
+//                 size={{ base: "90%", md: "70%", lg: "80%" }}
+//             >
+//                 <ModalOverlay w={"100%"} h={"100%"} />
+//                 <ModalContent
+//                     maxW={{ base: "90%", md: "90%", lg: "80%", xl: "60%" }}
+//                     maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}
+//                 >
+//                     <ModalPaymentsAmountEdit
+//                         onClose={onCloseModalEdit}
+//                         product={selectedItem}
+//                         onCloseAlertDialogMethod={onCloseAlertDialogMethod}
+//                     />
+//                 </ModalContent>
+//             </Modal>
 
-// <AlertDialog
-// isOpen={isAlertDialogMethodDeleteOpen}
-// onClose={onCloseAlertDialogMethodDelete}
-// leastDestructiveRef={cancelRef}
-// >
-// <AlertDialogOverlay>
-// <AlertDialogContent m={100} ml={10} mr={10}>
-// <AlertDialogCloseButton />
-// <AlertDialogHeader>
-// Eliminar precio por método
-// </AlertDialogHeader>
-// <AlertDialogBody textAlign={"center"}>
-// {selectedItem ? (
-// <>¿Desea eliminar el precio en efectivo o transferencia?</>
-// ) : (
-// <>No se ha seleccionado ninguna solicitud.</>
-// )}
-// </AlertDialogBody>
-// <AlertDialogFooter display={"flex"} justifyContent={"center"} gap={"20px"}>
-// <Button
-// onClick={() => handleRowDelete(selectedItem?.ids?.efectivo)}
-// bg="bg.surface"
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// border="1px solid black"
-// borderRadius={4}
-// fontWeight="medium"
-// boxShadow="none"
-// _hover={{ bg: "bg.hover" }}
-// >
-// Efectivo
-// </Button>
-// <Button
-// onClick={() => handleRowDelete(selectedItem?.ids?.transferencia)}
-// bg="studio.primary"
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// borderRadius={4}
-// fontWeight="medium"
+//             <AlertDialog
+//                 isOpen={isAlertDialogMethodDeleteOpen}
+//                 onClose={onCloseAlertDialogMethodDelete}
+//                 leastDestructiveRef={cancelRef}
+//             >
+//                 <AlertDialogOverlay>
+//                     <AlertDialogContent m={100} ml={10} mr={10}>
+//                         <AlertDialogCloseButton />
+//                         <AlertDialogHeader>
+//                             Eliminar precio por método
+//                         </AlertDialogHeader>
+//                         <AlertDialogBody textAlign={"center"}>
+//                             {selectedItem ? (
+//                                 <>¿Desea eliminar el precio en efectivo o transferencia?</>
+//                             ) : (
+//                                 <>No se ha seleccionado ninguna solicitud.</>
+//                             )}
+//                         </AlertDialogBody>
+//                         <AlertDialogFooter display={"flex"} justifyContent={"center"} gap={"20px"}>
+//                             <Button
+//                                 onClick={() => handleRowDelete(selectedItem?.ids?.efectivo)}
+//                                 bg="bg.surface"
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 border="1px solid black"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
+//                                 boxShadow="none"
+//                                 _hover={{ bg: "bg.hover" }}
+//                             >
+//                                 Efectivo
+//                             </Button>
+//                             <Button
+//                                 onClick={() => handleRowDelete(selectedItem?.ids?.transferencia)}
+//                                 bg="studio.primary"
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
 //
-// _hover={{ bg: "studio.primaryHover" }}
-// >
-// Transferencia
-// </Button>
-// </AlertDialogFooter>
-// </AlertDialogContent>
-// </AlertDialogOverlay>
-// </AlertDialog>
+//                                 _hover={{ bg: "studio.primaryHover" }}
+//                             >
+//                                 Transferencia
+//                             </Button>
+//                         </AlertDialogFooter>
+//                     </AlertDialogContent>
+//                 </AlertDialogOverlay>
+//             </AlertDialog>
 
-// {loading && (
-// <Flex
-// position="fixed"
-// top={0}
-// left={0}
-// width="100vw"
-// height="100vh"
-// bg="rgba(0, 0, 0, 0.5)"
-// alignItems="center"
-// justifyContent="center"
-// zIndex={1000}
-// >
-// <Spinner size="xl" color="white" />
-// </Flex>
-// )}
+//             {loading && (
+//                 <Flex
+//                     position="fixed"
+//                     top={0}
+//                     left={0}
+//                     width="100vw"
+//                     height="100vh"
+//                     bg="rgba(0, 0, 0, 0.5)"
+//                     alignItems="center"
+//                     justifyContent="center"
+//                     zIndex={1000}
+//                 >
+//                     <Spinner size="xl" color="white" />
+//                 </Flex>
+//             )}
 
-// <AlertDialog
-// isOpen={isAlertDialogDeleteOpen}
-// onClose={onCloseAlertDialogDelete}
-// leastDestructiveRef={cancelRef}
-// >
-// <AlertDialogOverlay>
-// <AlertDialogContent m={100} ml={10} mr={10}>
-// <AlertDialogCloseButton />
-// <AlertDialogHeader>
-// Eliminar precio
-// </AlertDialogHeader>
-// <AlertDialogBody textAlign={"center"}>
-// {selectedItem ? (
-// <>
-// ¿Está seguro que quiere eliminar el plan{" "}
-// <span style={{ fontWeight: 600 }}>
-// {plans.find((plan: any) => plan.id === selectedItem?.plan)?.days ||
-// selectedItem?.plan}
-// </span>{" "}
-// con método de pago{" "}
-// <span style={{ fontWeight: 600 }}>{selectedItem?.method}</span> y precio{" "}
-// <span style={{ fontWeight: 600 }}>${selectedItem?.amount}</span>?
-// </>
-// ) : (
-// <>No se ha seleccionado ninguna solicitud.</>
-// )}
-// </AlertDialogBody>
+//             <AlertDialog
+//                 isOpen={isAlertDialogDeleteOpen}
+//                 onClose={onCloseAlertDialogDelete}
+//                 leastDestructiveRef={cancelRef}
+//             >
+//                 <AlertDialogOverlay>
+//                     <AlertDialogContent m={100} ml={10} mr={10}>
+//                         <AlertDialogCloseButton />
+//                         <AlertDialogHeader>
+//                             Eliminar precio
+//                         </AlertDialogHeader>
+//                         <AlertDialogBody textAlign={"center"}>
+//                             {selectedItem ? (
+//                                 <>
+//                                     ¿Está seguro que quiere eliminar el plan{" "}
+//                                     <span style={{ fontWeight: 600 }}>
+//                                         {plans.find((plan: any) => plan.id === selectedItem?.plan)?.days ||
+//                                             selectedItem?.plan}
+//                                     </span>{" "}
+//                                     con método de pago{" "}
+//                                     <span style={{ fontWeight: 600 }}>{selectedItem?.method}</span> y precio{" "}
+//                                     <span style={{ fontWeight: 600 }}>${selectedItem?.amount}</span>?
+//                                 </>
+//                             ) : (
+//                                 <>No se ha seleccionado ninguna solicitud.</>
+//                             )}
+//                         </AlertDialogBody>
 
-// <AlertDialogFooter display={"flex"} justifyContent={"center"} gap={"20px"}>
-// <Button
-// onClick={onCloseAlertDialogDelete}
-// bg="bg.surface"
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// border="1px solid black"
-// borderRadius={4}
-// fontWeight="medium"
-// boxShadow="none"
-// _hover={{ bg: "bg.hover" }}
-// >
-// Cancelar
-// </Button>
-// <Button
-// onClick={handleDelete}
-// colorScheme="red"
-// ml={3}
-// w={["100%", "135px"]}
-// h="40px"
-// borderRadius={4}
-// fontWeight="medium"
+//                         <AlertDialogFooter display={"flex"} justifyContent={"center"} gap={"20px"}>
+//                             <Button
+//                                 onClick={onCloseAlertDialogDelete}
+//                                 bg="bg.surface"
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 border="1px solid black"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
+//                                 boxShadow="none"
+//                                 _hover={{ bg: "bg.hover" }}
+//                             >
+//                                 Cancelar
+//                             </Button>
+//                             <Button
+//                                 onClick={handleDelete}
+//                                 colorScheme="red"
+//                                 ml={3}
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
 //
-// >
-// Eliminar
-// </Button>
-// </AlertDialogFooter>
-// </AlertDialogContent>
-// </AlertDialogOverlay>
-// </AlertDialog>
+//                             >
+//                                 Eliminar
+//                             </Button>
+//                         </AlertDialogFooter>
+//                     </AlertDialogContent>
+//                 </AlertDialogOverlay>
+//             </AlertDialog>
 
-// <AlertDialog
-// isOpen={isAlertDialogOpenNoExist}
-// onClose={onCloseAlertDialogNoExist}
-// leastDestructiveRef={cancelRef}
-// >
-// <AlertDialogOverlay>
-// <AlertDialogContent m={100} ml={10} mr={10}>
-// <AlertDialogCloseButton />
-// <AlertDialogBody textAlign={"center"} mt={55}>
-// No hay cargado un precio con ese método de pago.
-// </AlertDialogBody>
-// <AlertDialogFooter mt={5} display={"flex"} justifyContent={"center"} gap={"20px"}>
-// <Button
-// onClick={onCloseAlertDialogNoExist}
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// border="1px solid black"
-// borderRadius={4}
-// fontWeight="medium"
-// boxShadow="none"
-// _hover={{ bg: "bg.hover" }}
-// >
-// Cerrar
-// </Button>
-// </AlertDialogFooter>
-// </AlertDialogContent>
-// </AlertDialogOverlay>
-// </AlertDialog>
+//             <AlertDialog
+//                 isOpen={isAlertDialogOpenNoExist}
+//                 onClose={onCloseAlertDialogNoExist}
+//                 leastDestructiveRef={cancelRef}
+//             >
+//                 <AlertDialogOverlay>
+//                     <AlertDialogContent m={100} ml={10} mr={10}>
+//                         <AlertDialogCloseButton />
+//                         <AlertDialogBody textAlign={"center"} mt={55}>
+//                             No hay cargado un precio con ese método de pago.
+//                         </AlertDialogBody>
+//                         <AlertDialogFooter mt={5} display={"flex"} justifyContent={"center"} gap={"20px"}>
+//                             <Button
+//                                 onClick={onCloseAlertDialogNoExist}
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 border="1px solid black"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
+//                                 boxShadow="none"
+//                                 _hover={{ bg: "bg.hover" }}
+//                             >
+//                                 Cerrar
+//                             </Button>
+//                         </AlertDialogFooter>
+//                     </AlertDialogContent>
+//                 </AlertDialogOverlay>
+//             </AlertDialog>
 
-// <AlertDialog
-// isOpen={isAlertDialogMethodOpen}
-// onClose={onCloseAlertDialogMethod}
-// leastDestructiveRef={cancelRef}
-// >
-// <AlertDialogOverlay>
-// <AlertDialogContent m={100} ml={10} mr={10}>
-// <AlertDialogCloseButton />
-// <AlertDialogHeader>
-// Editar precio por método
-// </AlertDialogHeader>
-// <AlertDialogBody textAlign={"center"}>
-// {selectedItem ? (
-// <>¿Desea editar el precio en efectivo o transferencia?</>
-// ) : (
-// <>No se ha seleccionado ninguna solicitud.</>
-// )}
-// </AlertDialogBody>
-// <AlertDialogFooter display={"flex"} justifyContent={"center"} gap={"20px"}>
-// <Button
-// onClick={() => handleRowDoubleClick(selectedItem?.ids?.efectivo)}
-// bg="bg.surface"
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// border="1px solid black"
-// borderRadius={4}
-// fontWeight="medium"
-// boxShadow="none"
-// _hover={{ bg: "bg.hover" }}
-// >
-// Efectivo
-// </Button>
-// <Button
-// onClick={() => handleRowDoubleClick(selectedItem?.ids?.transferencia)}
-// bg="studio.primary"
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// borderRadius={4}
-// fontWeight="medium"
+//             <AlertDialog
+//                 isOpen={isAlertDialogMethodOpen}
+//                 onClose={onCloseAlertDialogMethod}
+//                 leastDestructiveRef={cancelRef}
+//             >
+//                 <AlertDialogOverlay>
+//                     <AlertDialogContent m={100} ml={10} mr={10}>
+//                         <AlertDialogCloseButton />
+//                         <AlertDialogHeader>
+//                             Editar precio por método
+//                         </AlertDialogHeader>
+//                         <AlertDialogBody textAlign={"center"}>
+//                             {selectedItem ? (
+//                                 <>¿Desea editar el precio en efectivo o transferencia?</>
+//                             ) : (
+//                                 <>No se ha seleccionado ninguna solicitud.</>
+//                             )}
+//                         </AlertDialogBody>
+//                         <AlertDialogFooter display={"flex"} justifyContent={"center"} gap={"20px"}>
+//                             <Button
+//                                 onClick={() => handleRowDoubleClick(selectedItem?.ids?.efectivo)}
+//                                 bg="bg.surface"
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 border="1px solid black"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
+//                                 boxShadow="none"
+//                                 _hover={{ bg: "bg.hover" }}
+//                             >
+//                                 Efectivo
+//                             </Button>
+//                             <Button
+//                                 onClick={() => handleRowDoubleClick(selectedItem?.ids?.transferencia)}
+//                                 bg="studio.primary"
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
 //
-// _hover={{ bg: "studio.primaryHover" }}
-// >
-// Transferencia
-// </Button>
-// </AlertDialogFooter>
-// </AlertDialogContent>
-// </AlertDialogOverlay>
-// </AlertDialog>
+//                                 _hover={{ bg: "studio.primaryHover" }}
+//                             >
+//                                 Transferencia
+//                             </Button>
+//                         </AlertDialogFooter>
+//                     </AlertDialogContent>
+//                 </AlertDialogOverlay>
+//             </AlertDialog>
 
-// <Stack mt={4} mb={2} w="100%">
-// <Flex
-// direction={{ base: "column", md: "row" }}
-// align={{ base: "flex-start", md: "center" }}
-// justify="space-between"
-// w="100%"
-// gap={4}
-// >
-// <Box>
-// <Text fontSize="lg" fontWeight="bold">
-// Precios
-// </Text>
-// <Text fontSize="sm" color="text.muted">
-// Gestión de precios
-// </Text>
-// </Box>
+//             <Stack mt={4} mb={2} w="100%">
+//                 <Flex
+//                     direction={{ base: "column", md: "row" }}
+//                     align={{ base: "flex-start", md: "center" }}
+//                     justify="space-between"
+//                     w="100%"
+//                     gap={4}
+//                 >
+//                     <Box>
+//                         <Text fontSize="lg" fontWeight="bold">
+//                             Precios
+//                         </Text>
+//                         <Text fontSize="sm" color="text.muted">
+//                             Gestión de precios
+//                         </Text>
+//                     </Box>
 
-// <HStack
-// spacing={3}
-// w={{ base: "100%", md: "auto" }}
-// justify={{ base: "flex-end", md: "flex-end" }}
-// flexWrap={{ base: "wrap", md: "wrap", lg: "nowrap" }}
-// >
-// <HStack
-// bg="bg.subtle"
-// _dark={{ bg: "gray.800" }}
-// px={3}
-// py={1.5}
-// rounded="full"
-// borderWidth="1px"
-// w={{ base: "100%", md: "50%", lg: "350px", xl: "350px" }}
-// >
-// <FiSearch />
-// <Input
-// variant="unstyled"
-// placeholder="Buscar…"
-// value={searchTerm}
-// onChange={(e) => setSearchTerm(e.target.value)}
-// />
-// </HStack>
+//                     <HStack
+//                         spacing={3}
+//                         w={{ base: "100%", md: "auto" }}
+//                         justify={{ base: "flex-end", md: "flex-end" }}
+//                         flexWrap={{ base: "wrap", md: "wrap", lg: "nowrap" }}
+//                     >
+//                         <HStack
+//                             bg="bg.subtle"
+//                             _dark={{ bg: "gray.800" }}
+//                             px={3}
+//                             py={1.5}
+//                             rounded="full"
+//                             borderWidth="1px"
+//                             w={{ base: "100%", md: "50%", lg: "350px", xl: "350px" }}
+//                         >
+//                             <FiSearch />
+//                             <Input
+//                                 variant="unstyled"
+//                                 placeholder="Buscar…"
+//                                 value={searchTerm}
+//                                 onChange={(e) => setSearchTerm(e.target.value)}
+//                             />
+//                         </HStack>
 
-// <Button
-// leftIcon={<FiPlus />}
-// bg="studio.muted"
-// size="sm"
-// onClick={onOpen}
-// w={{ base: "auto", md: "auto" }}
-// >
-// Registrar Precio
-// </Button>
-// </HStack>
-// </Flex>
-// </Stack>
+//                         <Button
+//                             leftIcon={<FiPlus />}
+//                             bg="studio.muted"
+//                             size="sm"
+//                             onClick={onOpen}
+//                             w={{ base: "auto", md: "auto" }}
+//                         >
+//                             Registrar Precio
+//                         </Button>
+//                     </HStack>
+//                 </Flex>
+//             </Stack>
 
-// <Box
-// overflowX="auto"
-// borderWidth="1px"
-// rounded="xl"
-// bg="bg.surface"
-// mt={0}
-// minH={"100%"}
-// w={"100%"}
-// >
-// <Table size="sm" data-sticky-actions>
-// <Thead h={"50px"} fontSize={"16px"}>
-// <Tr>
-// <Th textTransform="uppercase">Plan</Th>
-// <Th textTransform="uppercase">Efectivo</Th>
-// <Th textTransform="uppercase">Transferencia</Th>
-// <Th textTransform="uppercase">Acciones</Th>
-// </Tr>
-// </Thead>
+//             <Box
+//                 overflowX="auto"
+//                 borderWidth="1px"
+//                 rounded="xl"
+//                 bg="bg.surface"
+//                 mt={0}
+//                 minH={"100%"}
+//                 w={"100%"}
+//             >
+//                 <Table size="sm" data-sticky-actions>
+//                     <Thead h={"50px"} fontSize={"16px"}>
+//                         <Tr>
+//                             <Th textTransform="uppercase">Plan</Th>
+//                             <Th textTransform="uppercase">Efectivo</Th>
+//                             <Th textTransform="uppercase">Transferencia</Th>
+//                             <Th textTransform="uppercase">Acciones</Th>
+//                         </Tr>
+//                     </Thead>
 
-// <Tbody>
-// {loadingTable ? (
-// <Tr>
-// <Td colSpan={4} textAlign="center">
-// Cargando...
-// </Td>
-// </Tr>
-// ) : currentItems.length > 0 ? (
-// currentItems.map((row: any, index: number) => {
-// if (row.rowType === "activityType") {
-// return (
-// <Tr key={`type-${index}`} bg="studio.primary">
-// <Td colSpan={4} fontWeight="700" color="text.primary" py={3}>
-// {row.label}
-// </Td>
-// </Tr>
-// );
-// }
+//                     <Tbody>
+//                         {loadingTable ? (
+//                             <Tr>
+//                                 <Td colSpan={4} textAlign="center">
+//                                     Cargando...
+//                                 </Td>
+//                             </Tr>
+//                         ) : currentItems.length > 0 ? (
+//                             currentItems.map((row: any, index: number) => {
+//                                 if (row.rowType === "activityType") {
+//                                     return (
+//                                         <Tr key={`type-${index}`} bg="studio.primary">
+//                                             <Td colSpan={4} fontWeight="700" color="text.primary" py={3}>
+//                                                 {row.label}
+//                                             </Td>
+//                                         </Tr>
+//                                     );
+//                                 }
 
-// if (row.rowType === "activitySubType") {
-// return (
-// <Tr key={`subtype-${index}`} bg="black">
-// <Td colSpan={4} fontWeight="700" color="white" py={3}>
-// {row.label}
-// </Td>
-// </Tr>
-// );
-// }
+//                                 if (row.rowType === "activitySubType") {
+//                                     return (
+//                                         <Tr key={`subtype-${index}`} bg="black">
+//                                             <Td colSpan={4} fontWeight="700" color="white" py={3}>
+//                                                 {row.label}
+//                                             </Td>
+//                                         </Tr>
+//                                     );
+//                                 }
 
-// return (
-// <Tr
-// key={`item-${index}`}
-// onDoubleClick={() => handleRowDoubleClickMethod(row)}
-// onClick={() => setSelectedRow(row)}
-// bg={selectedRow?.plan === row.plan ? "gray.100" : "transparent"}
-// cursor="pointer"
-// >
-// <Td fontWeight={300}>{row.planDays}</Td>
-// <Td fontWeight={300}>{row.efectivo || "-"}</Td>
-// <Td fontWeight={300}>{row.transferencia || "-"}</Td>
-// <Td>
-// <HStack justify="flex-start" spacing={1}>
-// <Tooltip hasArrow label="Editar" bg="bg.inverted" borderRadius={4}>
-// <IconButton
-// aria-label="Editar"
-// icon={<Icon path={mdiPencilOutline} size={0.9} />}
-// variant="outline"
-// size="sm"
-// onClick={() => handleRowDoubleClickMethod(row)}
-// />
-// </Tooltip>
+//                                 return (
+//                                     <Tr
+//                                         key={`item-${index}`}
+//                                         onDoubleClick={() => handleRowDoubleClickMethod(row)}
+//                                         onClick={() => setSelectedRow(row)}
+//                                         bg={selectedRow?.plan === row.plan ? "gray.100" : "transparent"}
+//                                         cursor="pointer"
+//                                     >
+//                                         <Td fontWeight={300}>{row.planDays}</Td>
+//                                         <Td fontWeight={300}>{row.efectivo || "-"}</Td>
+//                                         <Td fontWeight={300}>{row.transferencia || "-"}</Td>
+//                                         <Td>
+//                                             <HStack justify="flex-start" spacing={1}>
+//                                                 <Tooltip hasArrow label="Editar" bg="bg.inverted" borderRadius={4}>
+//                                                     <IconButton
+//                                                         aria-label="Editar"
+//                                                         icon={<Icon path={mdiPencilOutline} size={0.9} />}
+//                                                         variant="outline"
+//                                                         size="sm"
+//                                                         onClick={() => handleRowDoubleClickMethod(row)}
+//                                                     />
+//                                                 </Tooltip>
 
-// <Tooltip hasArrow label="Eliminar" bg="bg.inverted" borderRadius={4}>
-// <IconButton
-// aria-label="Eliminar"
-// icon={<Icon path={mdiDeleteOutline} size={0.9} />}
-// variant="outline"
-// size="sm"
-// onClick={() => handleClickDeleteMethod(row)}
-// />
-// </Tooltip>
-// </HStack>
-// </Td>
-// </Tr>
-// );
-// })
-// ) : (
-// <Tr>
-// <Td colSpan={4} textAlign="center">
-// No se encontraron datos
-// </Td>
-// </Tr>
-// )}
-// </Tbody>
-// </Table>
-// </Box>
+//                                                 <Tooltip hasArrow label="Eliminar" bg="bg.inverted" borderRadius={4}>
+//                                                     <IconButton
+//                                                         aria-label="Eliminar"
+//                                                         icon={<Icon path={mdiDeleteOutline} size={0.9} />}
+//                                                         variant="outline"
+//                                                         size="sm"
+//                                                         onClick={() => handleClickDeleteMethod(row)}
+//                                                     />
+//                                                 </Tooltip>
+//                                             </HStack>
+//                                         </Td>
+//                                     </Tr>
+//                                 );
+//                             })
+//                         ) : (
+//                             <Tr>
+//                                 <Td colSpan={4} textAlign="center">
+//                                     No se encontraron datos
+//                                 </Td>
+//                             </Tr>
+//                         )}
+//                     </Tbody>
+//                 </Table>
+//             </Box>
 
-// <Box display="flex" justifyContent="center" mt={4}>
-// <Pagination
-// count={countPagination}
-// pageSize={ITEMS_PER_PAGE}
-// defaultPage={1}
-// onPageChange={setCurrentPage}
-// />
-// </Box>
-// </>
-// );
+//             <Box display="flex" justifyContent="center" mt={4}>
+//                 <Pagination
+//                     count={countPagination}
+//                     pageSize={ITEMS_PER_PAGE}
+//                     defaultPage={1}
+//                     onPageChange={setCurrentPage}
+//                 />
+//             </Box>
+//         </>
+//     );
 // };
 
 // export default TablePrice;
@@ -1477,11 +1476,13 @@ const TablePrice = ({
                 </Table>
             </Box>
 
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box display="flex" justifyContent="center" mt={4} w="100%">
                 <Pagination
                     count={countPagination}
                     pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredItems.length}
                     defaultPage={1}
+                    page={currentPage}
                     onPageChange={setCurrentPage}
                 />
             </Box>

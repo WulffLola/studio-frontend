@@ -11,13 +11,11 @@ import { useSelector } from "react-redux";
 import {
   getUsers
 } from '../stores/studioSlice';
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 
 const Users = () => {
   // const [users, setUsers] = useState([]);
   const { login, tokens } = useAuthStore(); // Obtener el token del store de autenticación
-  const [loading, setLoading] = useState(true);
 
   const { users } = useSelector((state: any) => state.studio);
   const dispatch = useAppDispatch();
@@ -28,39 +26,22 @@ const Users = () => {
 
   // // Función para obtener los usuarios
   // async function getUsers() {
-  // try {
-  // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_USERS}`, {
-  // headers: {
-  // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-  // 'Content-Type': 'application/json',
-  // },
-  // });
-  // setUsers(response.data);
-  // } catch (error) {
-  // console.log("Error al obtener usuarios:", error);
-  // }
+  //   try {
+  //     const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_USERS}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+  //     setUsers(response.data);
+  //   } catch (error) {
+  //     console.log("Error al obtener usuarios:", error);
+  //   }
   // }
 
   useEffect(() => {
-    // Simulamos una carga de datos o componentes
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000); // Cambia este tiempo según tus necesidades
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      dispatch(getUsers());
-    }// Llamar a la API cuando el componente se monta
-  }, [loading]); // Asegúrate de que el hook solo se ejecute una vez al montar el componente
-
-  if (loading) {
-    return (
-      <FullPageLoader />
-    );
-  }
+    dispatch(getUsers());
+  }, [dispatch]);
 
   return (
     <>

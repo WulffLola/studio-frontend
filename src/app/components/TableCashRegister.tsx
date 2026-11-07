@@ -12,6 +12,7 @@ import {
     Stack,
     Input,
     useDisclosure,
+    useToast,
     TableContainer,
     Tfoot,
     HStack,
@@ -42,6 +43,7 @@ import { Select as Select2 } from "./ui/Select";
 import { isSelectableStudio } from "../utils/studios";
 import { formatAmount, formatCurrency } from "../utils/amount";
 import { TableState } from "./ui/StateMessage";
+import { useStudioStore } from "../stores/studio";
 
 const getPlanSubTypeId = (item: any) => {
     if (!item) return "";
@@ -126,21 +128,20 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
         value: "all",
         label: "Todos los estudios",
     });
+    const selectedStudioFromHeader = useStudioStore((state) => state.selectedStudio);
+    const studioStoreHasHydrated = useStudioStore((state) => state.hasHydrated);
+    const studioFilterInitialized = React.useRef(false);
 
-    const [totalEntradas, setTotalEntradas] = useState("0.00");
-    const [totalSalidas, setTotalSalidas] = useState("0.00");
-    const [totalSaldo, setTotalSaldo] = useState("0.00");
-    const [totalEntradasEfectivo, setTotalEntradasEfectivo] = useState("0.00");
-    const [totalEntradasTransferencia, setTotalEntradasTransferencia] = useState("0.00");
-    const [totalSalidasEfectivo, setTotalSalidasEfectivo] = useState("0.00");
-    const [totalSalidasTransferencia, setTotalSalidasTransferencia] = useState("0.00");
-    const [calcularTotalEfectivo, setCalcularTotalEfectivo] = useState("0.00");
-    const [calcularTotalTransferencia, setCalcularTotalTransferencia] = useState("0.00");
     const [isFiltered, setIsFiltered] = useState(false);
 
     // const [shouldRefetch, setShouldRefetch] = useState(false);
     const [dateInTable, setDateInTable] = useState(false);
     const { tipo, tokens } = useAuthStore();
+    const isConsultant = tipo === "Consultor";
+    const headerStudioValue = selectedStudioFromHeader?.id
+        ? String(selectedStudioFromHeader.id)
+        : "";
+    const toast = useToast();
     const [loadingTable, setLoadingTable] = useState(false);
     const dispatch = useAppDispatch();
     const { plansSubType, studios } = useSelector((state: any) => state.studio);
@@ -153,6 +154,14 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
         })),
     ];
 
+    const studiosMap = useMemo(() => {
+        const map = new Map<string, any>();
+        (studios || []).forEach((studio: any) => {
+            map.set(String(studio.id), studio);
+        });
+        return map;
+    }, [studios]);
+
     const getTransactionStudioId = (item: any) => {
         if (item?.studio_id) return String(item.studio_id);
         if (typeof item?.studio === "number" || typeof item?.studio === "string") return String(item.studio);
@@ -163,7 +172,25 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
         if (item?.person?.studio_id) return String(item.person.studio_id);
         if (typeof item?.person?.studio === "number" || typeof item?.person?.studio === "string") return String(item.person.studio);
         if (item?.person?.studio?.id) return String(item.person.studio.id);
+        if (item?.sourceType?.studio_id) return String(item.sourceType.studio_id);
+        if (typeof item?.sourceType?.studio === "number" || typeof item?.sourceType?.studio === "string") return String(item.sourceType.studio);
+        if (item?.sourceType?.studio?.id) return String(item.sourceType.studio.id);
         return "";
+    };
+
+    const getTransactionStudioName = (item: any) => {
+        const explicitName =
+            item?.studio_name ||
+            item?.studio?.name ||
+            item?.person?.studio_name ||
+            item?.person?.studio?.name ||
+            item?.sourceType?.studio_name ||
+            item?.sourceType?.studio?.name;
+
+        if (explicitName) return String(explicitName);
+
+        const studioId = getTransactionStudioId(item);
+        return studioId ? studiosMap.get(studioId)?.name || "-" : "-";
     };
 
     const plansSubTypeMap = useMemo(() => {
@@ -186,7 +213,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
     } = useDisclosure();
 
 
-    const handleSubmitCashRegister = () => {
+    const handleSubmitCashRegister = (studioValue = selectedStudio.value) => {
         setDateInTable(true);
         setIsLoading(true);
         setErrorPaymentsByDateRange("");
@@ -194,7 +221,12 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
         if (startDate && endDate) {
             axios
                 .get(
-                    `${process.env.NEXT_PUBLIC_URL_BACKEND_CASH_REGISTER}?start_date=${startDate}&end_date=${endDate}`, {
+                    `${process.env.NEXT_PUBLIC_URL_BACKEND_CASH_REGISTER}`, {
+                    params: {
+                        start_date: startDate,
+                        end_date: endDate,
+                        ...(studioValue !== "all" ? { studio: studioValue } : {}),
+                    },
                     headers: {
                         'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
                         'Content-Type': 'application/json',
@@ -204,6 +236,16 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                 .then((response) => {
                     setCashRegister(response.data);
                     setIsFiltered(true); // Activar el filtrado
+                    if (response.data?.detail) {
+                        toast({
+                            title: "Estudio dado de baja",
+                            description: response.data.detail,
+                            status: "warning",
+                            duration: 5000,
+                            isClosable: true,
+                            position: "bottom-right",
+                        });
+                    }
                 })
                 .catch((error) => {
                     console.log(error);
@@ -231,29 +273,32 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
             combinedData = [
                 ...(cashRegister.payments || []).map(payment => ({
                     ...payment,
+                    sourceType: payment.type,
                     type: 'payments',
                 })),
                 // ...(cashRegister.expenses_chicos || []).map(expense => ({
-                // ...expense,
-                // type: 'expenses_chicos',
+                //     ...expense,
+                //     type: 'expenses_chicos',
                 // })),
             ];
         } else {
             combinedData = [
                 ...(cashRegister.payments || []).map(payment => ({
                     ...payment,
+                    sourceType: payment.type,
                     type: 'payments',
                 })),
                 ...(cashRegister.expenses || []).map(expense => ({
                     ...expense,
+                    sourceType: expense.type,
                     type: 'expenses',
                 })),
             ];
         }
 
-        if (selectedStudio.value !== "all") {
+        if (isConsultant && headerStudioValue) {
             combinedData = combinedData.filter(
-                (item: any) => getTransactionStudioId(item) === String(selectedStudio.value)
+                (item) => getTransactionStudioId(item) === headerStudioValue
             );
         }
 
@@ -261,81 +306,41 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
         const sortedCombinedData = [...combinedData].sort((a, b) => new Date(a.date || a.fecha) - new Date(b.date || b.fecha));
         setSortedData(sortedCombinedData);
 
-        // Calcula las estadísticas solo si hay datos
-        if (combinedData.length > 0) {
-            const totalEntradas = combinedData
-                .filter(data => data.type === 'payments')
-                .reduce((acc, data) => acc + parseFloat(data.amount || 0), 0)
-                .toFixed(2);
+    }, [cashRegister, headerStudioValue, isConsultant, tipo]);
 
-            const totalSalidas = combinedData
-                .filter(data => data.type === 'expenses' || data.type === 'expenses_chicos')
-                .reduce((acc, data) => acc + parseFloat(data.amount || 0), 0)
-                .toFixed(2);
 
-            const totalSaldo = (totalEntradas - totalSalidas).toFixed(2);
+    const fetchCashRegister = useCallback(async (studioValue: string = "all") => {
+        const effectiveStudioValue = isConsultant ? headerStudioValue : studioValue;
 
-            const totalEntradasEfectivo = combinedData
-                .filter(data => data.type === 'payments' && data.method === 'Efectivo')
-                .reduce((acc, data) => acc + parseFloat(data.amount || 0), 0)
-                .toFixed(2);
-
-            const totalEntradasTransferencia = combinedData
-                .filter(data => data.type === 'payments' && data.method === 'Transferencia')
-                .reduce((acc, data) => acc + parseFloat(data.amount || 0), 0)
-                .toFixed(2);
-
-            const totalSalidasEfectivo = combinedData
-                .filter(data => (data.type === 'expenses' || data.type === 'expenses_chicos') && data.method === 'Efectivo')
-                .reduce((acc, data) => acc + parseFloat(data.amount || 0), 0)
-                .toFixed(2);
-
-            const totalSalidasTransferencia = combinedData
-                .filter(data => (data.type === 'expenses' || data.type === 'expenses_chicos') && data.method === 'Transferencia')
-                .reduce((acc, data) => acc + parseFloat(data.amount || 0), 0)
-                .toFixed(2);
-
-            const calcularTotalEfectivo = (parseFloat(totalEntradasEfectivo) - parseFloat(totalSalidasEfectivo)).toFixed(2);
-            const calcularTotalTransferencia = (parseFloat(totalEntradasTransferencia) - parseFloat(totalSalidasTransferencia)).toFixed(2);
-
-            setTotalEntradas(totalEntradas);
-            setTotalSalidas(totalSalidas);
-            setTotalSaldo(totalSaldo);
-            setTotalEntradasEfectivo(totalEntradasEfectivo);
-            setTotalEntradasTransferencia(totalEntradasTransferencia);
-            setTotalSalidasEfectivo(totalSalidasEfectivo);
-            setTotalSalidasTransferencia(totalSalidasTransferencia);
-            setCalcularTotalEfectivo(calcularTotalEfectivo);
-            setCalcularTotalTransferencia(calcularTotalTransferencia);
-        } else {
-            setTotalEntradas("0.00");
-            setTotalSalidas("0.00");
-            setTotalSaldo("0.00");
-            setTotalEntradasEfectivo("0.00");
-            setTotalEntradasTransferencia("0.00");
-            setTotalSalidasEfectivo("0.00");
-            setTotalSalidasTransferencia("0.00");
-            setCalcularTotalEfectivo("0.00");
-            setCalcularTotalTransferencia("0.00");
+        if (isConsultant && !effectiveStudioValue) {
+            setCashRegister("");
+            setIsLoading(false);
+            return;
         }
-    }, [cashRegister, tipo, selectedStudio]);
 
-
-    const fetchCashRegister = useCallback(async () => {
         setIsLoading(true);
 
         try {
-            const url = (tipo !== "Consultor")
-                ? process.env.NEXT_PUBLIC_URL_BACKEND_CASH_REGISTER_TODAY
-                : process.env.NEXT_PUBLIC_URL_BACKEND_TEACHER_CASH_REGISTER_TODAY;
+            const url = process.env.NEXT_PUBLIC_URL_BACKEND_CASH_REGISTER_TODAY;
 
             const response = await axios.get(url, {
+                params: effectiveStudioValue !== "all" ? { studio: effectiveStudioValue } : undefined,
                 headers: {
                     'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
                     'Content-Type': 'application/json',
                 },
             });
             setCashRegister(response.data || "");
+            if (response.data?.detail) {
+                toast({
+                    title: "Estudio dado de baja",
+                    description: response.data.detail,
+                    status: "warning",
+                    duration: 5000,
+                    isClosable: true,
+                    position: "bottom-right",
+                });
+            }
         } catch (error) {
             console.error("Error fetching payments:", error);
             setErrorPaymentsByDateRange("Ocurrió un error al buscar los pagos.");
@@ -343,37 +348,62 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
         } finally {
             setIsLoading(false);
         }
-    }, [tipo, tokens?.access]);
+    }, [headerStudioValue, isConsultant, toast, tokens?.access]);
+
+    useEffect(() => {
+        if (!studioStoreHasHydrated) return;
+
+        if (studioFilterInitialized.current && !isConsultant) return;
+
+        if (selectedStudioFromHeader?.id) {
+            const initialStudio = {
+                value: String(selectedStudioFromHeader.id),
+                label: selectedStudioFromHeader.name,
+            };
+            setSelectedStudio(initialStudio);
+            fetchCashRegister(initialStudio.value);
+        }
+
+        studioFilterInitialized.current = true;
+    }, [fetchCashRegister, isConsultant, selectedStudioFromHeader, studioStoreHasHydrated]);
+
+    const handleStudioChange = (option: any) => {
+        const nextStudio = option || studioOptions[0];
+        setSelectedStudio(nextStudio);
+
+        if (isFiltering && startDate && endDate && tipo !== "Consultor") {
+            handleSubmitCashRegister(nextStudio.value);
+        } else {
+            fetchCashRegister(nextStudio.value);
+        }
+    };
 
 
     // Función para limpiar y recargar los datos
     const handleClearAndFetch = () => {
         setStartDate("");
         setEndDate("");
-        fetchCashRegister();
+        fetchCashRegister(selectedStudio.value);
         setDateInTable(false);
         setIsFiltered(false); // Restablece el filtro
 
-        // Resetea el estado de datos y estadísticas
+        // Resetea los movimientos mientras se obtiene nuevamente la caja diaria.
         setCashRegister("");
         setSortedData([]);
-        setTotalEntradas("0.00");
-        setTotalSalidas("0.00");
-        setTotalSaldo("0.00");
-        setTotalEntradasEfectivo("0.00");
-        setTotalEntradasTransferencia("0.00");
-        setTotalSalidasEfectivo("0.00");
-        setTotalSalidasTransferencia("0.00");
-        setCalcularTotalEfectivo("0.00");
-        setCalcularTotalTransferencia("0.00");
 
         // Llama a fetchCashRegister para cargar datos iniciales
 
     };
 
     useEffect(() => {
-        fetchCashRegister();
-    }, [fetchCashRegister, shouldRefetch]); // Dependencia en shouldRefetch para que se ejecute cuando cambie
+        if (isFiltering && startDate && endDate && tipo !== "Consultor") {
+            handleSubmitCashRegister(selectedStudio.value);
+        } else {
+            fetchCashRegister(selectedStudio.value);
+        }
+        // Los cambios de estudio se atienden en handleStudioChange.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [fetchCashRegister, shouldRefetch]);
 
     useEffect(() => {
         dispatch(getPlanSubType());
@@ -496,7 +526,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                             <Select2
                                 options={studioOptions}
                                 value={selectedStudio}
-                                onChange={(option) => setSelectedStudio(option || studioOptions[0])}
+                                onChange={handleStudioChange}
                                 isClearable={false}
                                 selectedOptionStyle="check"
                                 appearance="filter"
@@ -572,6 +602,9 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                 Plan
                             </Th>
                             <Th color="text.primary">
+                                Estudio
+                            </Th>
+                            <Th color="text.primary">
                                 Tipo
                             </Th>
                             <Th color="text.primary">
@@ -590,7 +623,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
 
                     <Tbody style={{ overflowY: "scroll" }}>
                         {loadingTable ? ( // Mostrar "Cargando..." por defecto
-                            <TableState kind="loading" colSpan={(dateInTable ? 1 : 0) + (tipo !== "Consultor" ? 6 : 5)} />
+                            <TableState kind="loading" colSpan={(dateInTable ? 1 : 0) + (tipo !== "Consultor" ? 7 : 6)} />
                         ) : sortedData.length > 0 ? (
                             sortedData.map((item) => {
                                 let descripcion;
@@ -623,6 +656,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                         {/* {dateInTable && <Td>{formatTime(item.date)}</Td>} */}
                                         <Td>{descripcion}</Td>
                                         <Td>{plan}</Td>
+                                        <Td>{getTransactionStudioName(item)}</Td>
                                         <Td>{item.method}</Td>
                                         <Td>
                                             {entradas !== "-" ? formatCurrency(entradas) : entradas}
@@ -639,7 +673,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                         ) : (
                             !loadingTable &&
                             sortedData.length === 0 && (
-                                <TableState kind="empty" colSpan={(dateInTable ? 1 : 0) + (tipo !== "Consultor" ? 6 : 5)} title="No se encontraron datos" />
+                                <TableState kind="empty" colSpan={(dateInTable ? 1 : 0) + (tipo !== "Consultor" ? 7 : 6)} title="No se encontraron datos" />
                             )
                         )}
                         {/* Aquí podrías agregar la lógica para mostrar filas vacías, si es necesario */}
@@ -653,29 +687,26 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                             </Th>
                             <Th></Th>
                             <Th></Th>
+                            <Th></Th>
                             <Th color="text.primary">
                                 $
-                                    {formatCurrency(isFiltered
-                                    ? cashRegister
+                                    {formatCurrency(cashRegister
                                         ? (cashRegister.total_ingresos_transferencia || 0) +
                                         (cashRegister.total_ingresos_efectivo || 0)
-                                        : "-"
-                                    : totalEntradas)}
+                                        : 0)}
                             </Th>
                             {tipo !== "Consultor" && (
                                 <Th color="text.primary">
                                     $
-                                    {formatCurrency(isFiltered
-                                        ? cashRegister
-                                            ? (cashRegister.total_gastos_transferencia || 0) +
-                                            (cashRegister.total_gastos_efectivo || 0)
-                                            : "-"
-                                        : totalSalidas)}
+                                    {formatCurrency(cashRegister
+                                        ? (cashRegister.total_gastos_transferencia || 0) +
+                                        (cashRegister.total_gastos_efectivo || 0)
+                                        : 0)}
                                 </Th>
                             )}
                             <Th color="text.primary">
                                 $
-                                {formatCurrency(isFiltered ? cashRegister.caja_total || 0 : totalSaldo)}
+                                {formatCurrency(cashRegister?.caja_total || 0)}
                             </Th>
                         </Tr>
                     </Tfoot>
@@ -693,7 +724,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                 <Icon path={mdiCash} size={0.75} />
                                 <Text fontSize="13px" fontWeight={500} color="text.secondary">Entradas Efectivo</Text>
                             </HStack>
-                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(isFiltered ? cashRegister.total_ingresos_efectivo || 0 : totalEntradasEfectivo)}</Text>
+                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(cashRegister?.total_ingresos_efectivo || 0)}</Text>
                         </Stack>
                     </Box>
                 )}
@@ -704,7 +735,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                 <Icon path={mdiCash} size={0.75} />
                                 <Text fontSize="13px" fontWeight={500} color="text.secondary">Salidas Efectivo</Text>
                             </HStack>
-                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(isFiltered ? cashRegister.total_gastos_efectivo || 0 : totalSalidasEfectivo)}</Text>
+                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(cashRegister?.total_gastos_efectivo || 0)}</Text>
                         </Stack>
                     </Box>
                 )}
@@ -715,7 +746,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                 <Icon path={mdiCash} size={0.75} />
                                 <Text fontSize="13px" fontWeight={500} color="text.secondary">Total Efectivo</Text>
                             </HStack>
-                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.brand" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(isFiltered ? cashRegister.diferencia_efectivo || 0 : calcularTotalEfectivo)}</Text>
+                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.brand" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(cashRegister?.diferencia_efectivo || 0)}</Text>
                         </Stack>
                 </Box>
 
@@ -726,7 +757,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                 <Icon path={mdiBankOutline} size={0.75} />
                                 <Text fontSize="13px" fontWeight={500} color="text.secondary">Entradas Transferencia</Text>
                             </HStack>
-                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(isFiltered ? cashRegister.total_ingresos_transferencia || 0 : totalEntradasTransferencia)}</Text>
+                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(cashRegister?.total_ingresos_transferencia || 0)}</Text>
                         </Stack>
                     </Box>
                 )}
@@ -737,7 +768,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                 <Icon path={mdiBankOutline} size={0.75} />
                                 <Text fontSize="13px" fontWeight={500} color="text.secondary">Salidas Transferencia</Text>
                             </HStack>
-                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(isFiltered ? cashRegister.total_gastos_transferencia || 0 : totalSalidasTransferencia)}</Text>
+                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.primary" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(cashRegister?.total_gastos_transferencia || 0)}</Text>
                         </Stack>
                     </Box>
                 )}
@@ -748,7 +779,7 @@ const TableCashRegister = ({ onOpenExpense, onOpenPayment, shouldRefetch }: { on
                                 <Icon path={mdiBankOutline} size={0.75} />
                                 <Text fontSize="13px" fontWeight={500} color="text.secondary">Total Transferencia</Text>
                             </HStack>
-                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.brand" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(isFiltered ? cashRegister.diferencia_transferencia || 0 : calcularTotalTransferencia)}</Text>
+                            <Text fontSize={{ base: "17px", md: "20px" }} fontWeight={600} color="text.brand" overflowWrap="anywhere" lineHeight="1.2">{formatCurrency(cashRegister?.diferencia_transferencia || 0)}</Text>
                         </Stack>
                 </Box>
             </SimpleGrid>

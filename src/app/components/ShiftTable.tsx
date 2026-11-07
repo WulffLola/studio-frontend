@@ -12,1275 +12,1275 @@
 // import { useAppDispatch } from "../stores/hooks";
 // import { useSelector } from "react-redux";
 // import {
-// getAppointments,
-// getSlots,
-// getWaitingList,
+//     getAppointments,
+//     getSlots,
+//     getWaitingList,
 // } from '../stores/studioSlice';
 // import { FiPlus } from "react-icons/fi";
 // import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 
 // const mockList = [
-// {
-// id: 1,
-// teacher: { id: 1, name: "Carlos", last_name: "Instructor" },
-// slot: {
-// id: 1,
-// day: "Lunes",
-// start_time: "08:00:00",
-// end_time: "09:00:00",
-// room: 1,
-// },
-// rol: "Instructor Yoga",
-// },
-// {
-// id: 2,
-// teacher: { id: 2, name: "Ana", last_name: "Profe" },
-// slot: {
-// id: 2,
-// day: "Martes",
-// start_time: "09:00:00",
-// end_time: "10:00:00",
-// room: 2,
-// },
-// rol: "Instructor Pilates",
-// },
-// {
-// id: 3,
-// teacher: { id: 3, name: "Roberto", last_name: "Gomez" },
-// slot: {
-// id: 3,
-// day: "Miércoles",
-// start_time: "18:00:00",
-// end_time: "19:00:00",
-// room: 1,
-// },
-// rol: "Instructor Funcional",
-// },
+//     {
+//         id: 1,
+//         teacher: { id: 1, name: "Carlos", last_name: "Instructor" },
+//         slot: {
+//             id: 1,
+//             day: "Lunes",
+//             start_time: "08:00:00",
+//             end_time: "09:00:00",
+//             room: 1,
+//         },
+//         rol: "Instructor Yoga",
+//     },
+//     {
+//         id: 2,
+//         teacher: { id: 2, name: "Ana", last_name: "Profe" },
+//         slot: {
+//             id: 2,
+//             day: "Martes",
+//             start_time: "09:00:00",
+//             end_time: "10:00:00",
+//             room: 2,
+//         },
+//         rol: "Instructor Pilates",
+//     },
+//     {
+//         id: 3,
+//         teacher: { id: 3, name: "Roberto", last_name: "Gomez" },
+//         slot: {
+//             id: 3,
+//             day: "Miércoles",
+//             start_time: "18:00:00",
+//             end_time: "19:00:00",
+//             room: 1,
+//         },
+//         rol: "Instructor Funcional",
+//     },
 // ];
 
 // const ShiftTable = ({ list, updatedAppointments, appointments }) => {
-// const [slots, setSlots] = useState([]);
-// const [selectedRow, setSelectedRow] = useState([]);
-// const [currentDate, setCurrentDate] = useState(new Date());
-// const [selectedItem, setSelectedItem] = useState("")
-// // const [appointments, setAppointments] = useState([]);
-// const { tipo, tokens } = useAuthStore();
-// const [code, setCode] = useState("admin");
-// const [loadingTable, setLoadingTable] = useState(false);
-
-// const camillas = ["1", "2", "3", "4", "5", "6", "7"];
-// const [payments, setPayments] = useState([]);
-// // handleRowDoubleClick(appointment, hour)
-
-// const DEFAULT_VISIBLE_SLOTS = 7;
-
-// const [expandedHours, setExpandedHours] = useState<Record<string, boolean>>({});
-
-// const toggleHour = (hour: string) => {
-// setExpandedHours((prev) => ({ ...prev, [hour]: !prev[hour] }));
-// };
-// /*     const { appointments, waitingList } = useSelector((state: any) => state.studio);
-// */
-
-// const dispatch = useAppDispatch();
-
-// /////////////////////////////////////////////////////////////////////////////////////////////
-
-// const MOCK_APPOINTMENTS = [
-// {
-// id: 1,
-// person: {
-// id: 1,
-// plan: null,
-// name: "Ludmila",
-// last_name: "Ramos",
-// sex: "Femenino",
-// dni: "41767379",
-// email: "agosramos_12@hotmail.com",
-// phone: "2914415075",
-// birth_date: "1999-02-18",
-// observation: null,
-// last_payment: null,
-// exp_date: "2026-01-26",
-// created_at: "2026-01-26T12:01:55.289196-03:00",
-// updated_at: "2026-01-26T12:02:27.714032-03:00",
-// deleted: null
-// },
-// slot: {
-// id: 2,
-// week_day: { id: 1, day: "Lunes", date: "2026-01-26", deleted: null },
-// status: { id: 1, status: "Lugares Libres", deleted: null },
-// time_slot: "09:00:00",
-// availability: 6,
-// duration: "01:00:00",
-// deleted: null,
-// room: 1
-// },
-// reserved: null,
-// created_at: "2026-01-26T12:02:27.707369-03:00",
-// updated_at: "2026-01-26T12:02:27.707412-03:00",
-// deleted: null
-// },
-// {
-// id: 2,
-// person: {
-// id: 1,
-// plan: null,
-// name: "AGostina",
-// last_name: "Ramos",
-// sex: "Femenino",
-// dni: "41767379",
-// email: "agosramos_12@hotmail.com",
-// phone: "2914415075",
-// birth_date: "1999-02-18",
-// observation: null,
-// last_payment: null,
-// exp_date: "2026-01-26",
-// created_at: "2026-01-26T12:01:55.289196-03:00",
-// updated_at: "2026-01-26T12:02:27.714032-03:00",
-// deleted: null
-// },
-// slot: {
-// id: 2,
-// week_day: { id: 1, day: "Lunes", date: "2026-02-02", deleted: null },
-// status: { id: 1, status: "Lugares Libres", deleted: null },
-// time_slot: "12:00:00",
-// availability: 6,
-// duration: "01:00:00",
-// deleted: null,
-// room: 2
-// },
-// reserved: null,
-// created_at: "2026-01-26T12:02:27.707369-03:00",
-// updated_at: "2026-01-26T12:02:27.707412-03:00",
-// deleted: null
-// },
-// {
-// id: 3,
-// person: {
-// id: 1,
-// plan: null,
-// name: "Paloma",
-// last_name: "Ramos",
-// sex: "Femenino",
-// dni: "41767379",
-// email: "agosramos_12@hotmail.com",
-// phone: "2914415075",
-// birth_date: "1999-02-18",
-// observation: null,
-// last_payment: null,
-// exp_date: "2026-01-26",
-// created_at: "2026-01-26T12:01:55.289196-03:00",
-// updated_at: "2026-01-26T12:02:27.714032-03:00",
-// deleted: null
-// },
-// slot: {
-// id: 2,
-// week_day: { id: 1, day: "Jueves", date: "2026-01-29", deleted: null },
-// status: { id: 1, status: "Lugares Libres", deleted: null },
-// time_slot: "14:00:00",
-// availability: 6,
-// duration: "01:00:00",
-// deleted: null,
-// room: null
-// },
-// reserved: null,
-// created_at: "2026-01-26T12:02:27.707369-03:00",
-// updated_at: "2026-01-26T12:02:27.707412-03:00",
-// deleted: null
-// }
-// ];
-
-// /*     const appointments = MOCK_APPOINTMENTS; // <-- fuerza mock
-// */
-// /////////////////////////////////////////////////////////////////////////////////////////////
-
-// const cancelRef = React.useRef();
-// const toast = useToast();
-
-// const {
-// isOpen: isAlertWaitingListViewOpen,
-// onOpen: onOpenModalWaitingListView,
-// onClose: onCloseModalWaitingListView,
-// } = useDisclosure();
-
-// const {
-// isOpen: isAlertWaitingListAddOpen,
-// onOpen: onOpenModalWaitingListAdd,
-// onClose: onCloseModalWaitingListAdd,
-// } = useDisclosure();
-
-// const {
-// isOpen: isAlertDialogMethodDeleteOpen,
-// onOpen: onOpenAlertDialogMethodDelete,
-// onClose: onCloseAlertDialogMethodDelete,
-// } = useDisclosure();
-
-// const {
-// isOpen: isAlertEditOpen,
-// onOpen: onOpenModalEdit,
-// onClose: onCloseModalEdit,
-// } = useDisclosure();
-
-// const {
-// isOpen: isOpenAdd,
-// onOpen: onOpenModalAdd,
-// onClose: onCloseModalAdd,
-// } = useDisclosure();
-
-// const {
-// isOpen: isAlertDialogDeleteOpen,
-// onOpen: onOpenAlertDialogDelete,
-// onClose: onCloseAlertDialogDelete,
-// } = useDisclosure();
-
-// const {
-// isOpen: isAlertCodeOpen,
-// onOpen: onOpenModalCode,
-// onClose: onCloseModalCode,
-// } = useDisclosure();
-
-
-
-// const capitalizeFirstLetter = (str: string) =>
-// str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
-
-// // const normalizeDay = (s: string) =>
-
-// // .normalize("NFD")
-// // .replace(/[\u0300-\u036f]/g, "") // saca tildes
-// // .toLowerCase()
-// // .trim();
-
-// const weekdayIndexMap: Record<string, number> = {
-// lunes: 0,
-// martes: 1,
-// miercoles: 2,
-// jueves: 3,
-// viernes: 4,
-// sabado: 5,
-// domingo: 6,
-// };
-
-// const getWeekdayIndexFromDate = (date: Date) => {
-// const d = date.getDay(); // 0 dom ... 6 sáb
-// return d === 0 ? 6 : d - 1; // 0 lunes ... 6 domingo
-// };
-
-// const getDatesForWeekdayInMonth = (monthDate: Date, weekdayName: string) => {
-// // const key = normalizeDay(weekdayName);
-// const key = (weekdayName);
-
-// const targetIndex = weekdayIndexMap[key];
-// if (targetIndex === undefined) return [];
-
-// const start = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-// const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
-
-// const first = new Date(start);
-// const startIndex = getWeekdayIndexFromDate(first);
-
-// const add = (targetIndex - startIndex + 7) % 7;
-// first.setDate(first.getDate() + add);
-
-// const dates: Date[] = [];
-// for (let d = new Date(first); d <= end; d.setDate(d.getDate() + 7)) {
-// dates.push(new Date(d));
-// }
-// return dates;
-// };
-
-// const today = new Date();
-// /*     const todayDayName = capitalizeFirstLetter(today.toLocaleDateString('es-ES', { weekday: 'long' }));
-// */
-// /*     const getNextDateForWeekday = (targetDay) => {
-// const weekDaysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-// const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1; // convertir 0(domingo) a 6
-// const targetIndex = weekDaysOrder.indexOf(targetDay);
-
-// let daysToAdd = (targetIndex - todayIndex + 7) % 7;
-// const resultDate = new Date(today);
-// resultDate.setDate(today.getDate() + daysToAdd);
-// return resultDate;
-// };
-// */
-// /*  const uniqueSortedDaysWithDates = () => {
-// const weekDaysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-// const uniqueDaysSet = new Set();
-// list.forEach(item => {
-// uniqueDaysSet.add(item.week_day.day);
-// });
-// const uniqueDaysArray = Array.from(uniqueDaysSet);
-// const todayIndex = weekDaysOrder.indexOf(todayDayName);
-
-// const sortedDaysArray = uniqueDaysArray.sort((a, b) => {
-// const indexA = (weekDaysOrder.indexOf(a) + 7 - todayIndex) % 7;
-// const indexB = (weekDaysOrder.indexOf(b) + 7 - todayIndex) % 7;
-// return indexA - indexB;
-// });
-
-// return sortedDaysArray.map(dayName => ({
-// dayName,
-// date: getNextDateForWeekday(dayName)
-// }));
-// }; */
-
-// /*    const daysWithDates = useMemo(() => uniqueSortedDaysWithDates(), [list]);
-
-// const initialDayIndex = useMemo(() => {
-// const todayName = capitalizeFirstLetter(new Date().toLocaleDateString('es-ES', { weekday: 'long' }));
-// let index = daysWithDates.findIndex(d => d.dayName.toLowerCase() === todayName.toLowerCase());
-// if (todayName.toLowerCase() === 'domingo' || index === -1) {
-// index = daysWithDates.findIndex(d => d.dayName.toLowerCase() === 'lunes');
-// }
-// return index >= 0 ? index : 0;
-// }, [daysWithDates]);
-
-
-// const [currentDayIndex, setCurrentDayIndex] = useState(initialDayIndex);
-// const [formattedDay, setFormattedDay] = useState(
-// daysWithDates.length > 0 ? daysWithDates[initialDayIndex] : null
-// ); */
-
-// /*     useEffect(() => {
-// setFormattedDay(daysWithDates[currentDayIndex]);
-// }, [currentDayIndex, daysWithDates]);
-
-// const changeDay = (direction) => {
-// let newIndex = currentDayIndex + direction;
-// if (newIndex < 0) newIndex = daysWithDates.length - 1;
-// else if (newIndex >= daysWithDates.length) newIndex = 0;
-// setCurrentDayIndex(newIndex);
-// setFormattedDay(daysWithDates[newIndex]);
-// }; */
-
-// // 0=Lunes ... 6=Domingo (como tu weekDaysOrder)
-// const weekDaysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-
-
-// const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
-// const endOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
-
-// const [currentMonth, setCurrentMonth] = useState(() => new Date()); // mes visible
-
-// const monthGridDates = useMemo(() => {
-// const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-// const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
-
-// const dates: Date[] = [];
-// for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-// dates.push(new Date(d));
-// }
-// return dates;
-// }, [currentMonth]);
-
-
-// const allowedWeekdays = useMemo(() => {
-// const set = new Set<string>();
-// list.forEach((item: any) => set.add(item.day));
-// return Array.from(set);
-// }, [mockList]);
-
-// // const allowedWeekdays = [
-// // "LUNES",
-// // "MARTES",
-// // "MIÉRCOLES",
-// // "JUEVES",
-// // "VIERNES",
-// // ];
-// const allowedWeekdayIndexes = useMemo(() => {
-// const set = new Set<number>();
-
-// allowedWeekdays.forEach((name) => {
-// // const idx = weekdayIndexMap[normalizeDay(name)];
-// const idx = weekdayIndexMap[(name)];
-
-// if (idx !== undefined) set.add(idx);
-// });
-
-// return set;
-// }, [allowedWeekdays]);
-
-// const isEnabledDate = (d: Date) => allowedWeekdayIndexes.has(getWeekdayIndexFromDate(d));
-
-// const findEnabledDate = (from: Date, direction: 1 | -1) => {
-// // evita loops infinitos: buscamos hasta 400 días (más que suficiente)
-// const d = new Date(from);
-
-// for (let i = 0; i < 400; i++) {
-// if (isEnabledDate(d)) return new Date(d);
-// d.setDate(d.getDate() + direction);
-// }
-
-// return null;
-// };
-
-
-
-// const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
-// useEffect(() => {
-// const today = new Date();
-
-// const isSameMonth =
-// today.getFullYear() === currentMonth.getFullYear() &&
-// today.getMonth() === currentMonth.getMonth();
-
-// if (isSameMonth) {
-// // hoy si es válido, sino el próximo válido
-// const start = new Date(today);
-// const next = findEnabledDate(start, 1);
-// setSelectedDate(next);
-// } else {
-// // al navegar a otro mes: primer día válido del mes
-// const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-// const next = findEnabledDate(firstDay, 1);
-// setSelectedDate(next);
-// }
-// }, [currentMonth, allowedWeekdayIndexes]);
-
-
-
-// const changeSelectedDay = (direction: number) => {
-// if (!selectedDate) return;
-
-// const step = direction > 0 ? 1 : -1;
-
-// const base = new Date(selectedDate);
-// base.setDate(base.getDate() + step); // empezamos a buscar desde el día siguiente/anterior
-
-// const next = findEnabledDate(base, step);
-// if (!next) return;
-
-// setSelectedDate(next);
-
-// // si cambió de mes, sincronizá currentMonth
-// if (
-// next.getFullYear() !== currentMonth.getFullYear() ||
-// next.getMonth() !== currentMonth.getMonth()
-// ) {
-// setCurrentMonth(new Date(next.getFullYear(), next.getMonth(), 1));
-// }
-// };
-
-
-// const formatLongDate = (date: Date) => {
-// const weekday = date.toLocaleDateString("es-ES", { weekday: "long" });
-// const day = date.getDate();
-// const month = date.toLocaleDateString("es-ES", { month: "long" });
-// const year = date.getFullYear();
-// return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} de ${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
-// };
-
-// const formatFullDate = (date: Date) =>
-// date.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
-
-
-// const selectedDayName = selectedDate
-// ? capitalizeFirstLetter(selectedDate.toLocaleDateString("es-ES", { weekday: "long" }))
-// : null;
-
-// const filteredTimeSlots = selectedDayName
-// ? list
-// .filter((item: any) => normalizeDay(item.day) === normalizeDay(selectedDayName))
-// .map((item: any) => item.start_time)
-// //item.time_slot.slice(0, 5)
-// : [];
-
-// const timeSlots = Array.from(new Set(filteredTimeSlots)).sort();
-
-// const filterAppointmentsByDay = (appointments: any[], dayName: string) => {
-// return appointments.filter(
-// (appointment: any) =>
-// normalizeDay(appointment.slot.day) === normalizeDay(dayName)
-// );
-// };
-
-// useEffect(() => {
-// getSlots();
-// getWaitingList();
-// setLoadingTable(true)
-
-// const timer = setTimeout(() => {
-// setLoadingTable(false); // Desactiva loading después de 2 segundos
-// }, 800); // Ajusta el tiempo en milisegundos
-
-// return () => clearTimeout(timer);
-// }, []);
-
-
-
-// const handleClickWaitingListView = (item) => {
-// onOpenModalWaitingListView();
-// const hour = item + ":00"; // Declarar 'hour' correctamente
-// setSelectedItem(hour);
-// };
-
-// const handleClickWaitingListAdd = (item) => {
-// const matchingSlot = list.find(
-// (slot) => slot.day === formattedDay.dayName && slot.time_slot.slice(0, 5) === item
-// );
-// const slotId = matchingSlot ? matchingSlot.id : null;
-
-// // Pasa el slotId al modal de agregar
-// setSelectedItem({ item, formattedDay, slotId });
-
-
-// onOpenModalWaitingListAdd();
-// // const hour = item + ":00"; // Declarar 'hour' correctamente
-// // setSelectedItem(item);
-// };
-
-// const handleRowDoubleClick = (item, hour) => {
-// if (item) {
-// setSelectedItem(item);
-// onOpenAlertDialogMethodDelete()
-// // onOpenModalEdit();
-// } else {
-// const matchingSlot = list.find(
-// (slot) => slot.day.toLowerCase() === formattedDay.dayName.toLowerCase() && slot.time_slot.slice(0, 5) === hour
-// );
-// const slotId = matchingSlot ? matchingSlot.id : null;
-
-// // Pasa el slotId al modal de agregar
-// setSelectedItem({ hour, formattedDay, slotId });
-// console.log("slotid", slotId)
-
-// onOpenModalAdd();
-// }
-// };
-
-
-// const handleDelete = async (code) => {
-// try {
-// const { data } = await axios.delete(`${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMETS}${selectedItem.id}/`,
-// {
-// headers: {
-// 'Authorization': `Bearer ${tokens?.access}`, // Añade el token de autenticación
-// 'Content-Type': 'application/json',
-// },
-// data: {
-// code: code  // Aquí agregas el campo 'codigo' con su valor
-// }
-// });
-// toast({
-// title: "Turno eliminado correctamente.",
-// description: "El turno fue eliminado con éxito.",
-// status: "success",
-// duration: 3000,
-// isClosable: true,
-// position: "bottom-right",
-// });
-// onCloseAlertDialogDelete();
-// getAppointments();
-// } catch (error) {
-// console.error(error);
-// toast({
-// title: "Error",
-// description: "Ocurrió un error al eliminar el turno.",
-// status: "error",
-// duration: 5000,
-// isClosable: true,
-// position: "bottom-right",
-// });
-// }
-// };
-
-// const getBackgroundColor = (appointment, updatedAppointments) => {
-// if (!appointment) return "transparent";
-
-// if (appointment.reserved === true || appointment.reserved === "true")
-// return "#b0b0b0"; // GRIS - Reservado
-
-// const isUpdated = updatedAppointments.includes(appointment.person.id);
-// const expDate = new Date(appointment.person.exp_date);
-// const now = new Date();
-// const threeDaysBeforeExp = new Date(expDate);
-// threeDaysBeforeExp.setDate(expDate.getDate() - 3);
-
-// if (isUpdated) return "#7dd586"; // VERDE - Válido
-// if (!appointment.person.exp_date) return "#cd705f"; // ROJO - Expirado
-// if (now >= threeDaysBeforeExp && now <= expDate) return "#fddf60"; // AMARILLO CLARO - Próximo a vencer
-// if (appointment.person.plan === null) return "#60a3f8"; // AZUL - Sin plan
-// if (expDate < now) return "#cd705f"; // ROJO - Expirado
-
-// return "#7dd586"; // VERDE - Válido
-// };
-
-// console.log(selectedItem)
-
-
-// const DEV_FORCE_CUPOS = true;
-
-// // poné los que quieras para testear
-// const DEV_CUPOS_BY_HOUR: Record<string, number> = {
-// "08:00": 30,
-// "09:00": 16,
-// "10:00": 8,
-// "11:00": 20,
-// };
-
-// const getCuposForHour = (hour: string, slotForHour: any) => {
-// if (DEV_FORCE_CUPOS) return DEV_CUPOS_BY_HOUR[hour] ?? 12; // default 12 para que SIEMPRE haya flecha
-// return Number(slotForHour?.availability ?? 0);
-// };
-
-
-
-// ////////////////////////////////////////////////
-
-
-
-// const ymd = (d: Date) => {
-// const y = d.getFullYear();
-// const m = String(d.getMonth() + 1).padStart(2, "0");
-// const day = String(d.getDate()).padStart(2, "0");
-// return `${y}-${m}-${day}`;
-// };
-
-// const weekdayNameFromDate = (d: Date) =>
-// d.toLocaleDateString("es-ES", { weekday: "long" });
-
-
-// type Appointment = any; // si querés después lo tipamos
-
-// const appointmentsByDate = useMemo(() => {
-// const out: Record<string, Appointment[]> = {};
-
-// // inicializo todas las fechas del mes como []
-// monthGridDates.forEach((d) => {
-// out[ymd(d)] = [];
-// });
-
-// // meto cada appointment en su fecha exacta
-// appointments.forEach((app: Appointment) => {
-// const dateKey = app?.slot?.date; // "2026-01-26"
-// if (!dateKey) return;
-
-// // si la fecha no está en el mes visible, igual la creo por si la usás después
-// if (!out[dateKey]) out[dateKey] = [];
-
-// out[dateKey].push({
-// ...app,
-// mock_date: dateKey, // opcional
-// });
-// });
-
-// return out;
-// }, [appointments, monthGridDates]);
-
-
-// const selectedKey = selectedDate ? ymd(selectedDate) : null;
-
-// const filtered = useMemo(() => {
-// if (!selectedKey) return [];
-// return appointmentsByDate[selectedKey] ?? [];
-// }, [appointmentsByDate, selectedKey]);
-
-
-// ////////////////////////////////////////////////
-
-// const getSlotForHour = (hour: string) => {
-// if (!selectedKey) return null;
-
-// return (
-// list.find((s: any) => {
-// const sameDate = s?.date === selectedKey;
-// const sameHour = s?.time_slot?.slice(0, 5) === hour;
-// return sameDate && sameHour;
-// }) ?? null
-// );
-// };
-
-// // const getActivityName = (slotForHour: any) => {
-// // return (
-// // slotForHour?.activity_name ||
-// // slotForHour?.activity?.name ||
-// // slotForHour?.class_type ||
-// // slotForHour?.type ||
-// // "Pilates"
-// // );
-// // };
-
-// const DEFAULT_ACTIVITIES = ["Pilates", "Mambo", "Bachata", "Aero Yoga"];
-
-// const getActivityName = (slotForHour: any) => {
-// return (
-// slotForHour?.activity_name ||
-// slotForHour?.activity?.name ||
-// slotForHour?.class_type ||
-// slotForHour?.type ||
-// DEFAULT_ACTIVITIES[Math.floor(Math.random() * DEFAULT_ACTIVITIES.length)]
-// );
-// };
-
-
-// const stringToColor = (str: string) => {
-// let hash = 0;
-
-// for (let i = 0; i < str.length; i++) {
-// hash = str.charCodeAt(i) + ((hash << 5) - hash);
-// }
-
-// const hue = hash % 360;
-
-// // pastel suave
-// return `hsl(${hue}, 60%, 92%)`;
-// };
-
-// const getActivityBarBg = (name: string) => {
-// if (!name) return "#F3F5F7";
-// return stringToColor(name);
-// };
-
-
-// return (
-// <>
-// <AlertDialog
-// isOpen={isAlertDialogMethodDeleteOpen}
-// onClose={onCloseAlertDialogMethodDelete}
-// leastDestructiveRef={cancelRef}
-// >
-// <AlertDialogOverlay>
-// <AlertDialogContent m={100}>
-// <AlertDialogCloseButton />
-// <AlertDialogBody textAlign={"center"} mt={55}>
-// {selectedItem ? (
-// <>
-// ¿Desea editar o eliminar el turno?
-// </>
-// ) : (
-// <>No se ha seleccionado ninguna shownAppointmentssolicitud.</>
-// )}
-
-// </AlertDialogBody>
-// <AlertDialogFooter mt={5} display={"flex"} justifyContent={"center"} gap={"20px"}>
-// <Button
-// onClick={() => { onOpenModalEdit(); onCloseAlertDialogMethodDelete() }}
-// w={"135px"}
-// h={"40px"}
-// bg={"#FFFFFF"}
-// color="text.disabled"
+//     const [slots, setSlots] = useState([]);
+//     const [selectedRow, setSelectedRow] = useState([]);
+//     const [currentDate, setCurrentDate] = useState(new Date());
+//     const [selectedItem, setSelectedItem] = useState("")
+//     // const [appointments, setAppointments] = useState([]);
+//     const { tipo, tokens } = useAuthStore();
+//     const [code, setCode] = useState("admin");
+//     const [loadingTable, setLoadingTable] = useState(false);
+
+//     const camillas = ["1", "2", "3", "4", "5", "6", "7"];
+//     const [payments, setPayments] = useState([]);
+//     // handleRowDoubleClick(appointment, hour)
+
+//     const DEFAULT_VISIBLE_SLOTS = 7;
+
+//     const [expandedHours, setExpandedHours] = useState<Record<string, boolean>>({});
+
+//     const toggleHour = (hour: string) => {
+//         setExpandedHours((prev) => ({ ...prev, [hour]: !prev[hour] }));
+//     };
+//     /*     const { appointments, waitingList } = useSelector((state: any) => state.studio);
+//      */
+
+//     const dispatch = useAppDispatch();
+
+//     /////////////////////////////////////////////////////////////////////////////////////////////
+
+//     const MOCK_APPOINTMENTS = [
+//         {
+//             id: 1,
+//             person: {
+//                 id: 1,
+//                 plan: null,
+//                 name: "Ludmila",
+//                 last_name: "Ramos",
+//                 sex: "Femenino",
+//                 dni: "41767379",
+//                 email: "agosramos_12@hotmail.com",
+//                 phone: "2914415075",
+//                 birth_date: "1999-02-18",
+//                 observation: null,
+//                 last_payment: null,
+//                 exp_date: "2026-01-26",
+//                 created_at: "2026-01-26T12:01:55.289196-03:00",
+//                 updated_at: "2026-01-26T12:02:27.714032-03:00",
+//                 deleted: null
+//             },
+//             slot: {
+//                 id: 2,
+//                 week_day: { id: 1, day: "Lunes", date: "2026-01-26", deleted: null },
+//                 status: { id: 1, status: "Lugares Libres", deleted: null },
+//                 time_slot: "09:00:00",
+//                 availability: 6,
+//                 duration: "01:00:00",
+//                 deleted: null,
+//                 room: 1
+//             },
+//             reserved: null,
+//             created_at: "2026-01-26T12:02:27.707369-03:00",
+//             updated_at: "2026-01-26T12:02:27.707412-03:00",
+//             deleted: null
+//         },
+//         {
+//             id: 2,
+//             person: {
+//                 id: 1,
+//                 plan: null,
+//                 name: "AGostina",
+//                 last_name: "Ramos",
+//                 sex: "Femenino",
+//                 dni: "41767379",
+//                 email: "agosramos_12@hotmail.com",
+//                 phone: "2914415075",
+//                 birth_date: "1999-02-18",
+//                 observation: null,
+//                 last_payment: null,
+//                 exp_date: "2026-01-26",
+//                 created_at: "2026-01-26T12:01:55.289196-03:00",
+//                 updated_at: "2026-01-26T12:02:27.714032-03:00",
+//                 deleted: null
+//             },
+//             slot: {
+//                 id: 2,
+//                 week_day: { id: 1, day: "Lunes", date: "2026-02-02", deleted: null },
+//                 status: { id: 1, status: "Lugares Libres", deleted: null },
+//                 time_slot: "12:00:00",
+//                 availability: 6,
+//                 duration: "01:00:00",
+//                 deleted: null,
+//                 room: 2
+//             },
+//             reserved: null,
+//             created_at: "2026-01-26T12:02:27.707369-03:00",
+//             updated_at: "2026-01-26T12:02:27.707412-03:00",
+//             deleted: null
+//         },
+//         {
+//             id: 3,
+//             person: {
+//                 id: 1,
+//                 plan: null,
+//                 name: "Paloma",
+//                 last_name: "Ramos",
+//                 sex: "Femenino",
+//                 dni: "41767379",
+//                 email: "agosramos_12@hotmail.com",
+//                 phone: "2914415075",
+//                 birth_date: "1999-02-18",
+//                 observation: null,
+//                 last_payment: null,
+//                 exp_date: "2026-01-26",
+//                 created_at: "2026-01-26T12:01:55.289196-03:00",
+//                 updated_at: "2026-01-26T12:02:27.714032-03:00",
+//                 deleted: null
+//             },
+//             slot: {
+//                 id: 2,
+//                 week_day: { id: 1, day: "Jueves", date: "2026-01-29", deleted: null },
+//                 status: { id: 1, status: "Lugares Libres", deleted: null },
+//                 time_slot: "14:00:00",
+//                 availability: 6,
+//                 duration: "01:00:00",
+//                 deleted: null,
+//                 room: null
+//             },
+//             reserved: null,
+//             created_at: "2026-01-26T12:02:27.707369-03:00",
+//             updated_at: "2026-01-26T12:02:27.707412-03:00",
+//             deleted: null
+//         }
+//     ];
+
+//     /*     const appointments = MOCK_APPOINTMENTS; // <-- fuerza mock
+//      */
+//     /////////////////////////////////////////////////////////////////////////////////////////////
+
+//     const cancelRef = React.useRef();
+//     const toast = useToast();
+
+//     const {
+//         isOpen: isAlertWaitingListViewOpen,
+//         onOpen: onOpenModalWaitingListView,
+//         onClose: onCloseModalWaitingListView,
+//     } = useDisclosure();
+
+//     const {
+//         isOpen: isAlertWaitingListAddOpen,
+//         onOpen: onOpenModalWaitingListAdd,
+//         onClose: onCloseModalWaitingListAdd,
+//     } = useDisclosure();
+
+//     const {
+//         isOpen: isAlertDialogMethodDeleteOpen,
+//         onOpen: onOpenAlertDialogMethodDelete,
+//         onClose: onCloseAlertDialogMethodDelete,
+//     } = useDisclosure();
+
+//     const {
+//         isOpen: isAlertEditOpen,
+//         onOpen: onOpenModalEdit,
+//         onClose: onCloseModalEdit,
+//     } = useDisclosure();
+
+//     const {
+//         isOpen: isOpenAdd,
+//         onOpen: onOpenModalAdd,
+//         onClose: onCloseModalAdd,
+//     } = useDisclosure();
+
+//     const {
+//         isOpen: isAlertDialogDeleteOpen,
+//         onOpen: onOpenAlertDialogDelete,
+//         onClose: onCloseAlertDialogDelete,
+//     } = useDisclosure();
+
+//     const {
+//         isOpen: isAlertCodeOpen,
+//         onOpen: onOpenModalCode,
+//         onClose: onCloseModalCode,
+//     } = useDisclosure();
+
+
+
+//     const capitalizeFirstLetter = (str: string) =>
+//         str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+
+//     // const normalizeDay = (s: string) =>
+
+//     //         .normalize("NFD")
+//     //         .replace(/[\u0300-\u036f]/g, "") // saca tildes
+//     //         .toLowerCase()
+//     //         .trim();
+
+//     const weekdayIndexMap: Record<string, number> = {
+//         lunes: 0,
+//         martes: 1,
+//         miercoles: 2,
+//         jueves: 3,
+//         viernes: 4,
+//         sabado: 5,
+//         domingo: 6,
+//     };
+
+//     const getWeekdayIndexFromDate = (date: Date) => {
+//         const d = date.getDay(); // 0 dom ... 6 sáb
+//         return d === 0 ? 6 : d - 1; // 0 lunes ... 6 domingo
+//     };
+
+//     const getDatesForWeekdayInMonth = (monthDate: Date, weekdayName: string) => {
+//         // const key = normalizeDay(weekdayName);
+//                 const key = (weekdayName);
+
+//         const targetIndex = weekdayIndexMap[key];
+//         if (targetIndex === undefined) return [];
+
+//         const start = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+//         const end = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0);
+
+//         const first = new Date(start);
+//         const startIndex = getWeekdayIndexFromDate(first);
+
+//         const add = (targetIndex - startIndex + 7) % 7;
+//         first.setDate(first.getDate() + add);
+
+//         const dates: Date[] = [];
+//         for (let d = new Date(first); d <= end; d.setDate(d.getDate() + 7)) {
+//             dates.push(new Date(d));
+//         }
+//         return dates;
+//     };
+
+//     const today = new Date();
+//     /*     const todayDayName = capitalizeFirstLetter(today.toLocaleDateString('es-ES', { weekday: 'long' }));
+//      */
+//     /*     const getNextDateForWeekday = (targetDay) => {
+//             const weekDaysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+//             const todayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1; // convertir 0(domingo) a 6
+//             const targetIndex = weekDaysOrder.indexOf(targetDay);
+
+//             let daysToAdd = (targetIndex - todayIndex + 7) % 7;
+//             const resultDate = new Date(today);
+//             resultDate.setDate(today.getDate() + daysToAdd);
+//             return resultDate;
+//         };
+//      */
+//     /*  const uniqueSortedDaysWithDates = () => {
+//          const weekDaysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+//          const uniqueDaysSet = new Set();
+//          list.forEach(item => {
+//              uniqueDaysSet.add(item.week_day.day);
+//          });
+//          const uniqueDaysArray = Array.from(uniqueDaysSet);
+//          const todayIndex = weekDaysOrder.indexOf(todayDayName);
+
+//          const sortedDaysArray = uniqueDaysArray.sort((a, b) => {
+//              const indexA = (weekDaysOrder.indexOf(a) + 7 - todayIndex) % 7;
+//              const indexB = (weekDaysOrder.indexOf(b) + 7 - todayIndex) % 7;
+//              return indexA - indexB;
+//          });
+
+//          return sortedDaysArray.map(dayName => ({
+//              dayName,
+//              date: getNextDateForWeekday(dayName)
+//          }));
+//      }; */
+
+//     /*    const daysWithDates = useMemo(() => uniqueSortedDaysWithDates(), [list]);
+
+//        const initialDayIndex = useMemo(() => {
+//            const todayName = capitalizeFirstLetter(new Date().toLocaleDateString('es-ES', { weekday: 'long' }));
+//            let index = daysWithDates.findIndex(d => d.dayName.toLowerCase() === todayName.toLowerCase());
+//            if (todayName.toLowerCase() === 'domingo' || index === -1) {
+//                index = daysWithDates.findIndex(d => d.dayName.toLowerCase() === 'lunes');
+//            }
+//            return index >= 0 ? index : 0;
+//        }, [daysWithDates]);
+
+
+//        const [currentDayIndex, setCurrentDayIndex] = useState(initialDayIndex);
+//        const [formattedDay, setFormattedDay] = useState(
+//            daysWithDates.length > 0 ? daysWithDates[initialDayIndex] : null
+//        ); */
+
+//     /*     useEffect(() => {
+//             setFormattedDay(daysWithDates[currentDayIndex]);
+//         }, [currentDayIndex, daysWithDates]);
+
+//         const changeDay = (direction) => {
+//             let newIndex = currentDayIndex + direction;
+//             if (newIndex < 0) newIndex = daysWithDates.length - 1;
+//             else if (newIndex >= daysWithDates.length) newIndex = 0;
+//             setCurrentDayIndex(newIndex);
+//             setFormattedDay(daysWithDates[newIndex]);
+//         }; */
+
+//     // 0=Lunes ... 6=Domingo (como tu weekDaysOrder)
+//     const weekDaysOrder = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+
+
+//     const startOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1);
+//     const endOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+//     const [currentMonth, setCurrentMonth] = useState(() => new Date()); // mes visible
+
+//     const monthGridDates = useMemo(() => {
+//         const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+//         const end = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+
+//         const dates: Date[] = [];
+//         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+//             dates.push(new Date(d));
+//         }
+//         return dates;
+//     }, [currentMonth]);
+
+
+//     const allowedWeekdays = useMemo(() => {
+//         const set = new Set<string>();
+//         list.forEach((item: any) => set.add(item.day));
+//         return Array.from(set);
+//     }, [mockList]);
+
+//     // const allowedWeekdays = [
+//     //     "LUNES",
+//     //     "MARTES",
+//     //     "MIÉRCOLES",
+//     //     "JUEVES",
+//     //     "VIERNES",
+//     // ];
+//     const allowedWeekdayIndexes = useMemo(() => {
+//         const set = new Set<number>();
+
+//         allowedWeekdays.forEach((name) => {
+//             // const idx = weekdayIndexMap[normalizeDay(name)];
+//             const idx = weekdayIndexMap[(name)];
+
+//             if (idx !== undefined) set.add(idx);
+//         });
+
+//         return set;
+//     }, [allowedWeekdays]);
+
+//     const isEnabledDate = (d: Date) => allowedWeekdayIndexes.has(getWeekdayIndexFromDate(d));
+
+//     const findEnabledDate = (from: Date, direction: 1 | -1) => {
+//         // evita loops infinitos: buscamos hasta 400 días (más que suficiente)
+//         const d = new Date(from);
+
+//         for (let i = 0; i < 400; i++) {
+//             if (isEnabledDate(d)) return new Date(d);
+//             d.setDate(d.getDate() + direction);
+//         }
+
+//         return null;
+//     };
+
+
+
+//     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+//     useEffect(() => {
+//         const today = new Date();
+
+//         const isSameMonth =
+//             today.getFullYear() === currentMonth.getFullYear() &&
+//             today.getMonth() === currentMonth.getMonth();
+
+//         if (isSameMonth) {
+//             // hoy si es válido, sino el próximo válido
+//             const start = new Date(today);
+//             const next = findEnabledDate(start, 1);
+//             setSelectedDate(next);
+//         } else {
+//             // al navegar a otro mes: primer día válido del mes
+//             const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+//             const next = findEnabledDate(firstDay, 1);
+//             setSelectedDate(next);
+//         }
+//     }, [currentMonth, allowedWeekdayIndexes]);
+
+
+
+//     const changeSelectedDay = (direction: number) => {
+//         if (!selectedDate) return;
+
+//         const step = direction > 0 ? 1 : -1;
+
+//         const base = new Date(selectedDate);
+//         base.setDate(base.getDate() + step); // empezamos a buscar desde el día siguiente/anterior
+
+//         const next = findEnabledDate(base, step);
+//         if (!next) return;
+
+//         setSelectedDate(next);
+
+//         // si cambió de mes, sincronizá currentMonth
+//         if (
+//             next.getFullYear() !== currentMonth.getFullYear() ||
+//             next.getMonth() !== currentMonth.getMonth()
+//         ) {
+//             setCurrentMonth(new Date(next.getFullYear(), next.getMonth(), 1));
+//         }
+//     };
+
+
+//     const formatLongDate = (date: Date) => {
+//         const weekday = date.toLocaleDateString("es-ES", { weekday: "long" });
+//         const day = date.getDate();
+//         const month = date.toLocaleDateString("es-ES", { month: "long" });
+//         const year = date.getFullYear();
+//         return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)} ${day} de ${month.charAt(0).toUpperCase() + month.slice(1)} de ${year}`;
+//     };
+
+//     const formatFullDate = (date: Date) =>
+//         date.toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" });
+
+
+//     const selectedDayName = selectedDate
+//         ? capitalizeFirstLetter(selectedDate.toLocaleDateString("es-ES", { weekday: "long" }))
+//         : null;
+
+//     const filteredTimeSlots = selectedDayName
+//         ? list
+//             .filter((item: any) => normalizeDay(item.day) === normalizeDay(selectedDayName))
+//             .map((item: any) => item.start_time)
+//         //item.time_slot.slice(0, 5)
+//         : [];
+
+//     const timeSlots = Array.from(new Set(filteredTimeSlots)).sort();
+
+//     const filterAppointmentsByDay = (appointments: any[], dayName: string) => {
+//         return appointments.filter(
+//             (appointment: any) =>
+//                 normalizeDay(appointment.slot.day) === normalizeDay(dayName)
+//         );
+//     };
+
+//     useEffect(() => {
+//         getSlots();
+//         getWaitingList();
+//         setLoadingTable(true)
+
+//         const timer = setTimeout(() => {
+//             setLoadingTable(false); // Desactiva loading después de 2 segundos
+//         }, 800); // Ajusta el tiempo en milisegundos
+
+//         return () => clearTimeout(timer);
+//     }, []);
+
+
+
+//     const handleClickWaitingListView = (item) => {
+//         onOpenModalWaitingListView();
+//         const hour = item + ":00"; // Declarar 'hour' correctamente
+//         setSelectedItem(hour);
+//     };
+
+//     const handleClickWaitingListAdd = (item) => {
+//         const matchingSlot = list.find(
+//             (slot) => slot.day === formattedDay.dayName && slot.time_slot.slice(0, 5) === item
+//         );
+//         const slotId = matchingSlot ? matchingSlot.id : null;
+
+//         // Pasa el slotId al modal de agregar
+//         setSelectedItem({ item, formattedDay, slotId });
+
+
+//         onOpenModalWaitingListAdd();
+//         // const hour = item + ":00"; // Declarar 'hour' correctamente
+//         // setSelectedItem(item);
+//     };
+
+//     const handleRowDoubleClick = (item, hour) => {
+//         if (item) {
+//             setSelectedItem(item);
+//             onOpenAlertDialogMethodDelete()
+//             // onOpenModalEdit();
+//         } else {
+//             const matchingSlot = list.find(
+//                 (slot) => slot.day.toLowerCase() === formattedDay.dayName.toLowerCase() && slot.time_slot.slice(0, 5) === hour
+//             );
+//             const slotId = matchingSlot ? matchingSlot.id : null;
+
+//             // Pasa el slotId al modal de agregar
+//             setSelectedItem({ hour, formattedDay, slotId });
+//             console.log("slotid", slotId)
+
+//             onOpenModalAdd();
+//         }
+//     };
+
+
+//     const handleDelete = async (code) => {
+//         try {
+//             const { data } = await axios.delete(`${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMETS}${selectedItem.id}/`,
+//                 {
+//                     headers: {
+//                         'Authorization': `Bearer ${tokens?.access}`, // Añade el token de autenticación
+//                         'Content-Type': 'application/json',
+//                     },
+//                     data: {
+//                         code: code  // Aquí agregas el campo 'codigo' con su valor
+//                     }
+//                 });
+//             toast({
+//                 title: "Turno eliminado correctamente.",
+//                 description: "El turno fue eliminado con éxito.",
+//                 status: "success",
+//                 duration: 3000,
+//                 isClosable: true,
+//                 position: "bottom-right",
+//             });
+//             onCloseAlertDialogDelete();
+//             getAppointments();
+//         } catch (error) {
+//             console.error(error);
+//             toast({
+//                 title: "Error",
+//                 description: "Ocurrió un error al eliminar el turno.",
+//                 status: "error",
+//                 duration: 5000,
+//                 isClosable: true,
+//                 position: "bottom-right",
+//             });
+//         }
+//     };
+
+//     const getBackgroundColor = (appointment, updatedAppointments) => {
+//         if (!appointment) return "transparent";
+
+//         if (appointment.reserved === true || appointment.reserved === "true")
+//             return "#b0b0b0"; // GRIS - Reservado
+
+//         const isUpdated = updatedAppointments.includes(appointment.person.id);
+//         const expDate = new Date(appointment.person.exp_date);
+//         const now = new Date();
+//         const threeDaysBeforeExp = new Date(expDate);
+//         threeDaysBeforeExp.setDate(expDate.getDate() - 3);
+
+//         if (isUpdated) return "#7dd586"; // VERDE - Válido
+//         if (!appointment.person.exp_date) return "#cd705f"; // ROJO - Expirado
+//         if (now >= threeDaysBeforeExp && now <= expDate) return "#fddf60"; // AMARILLO CLARO - Próximo a vencer
+//         if (appointment.person.plan === null) return "#60a3f8"; // AZUL - Sin plan
+//         if (expDate < now) return "#cd705f"; // ROJO - Expirado
+
+//         return "#7dd586"; // VERDE - Válido
+//     };
+
+//     console.log(selectedItem)
+
+
+//     const DEV_FORCE_CUPOS = true;
+
+//     // poné los que quieras para testear
+//     const DEV_CUPOS_BY_HOUR: Record<string, number> = {
+//         "08:00": 30,
+//         "09:00": 16,
+//         "10:00": 8,
+//         "11:00": 20,
+//     };
+
+//     const getCuposForHour = (hour: string, slotForHour: any) => {
+//         if (DEV_FORCE_CUPOS) return DEV_CUPOS_BY_HOUR[hour] ?? 12; // default 12 para que SIEMPRE haya flecha
+//         return Number(slotForHour?.availability ?? 0);
+//     };
+
+
+
+//     ////////////////////////////////////////////////
+
+
+
+//     const ymd = (d: Date) => {
+//         const y = d.getFullYear();
+//         const m = String(d.getMonth() + 1).padStart(2, "0");
+//         const day = String(d.getDate()).padStart(2, "0");
+//         return `${y}-${m}-${day}`;
+//     };
+
+//     const weekdayNameFromDate = (d: Date) =>
+//         d.toLocaleDateString("es-ES", { weekday: "long" });
+
+
+//     type Appointment = any; // si querés después lo tipamos
+
+//     const appointmentsByDate = useMemo(() => {
+//         const out: Record<string, Appointment[]> = {};
+
+//         // inicializo todas las fechas del mes como []
+//         monthGridDates.forEach((d) => {
+//             out[ymd(d)] = [];
+//         });
+
+//         // meto cada appointment en su fecha exacta
+//         appointments.forEach((app: Appointment) => {
+//             const dateKey = app?.slot?.date; // "2026-01-26"
+//             if (!dateKey) return;
+
+//             // si la fecha no está en el mes visible, igual la creo por si la usás después
+//             if (!out[dateKey]) out[dateKey] = [];
+
+//             out[dateKey].push({
+//                 ...app,
+//                 mock_date: dateKey, // opcional
+//             });
+//         });
+
+//         return out;
+//     }, [appointments, monthGridDates]);
+
+
+//     const selectedKey = selectedDate ? ymd(selectedDate) : null;
+
+//     const filtered = useMemo(() => {
+//         if (!selectedKey) return [];
+//         return appointmentsByDate[selectedKey] ?? [];
+//     }, [appointmentsByDate, selectedKey]);
+
+
+//     ////////////////////////////////////////////////
+
+//     const getSlotForHour = (hour: string) => {
+//         if (!selectedKey) return null;
+
+//         return (
+//             list.find((s: any) => {
+//                 const sameDate = s?.date === selectedKey;
+//                 const sameHour = s?.time_slot?.slice(0, 5) === hour;
+//                 return sameDate && sameHour;
+//             }) ?? null
+//         );
+//     };
+
+//     // const getActivityName = (slotForHour: any) => {
+//     //     return (
+//     //         slotForHour?.activity_name ||
+//     //         slotForHour?.activity?.name ||
+//     //         slotForHour?.class_type ||
+//     //         slotForHour?.type ||
+//     //         "Pilates"
+//     //     );
+//     // };
+
+//     const DEFAULT_ACTIVITIES = ["Pilates", "Mambo", "Bachata", "Aero Yoga"];
+
+//     const getActivityName = (slotForHour: any) => {
+//         return (
+//             slotForHour?.activity_name ||
+//             slotForHour?.activity?.name ||
+//             slotForHour?.class_type ||
+//             slotForHour?.type ||
+//             DEFAULT_ACTIVITIES[Math.floor(Math.random() * DEFAULT_ACTIVITIES.length)]
+//         );
+//     };
+
+
+//     const stringToColor = (str: string) => {
+//         let hash = 0;
+
+//         for (let i = 0; i < str.length; i++) {
+//             hash = str.charCodeAt(i) + ((hash << 5) - hash);
+//         }
+
+//         const hue = hash % 360;
+
+//         // pastel suave
+//         return `hsl(${hue}, 60%, 92%)`;
+//     };
+
+//     const getActivityBarBg = (name: string) => {
+//         if (!name) return "#F3F5F7";
+//         return stringToColor(name);
+//     };
+
+
+//     return (
+//         <>
+//             <AlertDialog
+//                 isOpen={isAlertDialogMethodDeleteOpen}
+//                 onClose={onCloseAlertDialogMethodDelete}
+//                 leastDestructiveRef={cancelRef}
+//             >
+//                 <AlertDialogOverlay>
+//                     <AlertDialogContent m={100}>
+//                         <AlertDialogCloseButton />
+//                         <AlertDialogBody textAlign={"center"} mt={55}>
+//                             {selectedItem ? (
+//                                 <>
+//                                     ¿Desea editar o eliminar el turno?
+//                                 </>
+//                             ) : (
+//                                 <>No se ha seleccionado ninguna shownAppointmentssolicitud.</>
+//                             )}
+
+//                         </AlertDialogBody>
+//                         <AlertDialogFooter mt={5} display={"flex"} justifyContent={"center"} gap={"20px"}>
+//                             <Button
+//                                 onClick={() => { onOpenModalEdit(); onCloseAlertDialogMethodDelete() }}
+//                                 w={"135px"}
+//                                 h={"40px"}
+//                                 bg={"#FFFFFF"}
+//                                 color="text.disabled"
 //
-// border={"1px solid #9FA5D8"}
-// fontWeight={800}
-// >
-// Editar
-// </Button>
-// <Button
-// onClick={() => { onOpenAlertDialogDelete(); onCloseAlertDialogMethodDelete() }}
-// bg={"gray.400"}
-// color={"white"}
-// w={"135px"}
+//                                 border={"1px solid #9FA5D8"}
+//                                 fontWeight={800}
+//                             >
+//                                 Editar
+//                             </Button>
+//                             <Button
+//                                 onClick={() => { onOpenAlertDialogDelete(); onCloseAlertDialogMethodDelete() }}
+//                                 bg={"gray.400"}
+//                                 color={"white"}
+//                                 w={"135px"}
 //
-// >
-// Eliminar
-// </Button>
-// </AlertDialogFooter>
-// </AlertDialogContent>
-// </AlertDialogOverlay>
-// </AlertDialog>
+//                             >
+//                                 Eliminar
+//                             </Button>
+//                         </AlertDialogFooter>
+//                     </AlertDialogContent>
+//                 </AlertDialogOverlay>
+//             </AlertDialog>
 
-// <AlertDialog
-// isOpen={isAlertDialogDeleteOpen}
-// onClose={onCloseAlertDialogDelete}
-// leastDestructiveRef={cancelRef}
-// >
-// <AlertDialogOverlay>
-// <AlertDialogContent m={100}>
-// <AlertDialogCloseButton />
-// <AlertDialogBody textAlign={"center"} mt={55}>
-// {/* {selectedItem && selectedItem.person ? (
-// <>¿Desea eliminar el turno del alumno <span style={{ fontWeight: 600 }}>{selectedItem?.person.name} {selectedItem?.person.last_name}
-// </span> con dni <span style={{ fontWeight: 600 }}>{selectedItem?.person.dni}</span> del dia  <span style={{ fontWeight: 600 }}>{selectedItem?.slot.week_day.day}</span> a las <span style={{ fontWeight: 600 }}>{selectedItem?.slot.time_slot.slice(0, 5)}</span> ?</>
-// ) : (
-// <>No se ha seleccionado ninguna solicitud.</>
-// )} */}
-// </AlertDialogBody>
-// <AlertDialogFooter mt={5} display={"flex"} justifyContent={"center"} gap={"20px"}>
-// <Button
-// onClick={onCloseAlertDialogDelete}
-// bg="bg.surface"
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// border="1px solid black"
-// borderRadius={4}
-// fontWeight="medium"
-// boxShadow="none"
-// _hover={{ bg: "bg.hover" }}
-// >
-// Cancelar
-// </Button>
-// <Button
-// onClick={() => tipo === "Consultor" ? onOpenModalCode() : handleDelete(code)}
-// bg="studio.primary"
-// color="text.primary"
-// w={["100%", "135px"]}
-// h="40px"
-// borderRadius={4}
-// fontWeight="medium"
+//             <AlertDialog
+//                 isOpen={isAlertDialogDeleteOpen}
+//                 onClose={onCloseAlertDialogDelete}
+//                 leastDestructiveRef={cancelRef}
+//             >
+//                 <AlertDialogOverlay>
+//                     <AlertDialogContent m={100}>
+//                         <AlertDialogCloseButton />
+//                         <AlertDialogBody textAlign={"center"} mt={55}>
+//                             {/* {selectedItem && selectedItem.person ? (
+//                                 <>¿Desea eliminar el turno del alumno <span style={{ fontWeight: 600 }}>{selectedItem?.person.name} {selectedItem?.person.last_name}
+//                                 </span> con dni <span style={{ fontWeight: 600 }}>{selectedItem?.person.dni}</span> del dia  <span style={{ fontWeight: 600 }}>{selectedItem?.slot.week_day.day}</span> a las <span style={{ fontWeight: 600 }}>{selectedItem?.slot.time_slot.slice(0, 5)}</span> ?</>
+//                             ) : (
+//                                 <>No se ha seleccionado ninguna solicitud.</>
+//                             )} */}
+//                         </AlertDialogBody>
+//                         <AlertDialogFooter mt={5} display={"flex"} justifyContent={"center"} gap={"20px"}>
+//                             <Button
+//                                 onClick={onCloseAlertDialogDelete}
+//                                 bg="bg.surface"
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 border="1px solid black"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
+//                                 boxShadow="none"
+//                                 _hover={{ bg: "bg.hover" }}
+//                             >
+//                                 Cancelar
+//                             </Button>
+//                             <Button
+//                                 onClick={() => tipo === "Consultor" ? onOpenModalCode() : handleDelete(code)}
+//                                 bg="studio.primary"
+//                                 color="text.primary"
+//                                 w={["100%", "135px"]}
+//                                 h="40px"
+//                                 borderRadius={4}
+//                                 fontWeight="medium"
 //
-// _hover={{ bg: "studio.primaryHover" }}
-// >
-// Aceptar
-// </Button>
-// </AlertDialogFooter>
-// </AlertDialogContent>
-// </AlertDialogOverlay>
-// </AlertDialog>
+//                                 _hover={{ bg: "studio.primaryHover" }}
+//                             >
+//                                 Aceptar
+//                             </Button>
+//                         </AlertDialogFooter>
+//                     </AlertDialogContent>
+//                 </AlertDialogOverlay>
+//             </AlertDialog>
 
-// {/*        <Modal
-// onClose={onCloseModalWaitingListView}
-// isOpen={isAlertWaitingListViewOpen}
-// size={{ base: "90%", md: "60%", lg: "60%", xl: "50%" }}
-// >
-// <ModalOverlay w={"100%"} h={"100%"} />
-// <ModalContent
-// maxW={{ base: "90%", md: "50%", lg: "35%", xl: "30%" }}
-// maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}
-// mt={{ base: "25%", md: "15%", lg: "12%", xl: "8%" }}  // Ajuste de margen superior
-// >
-// <ModalCloseButton />
-// <ModalWaitingListView
-// onClose={onCloseModalWaitingListView}
-// getAppointments={getAppointments}
-// hour={selectedItem}
-// day={formattedDay}
-// appointments={appointments}
-// slots={slots}
-// getSlots={getSlots}
-// />
-// </ModalContent>
-// </Modal> */}
+//             {/*        <Modal
+//                 onClose={onCloseModalWaitingListView}
+//                 isOpen={isAlertWaitingListViewOpen}
+//                 size={{ base: "90%", md: "60%", lg: "60%", xl: "50%" }}
+//             >
+//                 <ModalOverlay w={"100%"} h={"100%"} />
+//                 <ModalContent
+//                     maxW={{ base: "90%", md: "50%", lg: "35%", xl: "30%" }}
+//                     maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}
+//                     mt={{ base: "25%", md: "15%", lg: "12%", xl: "8%" }}  // Ajuste de margen superior
+//                 >
+//                     <ModalCloseButton />
+//                     <ModalWaitingListView
+//                         onClose={onCloseModalWaitingListView}
+//                         getAppointments={getAppointments}
+//                         hour={selectedItem}
+//                         day={formattedDay}
+//                         appointments={appointments}
+//                         slots={slots}
+//                         getSlots={getSlots}
+//                     />
+//                 </ModalContent>
+//             </Modal> */}
 
-// {/* <Modal onClose={onCloseModalAdd}
-// isOpen={isOpenAdd}
-// isCentered
-// size={{ base: "300px" }}  >
-// <ModalOverlay w={"100%"} h={"100%"} />
-// <ModalContent maxW={{ base: "90%", md: "90%", lg: "80%", xl: "50%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
-// <ModalCloseButton />
-// <ModalAppointmentsAdd
-// onClose={onCloseModalAdd}
-// getAppointments={getAppointments}
-// hour={selectedItem.hour}
-// day={selectedItem.formattedDay}
-// product={selectedItem.slotId}  // Nuevo parámetro para el id del slot
+//             {/* <Modal onClose={onCloseModalAdd}
+//                 isOpen={isOpenAdd}
+//                 isCentered
+//                 size={{ base: "300px" }}  >
+//                 <ModalOverlay w={"100%"} h={"100%"} />
+//                 <ModalContent maxW={{ base: "90%", md: "90%", lg: "80%", xl: "50%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
+//                     <ModalCloseButton />
+//                     <ModalAppointmentsAdd
+//                         onClose={onCloseModalAdd}
+//                         getAppointments={getAppointments}
+//                         hour={selectedItem.hour}
+//                         day={selectedItem.formattedDay}
+//                         product={selectedItem.slotId}  // Nuevo parámetro para el id del slot
 
-// />
-// </ModalContent>
-// </Modal>
+//                     />
+//                 </ModalContent>
+//             </Modal>
 
-// <Modal
-// onClose={onCloseModalEdit}
-// isOpen={isAlertEditOpen}
-// isCentered
-// size={{ base: "90%", md: "70%", lg: "80%" }}
-// >
-// <ModalOverlay w={"100%"} h={"100%"} />
-// <ModalContent maxW={{ base: "90%", md: "90%", lg: "80%", xl: "50%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
-// <ModalCloseButton />
-// <ModalAppointmentsEdit
-// onClose={onCloseModalEdit}
-// product={selectedItem}
-// getAppointments={getAppointments}
-// />
-// </ModalContent>
-// </Modal>
+//             <Modal
+//                 onClose={onCloseModalEdit}
+//                 isOpen={isAlertEditOpen}
+//                 isCentered
+//                 size={{ base: "90%", md: "70%", lg: "80%" }}
+//             >
+//                 <ModalOverlay w={"100%"} h={"100%"} />
+//                 <ModalContent maxW={{ base: "90%", md: "90%", lg: "80%", xl: "50%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
+//                     <ModalCloseButton />
+//                     <ModalAppointmentsEdit
+//                         onClose={onCloseModalEdit}
+//                         product={selectedItem}
+//                         getAppointments={getAppointments}
+//                     />
+//                 </ModalContent>
+//             </Modal>
 
-// <Modal
-// onClose={onCloseModalWaitingListAdd}
-// isOpen={isAlertWaitingListAddOpen}
-// isCentered
-// size={{ base: "90%", md: "70%", lg: "80%" }}
-// >
-// <ModalOverlay w={"100%"} h={"100%"} />
-// <ModalContent maxW={{ base: "90%", md: "90%", lg: "80%", xl: "50%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
-// <ModalCloseButton />
-// <ModalWaitingListAdd
-// onClose={onCloseModalWaitingListAdd}
-// getWaitingList={getWaitingList}
-// hour={selectedItem.item}
-// day={selectedItem.formattedDay}
-// product={selectedItem.slotId}
-// />
-// </ModalContent>
-// </Modal>
+//             <Modal
+//                 onClose={onCloseModalWaitingListAdd}
+//                 isOpen={isAlertWaitingListAddOpen}
+//                 isCentered
+//                 size={{ base: "90%", md: "70%", lg: "80%" }}
+//             >
+//                 <ModalOverlay w={"100%"} h={"100%"} />
+//                 <ModalContent maxW={{ base: "90%", md: "90%", lg: "80%", xl: "50%" }} maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}>
+//                     <ModalCloseButton />
+//                     <ModalWaitingListAdd
+//                         onClose={onCloseModalWaitingListAdd}
+//                         getWaitingList={getWaitingList}
+//                         hour={selectedItem.item}
+//                         day={selectedItem.formattedDay}
+//                         product={selectedItem.slotId}
+//                     />
+//                 </ModalContent>
+//             </Modal>
 
-// <Modal
-// onClose={onCloseModalCode}
-// isOpen={isAlertCodeOpen}
-// isCentered
-// size={{ base: "90%", md: "70%", lg: "80%" }}
-// >
-// <ModalOverlay w={"100%"} h={"100%"} />
-// <ModalContent maxW={{ base: "80%", md: "60%", lg: "50%", xl: "35%" }} maxH={{ base: "80vh", md: "80vh", lg: "60vh", xl: "75vh" }} mt={{ base: "23%", md: "13%", lg: "9.5%", xl: "7%" }}>
-// <ModalCloseButton />
-// <ModalCode
-// onClose={onCloseModalCode}
-// get={getAppointments}
-// onCloseAlert={onCloseAlertDialogDelete}
-// entityType={"appointmentsDelete"}
-// action={handleDelete}
-// />
-// </ModalContent>
-// </Modal> */}
+//             <Modal
+//                 onClose={onCloseModalCode}
+//                 isOpen={isAlertCodeOpen}
+//                 isCentered
+//                 size={{ base: "90%", md: "70%", lg: "80%" }}
+//             >
+//                 <ModalOverlay w={"100%"} h={"100%"} />
+//                 <ModalContent maxW={{ base: "80%", md: "60%", lg: "50%", xl: "35%" }} maxH={{ base: "80vh", md: "80vh", lg: "60vh", xl: "75vh" }} mt={{ base: "23%", md: "13%", lg: "9.5%", xl: "7%" }}>
+//                     <ModalCloseButton />
+//                     <ModalCode
+//                         onClose={onCloseModalCode}
+//                         get={getAppointments}
+//                         onCloseAlert={onCloseAlertDialogDelete}
+//                         entityType={"appointmentsDelete"}
+//                         action={handleDelete}
+//                     />
+//                 </ModalContent>
+//             </Modal> */}
 
-// <Stack direction={{ base: "column", md: "row", lg: "row", xl: "row" }} w={{ base: "100%", lg: "100%", xl: "100%" }}>
-// <Box
-// position="relative"
-// display="flex"
-// alignItems="center"
-// justifyContent="center"
-// mb={4}
-// width={{ base: "100%", xl: "35%" }}
-// minHeight="40px"
-// px={{ base: 10, md: 16 }}
-// >
-// <IconButton
-// icon={<Icon path={mdiChevronLeft} size={1.2} />}
-// onClick={() => changeSelectedDay(-1)}
-// aria-label="Mes anterior"
-// variant="ghost"
-// position="absolute"
-// left={{ base: "8px", md: "16px" }}
-// top="50%"
-// transform="translateY(-50%)"
-// w="32px"
-// h="32px"
-// />
+//             <Stack direction={{ base: "column", md: "row", lg: "row", xl: "row" }} w={{ base: "100%", lg: "100%", xl: "100%" }}>
+//                 <Box
+//                     position="relative"
+//                     display="flex"
+//                     alignItems="center"
+//                     justifyContent="center"
+//                     mb={4}
+//                     width={{ base: "100%", xl: "35%" }}
+//                     minHeight="40px"
+//                     px={{ base: 10, md: 16 }}
+//                 >
+//                     <IconButton
+//                         icon={<Icon path={mdiChevronLeft} size={1.2} />}
+//                         onClick={() => changeSelectedDay(-1)}
+//                         aria-label="Mes anterior"
+//                         variant="ghost"
+//                         position="absolute"
+//                         left={{ base: "8px", md: "16px" }}
+//                         top="50%"
+//                         transform="translateY(-50%)"
+//                         w="32px"
+//                         h="32px"
+//                     />
 
-// <Box display="flex" alignItems="center" gap={2} whiteSpace="nowrap" overflow="hidden">
-// <Box display={{ base: "none", sm: "block" }}>
-// <Box color="brand.500" display="flex"><Icon path={mdiCalendarMonthOutline} size={0.9} /></Box>
-// </Box>
-// <Text fontSize={{ base: "sm", sm: "md", md: "lg" }} fontWeight={500} color="#2b2b2b" textAlign="center" noOfLines={1}>
-// {selectedDate ? formatLongDate(selectedDate) : "Sin días disponibles"}
-// </Text>
-// </Box>
+//                     <Box display="flex" alignItems="center" gap={2} whiteSpace="nowrap" overflow="hidden">
+//                         <Box display={{ base: "none", sm: "block" }}>
+//                             <Box color="brand.500" display="flex"><Icon path={mdiCalendarMonthOutline} size={0.9} /></Box>
+//                         </Box>
+//                         <Text fontSize={{ base: "sm", sm: "md", md: "lg" }} fontWeight={500} color="#2b2b2b" textAlign="center" noOfLines={1}>
+//                             {selectedDate ? formatLongDate(selectedDate) : "Sin días disponibles"}
+//                         </Text>
+//                     </Box>
 
-// <IconButton
-// icon={<Icon path={mdiChevronRight} size={1.2} />}
-// onClick={() => changeSelectedDay(1)}
-// aria-label="Mes siguiente"
-// variant="ghost"
-// position="absolute"
-// right={{ base: "8px", md: "16px" }}
-// top="50%"
-// transform="translateY(-50%)"
-// w="32px"
-// h="32px"
-// />
-// </Box>
+//                     <IconButton
+//                         icon={<Icon path={mdiChevronRight} size={1.2} />}
+//                         onClick={() => changeSelectedDay(1)}
+//                         aria-label="Mes siguiente"
+//                         variant="ghost"
+//                         position="absolute"
+//                         right={{ base: "8px", md: "16px" }}
+//                         top="50%"
+//                         transform="translateY(-50%)"
+//                         w="32px"
+//                         h="32px"
+//                     />
+//                 </Box>
 
-// <Box
-// mt={{ base: 0, md: 2, lg: 3, xl: 3 }}
-// mb={5}
-// p={{ base: 0, md: 2, xl: 4 }}
-// pr={8}
-// ml={{ base: "auto", md: 10, lg: "350px", xl: "auto" }}
-// >
-// <Wrap spacing={4}>
-// <WrapItem>
-// <HStack>
-// <Box w={4} h={4} bg="#cd705f" borderRadius="sm" />
-// <Text fontSize="sm">Pago expirado</Text>
-// </HStack>
-// </WrapItem>
-// <WrapItem>
-// <HStack>
-// <Box w={4} h={4} bg="#60a3f8" borderRadius="sm" />
-// <Text fontSize="sm">Sin pago</Text>
-// </HStack>
-// </WrapItem>
-// <WrapItem>
-// <HStack>
-// <Box w={4} h={4} bg="#fddf60" borderRadius="sm" />
-// <Text fontSize="sm">Pago próximo a vencer</Text>
-// </HStack>
-// </WrapItem>
-// <WrapItem>
-// <HStack>
-// <Box w={4} h={4} bg="#7dd586" borderRadius="sm" />
-// <Text fontSize="sm">Pago vigente</Text>
-// </HStack>
-// </WrapItem>
-// <WrapItem>
-// <HStack>
-// <Box w="10px" h="10px" bg={paymentStatusColors.waiting.accent} borderRadius="full" />
-// <Text fontSize="sm">En espera</Text>
-// </HStack>
-// </WrapItem>
-// </Wrap>
-// </Box>
-// </Stack>
+//                 <Box
+//                     mt={{ base: 0, md: 2, lg: 3, xl: 3 }}
+//                     mb={5}
+//                     p={{ base: 0, md: 2, xl: 4 }}
+//                     pr={8}
+//                     ml={{ base: "auto", md: 10, lg: "350px", xl: "auto" }}
+//                 >
+//                     <Wrap spacing={4}>
+//                         <WrapItem>
+//                             <HStack>
+//                                 <Box w={4} h={4} bg="#cd705f" borderRadius="sm" />
+//                                 <Text fontSize="sm">Pago expirado</Text>
+//                             </HStack>
+//                         </WrapItem>
+//                         <WrapItem>
+//                             <HStack>
+//                                 <Box w={4} h={4} bg="#60a3f8" borderRadius="sm" />
+//                                 <Text fontSize="sm">Sin pago</Text>
+//                             </HStack>
+//                         </WrapItem>
+//                         <WrapItem>
+//                             <HStack>
+//                                 <Box w={4} h={4} bg="#fddf60" borderRadius="sm" />
+//                                 <Text fontSize="sm">Pago próximo a vencer</Text>
+//                             </HStack>
+//                         </WrapItem>
+//                         <WrapItem>
+//                             <HStack>
+//                                 <Box w={4} h={4} bg="#7dd586" borderRadius="sm" />
+//                                 <Text fontSize="sm">Pago vigente</Text>
+//                             </HStack>
+//                         </WrapItem>
+//                         <WrapItem>
+//                             <HStack>
+//                                 <Box w="10px" h="10px" bg={paymentStatusColors.waiting.accent} borderRadius="full" />
+//                                 <Text fontSize="sm">En espera</Text>
+//                             </HStack>
+//                         </WrapItem>
+//                     </Wrap>
+//                 </Box>
+//             </Stack>
 
-// <TableContainer
+//             <TableContainer
 // /*                 border="1px solid #D9E0EA"
 // /*                 bg="#ffffffe0"
-// */                bg="bg.canvas"
+//  */                bg="bg.canvas"
 // /*                 boxShadow="0px 10px 30px rgba(0,0,0,0.06)"
-// */                p={4}
+//  */                p={4}
 //
-// border={"1px solid #d1d6db"}
-// borderRadius={"4px"}
-// >
-// <Table
-// variant="unstyled"
-// size="md"
-// sx={{
-// borderCollapse: "separate",
-// borderSpacing: "0 14px", // 🔥 espacio entre filas tipo cards
-// }}
-// >
-// <Tbody>
-// {loadingTable ? (
-// <Tr>
-// <Td colSpan={20} textAlign="center" py="80px">
-// Cargando...
-// </Td>
-// </Tr>
-// ) : timeSlots.length === 0 ? (
-// <Tr>
-// <Td colSpan={20} textAlign="center">
-// No se encontraron datos
-// </Td>
-// </Tr>
-// ) : (
-// timeSlots.map((hour: string, rowIndex: number) => {
-// const slotForHour = getSlotForHour(hour);
-// const activityName = getActivityName(slotForHour);
+//                 border={"1px solid #d1d6db"}
+//                 borderRadius={"4px"}
+//             >
+//                 <Table
+//                     variant="unstyled"
+//                     size="md"
+//                     sx={{
+//                         borderCollapse: "separate",
+//                         borderSpacing: "0 14px", // 🔥 espacio entre filas tipo cards
+//                     }}
+//                 >
+//                     <Tbody>
+//                         {loadingTable ? (
+//                             <Tr>
+//                                 <Td colSpan={20} textAlign="center" py="80px">
+//                                     Cargando...
+//                                 </Td>
+//                             </Tr>
+//                         ) : timeSlots.length === 0 ? (
+//                             <Tr>
+//                                 <Td colSpan={20} textAlign="center">
+//                                     No se encontraron datos
+//                                 </Td>
+//                             </Tr>
+//                         ) : (
+//                             timeSlots.map((hour: string, rowIndex: number) => {
+//                                 const slotForHour = getSlotForHour(hour);
+//                                 const activityName = getActivityName(slotForHour);
 
-// const appsForHour = filtered.filter(
-// (app: any) => app?.slot?.time_slot?.slice(0, 5) === hour
-// );
+//                                 const appsForHour = filtered.filter(
+//                                     (app: any) => app?.slot?.time_slot?.slice(0, 5) === hour
+//                                 );
 
-// /*    const isLibre =
-// !slotForHour ||
-// !activityName ||
-// activityName.toLowerCase() === "libre";
-// */
-// const cupos = getCuposForHour(hour, slotForHour);
-// // SIEMPRE 8 visibles (aunque cupos sea menor)
-// const isExpanded = !!expandedHours[hour];
-// const visibleCupos = isExpanded ? cupos : DEFAULT_VISIBLE_SLOTS;
-// const hasMore = cupos > DEFAULT_VISIBLE_SLOTS;
+//                                 /*    const isLibre =
+//                                        !slotForHour ||
+//                                        !activityName ||
+//                                        activityName.toLowerCase() === "libre";
+//     */
+//                                 const cupos = getCuposForHour(hour, slotForHour);
+//                                 // ✅ SIEMPRE 8 visibles (aunque cupos sea menor)
+//                                 const isExpanded = !!expandedHours[hour];
+//                                 const visibleCupos = isExpanded ? cupos : DEFAULT_VISIBLE_SLOTS;
+//                                 const hasMore = cupos > DEFAULT_VISIBLE_SLOTS;
 
-// return (
-// <Tr key={rowIndex}>
-// {/* HORA */}
-// <Td
-// w="90px"
-// fontWeight="500"
+//                                 return (
+//                                     <Tr key={rowIndex}>
+//                                         {/* HORA */}
+//                                         <Td
+//                                             w="90px"
+//                                             fontWeight="500"
 // /*                                             color="#3A3F45"
-// */                              color="#000000"
-// fontSize="15px"
-// verticalAlign="top"
-// pt="60px"
-// >
-// {hour}
-// </Td>
+//  */                              color="#000000"
+//                                             fontSize="15px"
+//                                             verticalAlign="top"
+//                                             pt="60px"
+//                                         >
+//                                             {hour}
+//                                         </Td>
 
-// {/* CARD */}
-// <Td p={0}>
-// <Box
-// bg="#ffffff"
-// border="1px solid #D9E0EA"
-// borderRadius="16px"
-// boxShadow="0px 10px 30px rgba(0,0,0,0.06)"
-// >
-// {/* HEADER ACTIVIDAD */}
-// <Box
-// h="48px"
-// display="flex"
-// alignItems="center"
-// justifyContent="space-between"
-// px={6}
-// borderTopLeftRadius="16px"
-// borderTopRightRadius="16px"
-// bg={getActivityBarBg(activityName)}
-// >
-// <Text
-// fontWeight="800"
-// letterSpacing="0.04em"
-// fontSize="14px"
-// >
-// {activityName.toUpperCase()}
-// </Text>
+//                                         {/* CARD */}
+//                                         <Td p={0}>
+//                                             <Box
+//                                                 bg="#ffffff"
+//                                                 border="1px solid #D9E0EA"
+//                                                 borderRadius="16px"
+//                                                 boxShadow="0px 10px 30px rgba(0,0,0,0.06)"
+//                                             >
+//                                                 {/* HEADER ACTIVIDAD */}
+//                                                 <Box
+//                                                     h="48px"
+//                                                     display="flex"
+//                                                     alignItems="center"
+//                                                     justifyContent="space-between"
+//                                                     px={6}
+//                                                     borderTopLeftRadius="16px"
+//                                                     borderTopRightRadius="16px"
+//                                                     bg={getActivityBarBg(activityName)}
+//                                                 >
+//                                                     <Text
+//                                                         fontWeight="800"
+//                                                         letterSpacing="0.04em"
+//                                                         fontSize="14px"
+//                                                     >
+//                                                         {activityName.toUpperCase()}
+//                                                     </Text>
 
-// {hasMore && (
-// <Button
-// size="sm"
-// variant="ghost"
-// onClick={() => toggleHour(hour)}
-// rightIcon={
-// isExpanded ? (
-// <ChevronUpIcon />
-// ) : (
-// <ChevronDownIcon />
-// )
-// }
-// fontWeight="500"
-// >
-// {isExpanded
-// ? "Ver menos"
-// : `Ver ${cupos - DEFAULT_VISIBLE_SLOTS} cupos más`}
-// </Button>
-// )}
-// </Box>
+//                                                     {hasMore && (
+//                                                         <Button
+//                                                             size="sm"
+//                                                             variant="ghost"
+//                                                             onClick={() => toggleHour(hour)}
+//                                                             rightIcon={
+//                                                                 isExpanded ? (
+//                                                                     <ChevronUpIcon />
+//                                                                 ) : (
+//                                                                     <ChevronDownIcon />
+//                                                                 )
+//                                                             }
+//                                                             fontWeight="500"
+//                                                         >
+//                                                             {isExpanded
+//                                                                 ? "Ver menos"
+//                                                                 : `Ver ${cupos - DEFAULT_VISIBLE_SLOTS} cupos más`}
+//                                                         </Button>
+//                                                     )}
+//                                                 </Box>
 
-// {/* CUPOS */}
-// <Box px={5} py={4}>
-// <Box
-// display="grid"
-// gridTemplateColumns={{
-// base: "repeat(2, 1fr)",
-// sm: "repeat(3, 1fr)",
-// md: "repeat(5, 1fr)",
-// lg: "repeat(7, 1fr)",
-// }}
-// gap={3}
-// >
-// {Array.from({ length: visibleCupos }).map((_, i) => {
-// // si i >= cupos, es "slot fantasma" para completar hasta 8
-// const isSlotReal = i < cupos;
-// const appointment = isSlotReal ? (appsForHour[i] ?? null) : null;
+//                                                 {/* CUPOS */}
+//                                                 <Box px={5} py={4}>
+//                                                     <Box
+//                                                         display="grid"
+//                                                         gridTemplateColumns={{
+//                                                             base: "repeat(2, 1fr)",
+//                                                             sm: "repeat(3, 1fr)",
+//                                                             md: "repeat(5, 1fr)",
+//                                                             lg: "repeat(7, 1fr)",
+//                                                         }}
+//                                                         gap={3}
+//                                                     >
+//                                                         {Array.from({ length: visibleCupos }).map((_, i) => {
+//                                                             // si i >= cupos, es "slot fantasma" para completar hasta 8
+//                                                             const isSlotReal = i < cupos;
+//                                                             const appointment = isSlotReal ? (appsForHour[i] ?? null) : null;
 
-// return (
-// <Box
-// key={i}
-// h="44px"
-// display="flex"
-// alignItems="center"
-// justifyContent="center"
-// fontSize="13px"
-// fontWeight="600"
-// border="2px solid #D9E0EA"
-// borderRadius="8px"
-// bg={
-// appointment
-// ? getBackgroundColor(appointment, updatedAppointments)
-// : "#ffffff"
-// }
-// color="#2B2B2B"
-// boxShadow={isSlotReal ? "0px 4px 8px rgba(0,0,0,0.08)" : "none"}
-// opacity={isSlotReal ? 1 : 0.35}
-// transition="all 0.2s ease"
-// _hover={
-// isSlotReal
-// ? {
-// transform: "translateY(-2px)",
-// boxShadow: "0px 6px 14px rgba(0,0,0,0.12)",
-// cursor: "pointer",
-// }
-// : {}
-// }
-// onDoubleClick={() => {
-// if (!isSlotReal) return;
-// handleRowDoubleClick(appointment, hour);
-// }}
-// >
-// {appointment ? appointment.person.name : ""}
-// </Box>
-// );
-// })}
-// </Box>
+//                                                             return (
+//                                                                 <Box
+//                                                                     key={i}
+//                                                                     h="44px"
+//                                                                     display="flex"
+//                                                                     alignItems="center"
+//                                                                     justifyContent="center"
+//                                                                     fontSize="13px"
+//                                                                     fontWeight="600"
+//                                                                     border="2px solid #D9E0EA"
+//                                                                     borderRadius="8px"
+//                                                                     bg={
+//                                                                         appointment
+//                                                                             ? getBackgroundColor(appointment, updatedAppointments)
+//                                                                             : "#ffffff"
+//                                                                     }
+//                                                                     color="#2B2B2B"
+//                                                                     boxShadow={isSlotReal ? "0px 4px 8px rgba(0,0,0,0.08)" : "none"}
+//                                                                     opacity={isSlotReal ? 1 : 0.35}
+//                                                                     transition="all 0.2s ease"
+//                                                                     _hover={
+//                                                                         isSlotReal
+//                                                                             ? {
+//                                                                                 transform: "translateY(-2px)",
+//                                                                                 boxShadow: "0px 6px 14px rgba(0,0,0,0.12)",
+//                                                                                 cursor: "pointer",
+//                                                                             }
+//                                                                             : {}
+//                                                                     }
+//                                                                     onDoubleClick={() => {
+//                                                                         if (!isSlotReal) return;
+//                                                                         handleRowDoubleClick(appointment, hour);
+//                                                                     }}
+//                                                                 >
+//                                                                     {appointment ? appointment.person.name : ""}
+//                                                                 </Box>
+//                                                             );
+//                                                         })}
+//                                                     </Box>
 
-// {/*  FLECHA PARA DESPLEGAR */}
-// {/* {hasMore && (
-// <Box
-// display="flex"
-// justifyContent="center"
-// mt={3}
-// >
-// <Button
-// size="sm"
-// variant="ghost"
-// onClick={() => toggleHour(hour)}
-// rightIcon={
-// isExpanded ? (
-// <ChevronUpIcon />
-// ) : (
-// <ChevronDownIcon />
-// )
-// }
-// fontWeight="700"
-// >
-// {isExpanded
-// ? "Ver menos"
-// : `Ver ${cupos - DEFAULT_VISIBLE_SLOTS} más`}
-// </Button>
-// </Box>
-// )} */}
-// </Box>
-// </Box>
-// </Td>
+//                                                     {/* ✅ FLECHA PARA DESPLEGAR */}
+//                                                     {/* {hasMore && (
+//                                                         <Box
+//                                                             display="flex"
+//                                                             justifyContent="center"
+//                                                             mt={3}
+//                                                         >
+//                                                             <Button
+//                                                                 size="sm"
+//                                                                 variant="ghost"
+//                                                                 onClick={() => toggleHour(hour)}
+//                                                                 rightIcon={
+//                                                                     isExpanded ? (
+//                                                                         <ChevronUpIcon />
+//                                                                     ) : (
+//                                                                         <ChevronDownIcon />
+//                                                                     )
+//                                                                 }
+//                                                                 fontWeight="700"
+//                                                             >
+//                                                                 {isExpanded
+//                                                                     ? "Ver menos"
+//                                                                     : `Ver ${cupos - DEFAULT_VISIBLE_SLOTS} más`}
+//                                                             </Button>
+//                                                         </Box>
+//                                                     )} */}
+//                                                 </Box>
+//                                             </Box>
+//                                         </Td>
 
-// {/* BOTONES (al final de cada fila) */}
-// <Td
-// padding={0}
-// width="72px"
-// verticalAlign="middle"   // 🔥 centra respecto a la fila
-// >
-// <Box
-// display="flex"
-// flexDirection="column"   // uno arriba del otro (más prolijo)
-// alignItems="center"
-// justifyContent="center"
-// gap="10px"
-// height="100%"
-// >
-// <Tooltip hasArrow label="Ver lista de espera" bg="bg.inverted" borderRadius={4}>
-// <Button
-// size="sm"
-// w="40px"
-// h="40px"
-// display="flex"
-// justifyContent="center"
-// alignItems="center"
-// borderRadius="8px"
-// bg="transparent"
-// _hover={{ bg: "bg.muted" }}
-// onClick={() => handleClickWaitingListView(hour)}
-// >
-// <Icon path={mdiEye} size={1} />
-// </Button>
-// </Tooltip>
+//                                         {/* BOTONES (al final de cada fila) */}
+//                                         <Td
+//                                             padding={0}
+//                                             width="72px"
+//                                             verticalAlign="middle"   // 🔥 centra respecto a la fila
+//                                         >
+//                                             <Box
+//                                                 display="flex"
+//                                                 flexDirection="column"   // uno arriba del otro (más prolijo)
+//                                                 alignItems="center"
+//                                                 justifyContent="center"
+//                                                 gap="10px"
+//                                                 height="100%"
+//                                             >
+//                                                 <Tooltip hasArrow label="Ver lista de espera" bg="bg.inverted" borderRadius={4}>
+//                                                     <Button
+//                                                         size="sm"
+//                                                         w="40px"
+//                                                         h="40px"
+//                                                         display="flex"
+//                                                         justifyContent="center"
+//                                                         alignItems="center"
+//                                                         borderRadius="8px"
+//                                                         bg="transparent"
+//                                                         _hover={{ bg: "bg.muted" }}
+//                                                         onClick={() => handleClickWaitingListView(hour)}
+//                                                     >
+//                                                         <Icon path={mdiEye} size={1} />
+//                                                     </Button>
+//                                                 </Tooltip>
 
-// <Tooltip
-// hasArrow
-// label="Agregar a lista de espera"
-// bg="bg.inverted"
-// borderRadius={4}
-// >
-// <Button
-// size="sm"
-// w="40px"
-// h="40px"
-// display="flex"
-// justifyContent="center"
-// alignItems="center"
-// borderRadius="8px"
-// bg="transparent"
-// _hover={{ bg: "bg.muted" }}
-// onClick={() => handleClickWaitingListAdd(hour)}
-// >
-// <Icon path={mdiPlusCircleOutline} size={1} />
-// </Button>
-// </Tooltip>
-// </Box>
-// </Td>
+//                                                 <Tooltip
+//                                                     hasArrow
+//                                                     label="Agregar a lista de espera"
+//                                                     bg="bg.inverted"
+//                                                     borderRadius={4}
+//                                                 >
+//                                                     <Button
+//                                                         size="sm"
+//                                                         w="40px"
+//                                                         h="40px"
+//                                                         display="flex"
+//                                                         justifyContent="center"
+//                                                         alignItems="center"
+//                                                         borderRadius="8px"
+//                                                         bg="transparent"
+//                                                         _hover={{ bg: "bg.muted" }}
+//                                                         onClick={() => handleClickWaitingListAdd(hour)}
+//                                                     >
+//                                                         <Icon path={mdiPlusCircleOutline} size={1} />
+//                                                     </Button>
+//                                                 </Tooltip>
+//                                             </Box>
+//                                         </Td>
 
-// </Tr>
-// );
-// })
-// )}
-// </Tbody>
-// </Table>
-// </TableContainer>
-// </>
-// );
+//                                     </Tr>
+//                                 );
+//                             })
+//                         )}
+//                     </Tbody>
+//                 </Table>
+//             </TableContainer>
+//         </>
+//     );
 // };
 
 // export default ShiftTable;
@@ -1339,6 +1339,7 @@ import ModalAppointmentsAdd from "./ModalAppointmentsAdd";
 import ModalAppointmentsEdit from "./ModalAppointmentsEdit";
 import ModalWaitingListAdd from "./ModalWaitingListAdd";
 import ModalWaitingListView from "./ModalWaitingListView";
+import ModalCode from "./ModalCode";
 import {
     getAppointments,
     getSlots,
@@ -1348,6 +1349,7 @@ import {
 import { ChevronDownIcon, ChevronUpIcon } from "@chakra-ui/icons";
 import { brandActivityColors, brandActivityPalette, paymentStatusColors } from "../../theme/brand";
 import { TableState } from "./ui/StateMessage";
+import { isSlotFull } from "../utils/slots";
 
 
 const DEFAULT_VISIBLE_SLOTS = 7;
@@ -1365,19 +1367,6 @@ const PAYMENT_STATUS_ACCENT: Record<string, string> = Object.fromEntries(
     Object.values(paymentStatusColors).map(({ bg, accent }) => [bg, accent])
 );
 
-const DEMO_EXPIRING_APPOINTMENT = {
-    date: "2026-08-20",
-};
-
-const dateTomorrow = () => {
-    const date = new Date();
-    date.setDate(date.getDate() + 1);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-};
-
 const normalizeDay = (s: string) =>
     (s || "")
         .normalize("NFD")
@@ -1386,13 +1375,13 @@ const normalizeDay = (s: string) =>
         .trim();
 
 // const weekdayIndexMap: Record<string, number> = {
-// lunes: 0,
-// martes: 1,
-// miercoles: 2,
-// jueves: 3,
-// viernes: 4,
-// sabado: 5,
-// domingo: 6,
+//     lunes: 0,
+//     martes: 1,
+//     miercoles: 2,
+//     jueves: 3,
+//     viernes: 4,
+//     sabado: 5,
+//     domingo: 6,
 // };
 
 type ShiftTableProps = {
@@ -1410,26 +1399,10 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     const [expandedHours, setExpandedHours] = useState<Record<string, boolean>>(
         {}
     );
-    const { tipo, tokens } = useAuthStore();
-    const [code] = useState("admin");
+    const { tipo, tokens, code } = useAuthStore();
     const dispatch = useAppDispatch();
     const toast = useToast();
     const cancelRef = React.useRef<any>(null);
-    const peoples = useSelector((state: any) => state.studio.peoples);
-
-    // Fallback temporal: /calendar todavía no incluye vencimiento ni plan.
-    // Se cruza por person_id con /people hasta que el backend entregue esos datos.
-    const peopleById = useMemo(() => {
-        const map = new Map<string, any>();
-        if (Array.isArray(peoples)) {
-            peoples.forEach((person: any) => {
-                if (person?.id != null) map.set(String(person.id), person);
-            });
-        }
-        return map;
-    }, [peoples]);
-
-
     const flattenedCalendarSlots = useMemo(() => {
         if (!calendar?.length) return [];
 
@@ -1454,21 +1427,11 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     const flattenedAppointments = useMemo(() => {
         if (!calendar?.length) return [];
 
-        let demoApplied = false;
-
         return calendar.flatMap((dayItem: any) =>
             (dayItem.slots || []).flatMap((slot: any) =>
                 (slot.appointments || []).map((appointment: any) => {
                     const fullName = appointment.person_name || "";
                     const [name, ...rest] = fullName.split(" ");
-                    const personFromPeople = peopleById.get(String(appointment.person_id));
-                    const isDemoAppointment =
-                        !demoApplied &&
-                        appointment.reserved !== true &&
-                        appointment.reserved !== "true" &&
-                        String(dayItem.date).slice(0, 10) === DEMO_EXPIRING_APPOINTMENT.date;
-
-                    if (isDemoAppointment) demoApplied = true;
 
                     return {
                         id: appointment.id,
@@ -1478,10 +1441,8 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                             name: name || "",
                             last_name: rest.join(" ") || "",
                             phone: appointment.person_phone || "",
-                            exp_date: isDemoAppointment
-                                ? dateTomorrow()
-                                : appointment.person_exp_date ?? personFromPeople?.exp_date ?? null,
-                            plan: appointment.person_plan ?? personFromPeople?.plan ?? null,
+                            exp_date: appointment.exp_date ?? null,
+                            plan: appointment.plan_sub_type ?? null,
                             photo: appointment.person_photo || null,
                         },
                         slot: {
@@ -1497,7 +1458,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                 })
             )
         );
-    }, [calendar, peopleById]);
+    }, [calendar]);
 
     const effectiveList = flattenedCalendarSlots.length
         ? flattenedCalendarSlots
@@ -1507,7 +1468,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
         ? flattenedAppointments
         : [];
 
-    const slots = useSelector((state: any) => state.studio.slots);
+    const { slots, appointments } = useSelector((state: any) => state.studio);
 
 
     const availableDateKeys = useMemo(() => {
@@ -1548,6 +1509,12 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     } = useDisclosure();
 
     const {
+        isOpen: isCodeModalOpen,
+        onOpen: onOpenCodeModal,
+        onClose: onCloseCodeModal,
+    } = useDisclosure();
+
+    const {
         isOpen: isModalAppointmentsAddOpen,
         onOpen: onOpenModalAppointmentsAdd,
         onClose: onCloseModalAppointmentsAdd,
@@ -1575,8 +1542,8 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
         str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 
     // const getWeekdayIndexFromDate = (date: Date) => {
-    // const d = date.getDay();
-    // return d === 0 ? 6 : d - 1;
+    //     const d = date.getDay();
+    //     return d === 0 ? 6 : d - 1;
     // };
 
     const monthGridDates = useMemo(() => {
@@ -1591,22 +1558,22 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     }, [currentMonth]);
 
     // const allowedWeekdays = useMemo(() => {
-    // const set = new Set<string>();
-    // effectiveList.forEach((item: any) => {
-    // if (item?.day) set.add(item.day);
-    // });
-    // return Array.from(set);
+    //     const set = new Set<string>();
+    //     effectiveList.forEach((item: any) => {
+    //         if (item?.day) set.add(item.day);
+    //     });
+    //     return Array.from(set);
     // }, [effectiveList]);
 
     // const allowedWeekdayIndexes = useMemo(() => {
-    // const set = new Set<number>();
+    //     const set = new Set<number>();
 
-    // allowedWeekdays.forEach((name) => {
-    // const idx = weekdayIndexMap[normalizeDay(name)];
-    // if (idx !== undefined) set.add(idx);
-    // });
+    //     allowedWeekdays.forEach((name) => {
+    //         const idx = weekdayIndexMap[normalizeDay(name)];
+    //         if (idx !== undefined) set.add(idx);
+    //     });
 
-    // return set;
+    //     return set;
     // }, [allowedWeekdays]);
 
     const isEnabledDate = (d: Date) => availableDateKeys.has(ymd(d));
@@ -1653,48 +1620,48 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
     }, [effectiveList]);
 
     // useEffect(() => {
-    // if (!effectiveList?.length) {
-    // setSelectedDate(null);
-    // return;
-    // }
+    //     if (!effectiveList?.length) {
+    //         setSelectedDate(null);
+    //         return;
+    //     }
 
-    // const datesInCurrentMonth = effectiveList
-    // .map((item: any) => item?.date)
-    // .filter(Boolean)
-    // .map((date: string) => parseDateLocal(date))
-    // .filter(
-    // (date: Date) =>
-    // date.getFullYear() === currentMonth.getFullYear() &&
-    // date.getMonth() === currentMonth.getMonth()
-    // )
-    // .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+    //     const datesInCurrentMonth = effectiveList
+    //         .map((item: any) => item?.date)
+    //         .filter(Boolean)
+    //         .map((date: string) => parseDateLocal(date))
+    //         .filter(
+    //             (date: Date) =>
+    //                 date.getFullYear() === currentMonth.getFullYear() &&
+    //                 date.getMonth() === currentMonth.getMonth()
+    //         )
+    //         .sort((a: Date, b: Date) => a.getTime() - b.getTime());
 
-    // if (datesInCurrentMonth.length > 0) {
-    // const keepCurrent =
-    // selectedDate &&
-    // datesInCurrentMonth.some(
-    // (date) => date.toDateString() === selectedDate.toDateString()
-    // );
+    //     if (datesInCurrentMonth.length > 0) {
+    //         const keepCurrent =
+    //             selectedDate &&
+    //             datesInCurrentMonth.some(
+    //                 (date) => date.toDateString() === selectedDate.toDateString()
+    //             );
 
-    // if (!keepCurrent) {
-    // setSelectedDate(datesInCurrentMonth[0]);
-    // }
-    // return;
-    // }
+    //         if (!keepCurrent) {
+    //             setSelectedDate(datesInCurrentMonth[0]);
+    //         }
+    //         return;
+    //     }
 
-    // const allDates = effectiveList
-    // .map((item: any) => item?.date)
-    // .filter(Boolean)
-    // .map((date: string) => parseDateLocal(date))
-    // .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+    //     const allDates = effectiveList
+    //         .map((item: any) => item?.date)
+    //         .filter(Boolean)
+    //         .map((date: string) => parseDateLocal(date))
+    //         .sort((a: Date, b: Date) => a.getTime() - b.getTime());
 
-    // if (allDates.length > 0) {
-    // const firstDate = allDates[0];
-    // setCurrentMonth(new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
-    // setSelectedDate(firstDate);
-    // } else {
-    // setSelectedDate(null);
-    // }
+    //     if (allDates.length > 0) {
+    //         const firstDate = allDates[0];
+    //         setCurrentMonth(new Date(firstDate.getFullYear(), firstDate.getMonth(), 1));
+    //         setSelectedDate(firstDate);
+    //     } else {
+    //         setSelectedDate(null);
+    //     }
     // }, [currentMonth, effectiveList]);
 
     const changeSelectedDay = (direction: number) => {
@@ -1910,6 +1877,21 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
             setSelectedItem(item);
             onOpenAlertDialogMethodDelete();
         } else {
+            const activeAppointments = Array.isArray(matchingSlot?.appointments)
+                ? matchingSlot.appointments.length
+                : undefined;
+
+            if (isSlotFull(matchingSlot, activeAppointments)) {
+                toast({
+                    title: "Cupo completo.",
+                    description: "Este horario alcanzó su capacidad máxima. Elegí otro horario.",
+                    status: "warning",
+                    duration: 4000,
+                    isClosable: true,
+                    position: "bottom-right",
+                });
+                return;
+            }
             setSelectedItem({
                 hour,
                 dayName: selectedDayName,
@@ -1920,15 +1902,52 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
         }
     };
 
+    const resolveCurrentAppointment = (calendarAppointment: any) => {
+        if (!calendarAppointment || !Array.isArray(appointments)) {
+            return calendarAppointment;
+        }
+
+        const directMatch = appointments.find(
+            (appointment: any) => String(appointment.id) === String(calendarAppointment.id)
+        );
+
+        const personId = calendarAppointment.person?.id ?? calendarAppointment.person_id;
+        const slotId = calendarAppointment.slot?.id ?? calendarAppointment.slot_id;
+        const relationMatch = appointments.find((appointment: any) => {
+            const currentPersonId = appointment.person?.id ?? appointment.person;
+            const currentSlotId = appointment.slot?.id ?? appointment.slot;
+            return (
+                String(currentPersonId) === String(personId) &&
+                String(currentSlotId) === String(slotId)
+            );
+        });
+
+        const currentAppointment = directMatch || relationMatch;
+        if (!currentAppointment) return calendarAppointment;
+
+        return {
+            ...calendarAppointment,
+            ...currentAppointment,
+            person: {
+                ...(calendarAppointment.person || {}),
+                ...(typeof currentAppointment.person === "object" ? currentAppointment.person : {}),
+            },
+            slot: {
+                ...(calendarAppointment.slot || {}),
+                ...(typeof currentAppointment.slot === "object" ? currentAppointment.slot : {}),
+            },
+        };
+    };
+
     const handleEditAppointment = (appointment: any) => {
-        if (!appointment || tipo === "Consultor") return;
-        setSelectedItem(appointment);
+        if (!appointment) return;
+        setSelectedItem(resolveCurrentAppointment(appointment));
         onOpenModalAppointmentsEdit();
     };
 
     const handleDeleteAppointment = (appointment: any) => {
-        if (!appointment || tipo === "Consultor") return;
-        setSelectedItem(appointment);
+        if (!appointment) return;
+        setSelectedItem(resolveCurrentAppointment(appointment));
         onOpenAlertDialogDelete();
     };
 
@@ -1957,6 +1976,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
             onCloseAlertDialogDelete();
             dispatch(getAppointments());
             dispatch(getCalendar());
+            dispatch(getSlots());
         } catch (error) {
             toast({
                 title: "Error",
@@ -1967,6 +1987,30 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                 position: "bottom-right",
             });
         }
+    };
+
+    const handleConfirmDelete = () => {
+        const normalizedRole = (tipo || "").trim().toLowerCase();
+        const canUseOwnCode = ["super", "administrador", "admin"].includes(normalizedRole);
+
+        if (!canUseOwnCode) {
+            onOpenCodeModal();
+            return;
+        }
+
+        if (!code) {
+            toast({
+                title: "No se encontró el código del usuario.",
+                description: "Cerrá sesión y volvé a ingresar para actualizar tus datos.",
+                status: "error",
+                duration: 5000,
+                isClosable: true,
+                position: "bottom-right",
+            });
+            return;
+        }
+
+        handleDelete(code);
     };
 
     const getBackgroundColor = (appointment: any, updatedAppointmentsList: any[]) => {
@@ -2075,9 +2119,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                 Cancelar
                             </Button>
                             <Button
-                                onClick={() =>
-                                    tipo === "Consultor" ? null : handleDelete(code)
-                                }
+                                onClick={handleConfirmDelete}
                                 w={["100%", "135px"]}
                                 variant="danger"
                             >
@@ -2087,6 +2129,25 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                     </AlertDialogContent>
                 </AlertDialogOverlay>
             </AlertDialog>
+
+            <Modal
+                onClose={onCloseCodeModal}
+                isOpen={isCodeModalOpen}
+                isCentered
+                size={{ base: "90%", md: "70%", lg: "80%" }}
+            >
+                <ModalOverlay w="100%" h="100%" />
+                <ModalContent maxW={{ base: "80%", md: "60%", lg: "50%", xl: "35%" }}>
+                    <ModalCloseButton />
+                    <ModalCode
+                        onClose={onCloseCodeModal}
+                        get={getAppointments}
+                        onCloseAlert={onCloseAlertDialogDelete}
+                        entityType={"appointmentsDelete" as any}
+                        action={handleDelete}
+                    />
+                </ModalContent>
+            </Modal>
 
             <Modal
                 isOpen={isModalAppointmentsAddOpen}
@@ -2325,6 +2386,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                 );
 
                                 const cupos = getCuposForHour(hour, slotForHour);
+                                const slotIsFull = isSlotFull(slotForHour, appsForHour.length);
                                 const isExpanded = !!expandedHours[hour];
                                 const visibleCupos = isExpanded ? cupos : DEFAULT_VISIBLE_SLOTS;
                                 const hasMore = cupos > DEFAULT_VISIBLE_SLOTS;
@@ -2449,6 +2511,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                             const appointment = isSlotReal
                                                                 ? appsForHour[i] ?? null
                                                                 : null;
+                                                            const isReservable = isSlotReal && !appointment && !slotIsFull;
 
                                                             return (
                                                                 <Box
@@ -2483,14 +2546,14 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                                     opacity={isSlotReal ? 1 : 0.4}
                                                                     transition="border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease"
                                                                     _hover={
-                                                                        isSlotReal
-                                                                            ? appointment
-                                                                                ? { boxShadow: "sm", cursor: "pointer" }
-                                                                                : { borderColor: "brand.300", bg: "brand.50", color: "text.brand", cursor: "pointer" }
+                                                                        isSlotReal && appointment
+                                                                            ? { boxShadow: "sm", cursor: "pointer" }
+                                                                            : isSlotReal && isReservable
+                                                                                ? { borderColor: "brand.300", bg: "brand.50", color: "text.brand", cursor: "pointer" }
                                                                             : {}
                                                                     }
                                                                     onClick={() => {
-                                                                        if (!isSlotReal) return;
+                                                                        if (!isSlotReal || (!appointment && !isReservable)) return;
                                                                         if (appointment) {
                                                                             handleEditAppointment(appointment);
                                                                         } else {
@@ -2520,20 +2583,19 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                                             w="100%"
                                                                             lineHeight="1.25"
                                                                             display="grid"
-                                                                            gridTemplateColumns={tipo !== "Consultor" ? "34px minmax(0, 1fr) 34px" : "minmax(0, 1fr)"}
+                                                                            gridTemplateColumns="34px minmax(0, 1fr) 34px"
                                                                             gridTemplateRows="auto auto"
                                                                             alignItems="center"
                                                                             justifyContent="center"
                                                                             textAlign="center"
                                                                         >
-                                                                            <Text gridColumn={tipo !== "Consultor" ? "2" : "1"} gridRow="1" minW={0} fontSize="inherit" overflowWrap="anywhere" wordBreak="normal" whiteSpace="normal" textAlign="center">
+                                                                            <Text gridColumn="2" gridRow="1" minW={0} fontSize="inherit" overflowWrap="anywhere" wordBreak="normal" whiteSpace="normal" textAlign="center">
                                                                                 {appointment.person.name} {appointment.person?.last_name}
                                                                             </Text>
-                                                                            <Text gridColumn={tipo !== "Consultor" ? "2" : "1"} gridRow="2" minW={0} fontSize={{ base: "10px", md: "11px" }} noOfLines={1} mt={0.5} textAlign="center">
+                                                                            <Text gridColumn="2" gridRow="2" minW={0} fontSize={{ base: "10px", md: "11px" }} noOfLines={1} mt={0.5} textAlign="center">
                                                                                 {appointment.person.phone}
                                                                             </Text>
-                                                                            {tipo !== "Consultor" && (
-                                                                                <Menu placement="bottom-end">
+                                                                            <Menu placement="bottom-end">
                                                                                     <MenuButton
                                                                                         as={IconButton}
                                                                                         aria-label="Acciones del turno"
@@ -2576,12 +2638,15 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
                                                                                             </MenuItem>
                                                                                         </MenuList>
                                                                                     </Portal>
-                                                                                </Menu>
-                                                                            )}
+                                                                            </Menu>
                                                                         </Box>
-                                                                    ) : isSlotReal ? (
+                                                                    ) : isReservable ? (
                                                                         <Text fontSize="xs" color="inherit" fontWeight={500}>
                                                                             + Reservar
+                                                                        </Text>
+                                                                    ) : isSlotReal ? (
+                                                                        <Text fontSize="xs" color="text.muted" fontWeight={500}>
+                                                                            Sin cupo
                                                                         </Text>
                                                                     ) : null}
                                                                 </Box>

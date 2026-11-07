@@ -62,9 +62,15 @@ const ITEMS_PER_PAGE = 10;
 const TableExpenses = ({
   list,
   onOpen,
+  selectedStudio,
+  setSelectedStudio,
+  refreshKey,
 }: {
   list: Array<any>;
   onOpen: () => void;
+  selectedStudio: any;
+  setSelectedStudio: (studio: any) => void;
+  refreshKey: number;
 }) => {
   const [payments, setPayments] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -72,6 +78,11 @@ const TableExpenses = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [code, setCode] = useState("admin");
   const { logout, name, last_name, tipo, tokens } = useAuthStore();
+  const isConsultant = tipo === "Consultor";
+  const consultantStudioValue =
+    selectedStudio?.value && selectedStudio.value !== "all"
+      ? String(selectedStudio.value)
+      : "";
   const [searchTerm, setSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -83,11 +94,7 @@ const TableExpenses = ({
   const [isFiltering, setIsFiltering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(false);
-  const [selectedStudio, setSelectedStudio] = useState<any>({
-    value: "all",
-    label: "Todos los estudios",
-  });
-
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
   const { expenses, studios } = useSelector((state: any) => state.studio);
   const dispatch = useAppDispatch();
 
@@ -144,7 +151,8 @@ const TableExpenses = ({
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
-  const isNotDeleted = (item: any) => !item?.deleted;
+  const isNotDeleted = (item: any) =>
+    !item?.deleted && item?.is_active !== false;
 
   const filteredItems = sortedList.filter((item) => {
     if (!isNotDeleted(item)) return false;
@@ -183,9 +191,10 @@ const TableExpenses = ({
       amount.includes(searchValue) ||
       dateStr.includes(searchValue);
 
-    const matchesStudio =
-      selectedStudio?.value === "all" ||
-      getExpenseStudioId(item) === String(selectedStudio?.value);
+    const matchesStudio = isConsultant
+      ? Boolean(consultantStudioValue) && getExpenseStudioId(item) === consultantStudioValue
+      : selectedStudio?.value === "all" ||
+        getExpenseStudioId(item) === String(selectedStudio?.value);
 
     return matchesSearch && matchesStudio;
   });
@@ -227,9 +236,10 @@ const TableExpenses = ({
       amount.includes(searchValue) ||
       dateStr.includes(searchValue);
 
-    const matchesStudio =
-      selectedStudio?.value === "all" ||
-      getExpenseStudioId(item) === String(selectedStudio?.value);
+    const matchesStudio = isConsultant
+      ? Boolean(consultantStudioValue) && getExpenseStudioId(item) === consultantStudioValue
+      : selectedStudio?.value === "all" ||
+        getExpenseStudioId(item) === String(selectedStudio?.value);
 
     return matchesSearch && matchesStudio;
   });
@@ -280,13 +290,22 @@ const TableExpenses = ({
   const cancelRef = React.useRef();
   const toast = useToast();
 
-  useEffect(() => {
-    dispatch(getExpenses());
-    dispatch(getExpensesTodayTeachers());
-
-    if (tipo !== "Consultor") {
-      dispatch(getStudios());
+  const refreshExpenses = () => {
+    if (isFiltering && startDate && endDate) {
+      handleSubmitExpensesByDateRange();
+      return;
     }
+
+    dispatch(
+      getExpenses(
+        selectedStudio?.value === "all" ? undefined : selectedStudio?.value
+      )
+    );
+  };
+
+  useEffect(() => {
+    dispatch(getExpensesTodayTeachers());
+    dispatch(getStudios());
 
     setLoadingTable(true);
 
@@ -296,6 +315,45 @@ const TableExpenses = ({
 
     return () => clearTimeout(timer);
   }, [dispatch, tipo]);
+
+  useEffect(() => {
+    if (isConsultant && !consultantStudioValue) return;
+
+    const studio =
+      isConsultant
+        ? consultantStudioValue
+        : selectedStudio?.value === "all"
+          ? undefined
+          : selectedStudio?.value;
+
+    dispatch(getExpenses(studio))
+      .unwrap()
+      .then((response) => {
+        if (response?.detail) {
+          toast({
+            title: "Estudio dado de baja",
+            description: response.detail,
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+            position: "bottom-right",
+          });
+        }
+      })
+      .catch(() => {
+        // El estado global ya expone el error del request.
+      });
+  }, [consultantStudioValue, dispatch, isConsultant, selectedStudio?.value, toast]);
+
+  useEffect(() => {
+    if (refreshKey > 0 || localRefreshKey > 0) refreshExpenses();
+    // Las claves cambian únicamente después de crear o editar un gasto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey, localRefreshKey]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStudio?.value, isFiltering, expensesByDateRange]);
 
   const handleClickDelete = (item) => {
     onOpenAlertDialogDelete(item);
@@ -345,11 +403,7 @@ const TableExpenses = ({
 
       onCloseAlertDialogDelete();
 
-      if (tipo === "Consultor") {
-        dispatch(getExpensesTodayTeachers());
-      } else {
-        dispatch(getExpenses());
-      }
+      refreshExpenses();
     } catch (error) {
       console.error("Error al eliminar el gasto:", error);
 
@@ -450,7 +504,13 @@ const TableExpenses = ({
           maxH={{ base: "80vh", md: "80vh", lg: "70vh", xl: "75vh" }}
         >
           <ModalCloseButton />
-          <ModalExpenseEdit onClose={onCloseModalEdit} product={selectedItem} />
+          <ModalExpenseEdit
+            onClose={() => {
+              onCloseModalEdit();
+              setLocalRefreshKey((current) => current + 1);
+            }}
+            product={selectedItem}
+          />
         </ModalContent>
       </Modal>
 
@@ -621,7 +681,8 @@ const TableExpenses = ({
             )}
 
             <SearchField
-              w={{ base: "100%", md: "50%", lg: "40%", xl: "20%" }}
+              w={{ base: "100%", md: "360px" }}
+              minW={{ md: "360px" }}
               placeholder="Buscar por fecha, tipo, método de pago, monto…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -789,11 +850,13 @@ const TableExpenses = ({
         </Table>
       </Box>
 
-      <Box display="flex" justifyContent="center" mt={4}>
+      <Box display="flex" justifyContent="center" mt={4} w="100%">
         <Pagination
           count={countPagination}
           pageSize={ITEMS_PER_PAGE}
+          totalItems={isFiltering ? filteredItemsByRange.length : filteredItems.length}
           defaultPage={1}
+          page={currentPage}
           onPageChange={setCurrentPage}
         />
       </Box>

@@ -16,7 +16,6 @@ import {
   getTeacherHours,
 
 } from '../stores/studioSlice';
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 
 const Teachers = () => {
@@ -26,7 +25,6 @@ const Teachers = () => {
   // const [extraHours, setExtraHours] = useState([])
   // const [teachersHours, setTeachersHours] = useState([])
   const { tipo, tokens } = useAuthStore();
-  const [loading, setLoading] = useState(true);
 
   const { teachers, extraHours, teacherHours } =
     useSelector((state: any) => state.studio);
@@ -48,69 +46,52 @@ const Teachers = () => {
   } = useDisclosure();
 
   // async function getTeachers() {
-  // try {
-  // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHERS}`, {
-  // headers: {
-  // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-  // 'Content-Type': 'application/json',
-  // },
-  // });
-  // setTeachers(response.data)
-  // } catch (error) {
-  // console.log(error);
-  // }
+  //   try {
+  //     const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHERS}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+  //     setTeachers(response.data)
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
   // };
 
   // async function getExtraHours() {
-  // try {
-  // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_EXTRA_HOURS}`, {
-  // headers: {
-  // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-  // 'Content-Type': 'application/json',
-  // },
-  // });
-  // setExtraHours(response.data)
-  // } catch (error) {
-  // console.log(error);
-  // }
+  //   try {
+  //     const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_EXTRA_HOURS}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+  //     setExtraHours(response.data)
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
   // };
 
   // async function getTeachersHours() {
-  // try {
-  // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHERS_HOURS}`, {
-  // headers: {
-  // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-  // 'Content-Type': 'application/json',
-  // },
-  // });
-  // setTeachersHours(response.data)
-  // } catch (error) {
-  // console.log(error);
-  // }
+  //   try {
+  //     const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHERS_HOURS}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+  //     setTeachersHours(response.data)
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
   // };
 
   useEffect(() => {
-    // Simulamos una carga de datos o componentes
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000); // Cambia este tiempo según tus necesidades
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      dispatch(getTeachers());
-      dispatch(getExtraHours());
-      dispatch(getTeacherHours());
-    }
-  }, [loading]);
-
-  if (loading) {
-    return (
-      <FullPageLoader />
-    );
-  }
+    dispatch(getTeachers());
+    dispatch(getExtraHours());
+    dispatch(getTeacherHours());
+  }, [dispatch]);
 
   return (
     <>

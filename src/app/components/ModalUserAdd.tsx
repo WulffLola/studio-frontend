@@ -433,10 +433,10 @@ const ModalUserAdd = ({ product, onClose }: any) => {
                                     ) : (
                                         userType
                                             .filter((type) => {
-                                                // 🟣 SUPER -> ve todo
+                                                // 🟣 SUPER → ve todo
                                                 if (tipo === "Super") return true;
 
-                                                // 🔵 ADMIN -> solo Student/Estudiante y Consultor
+                                                // 🔵 ADMIN → solo Student/Estudiante y Consultor
                                                 if (tipo === "Administrador") {
                                                     return (
                                                         type.user_type_name === "Consultor" ||

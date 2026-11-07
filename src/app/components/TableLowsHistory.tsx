@@ -101,69 +101,69 @@ const TableLowsHistory = ({ list }: { list: LowHistoryList }) => {
 
 
     // const handleSubmitCashRegister = () => {
-    // setDateInTable(true);
-    // setIsLoading(true);
-    // setErrorPaymentsByDateRange("");
+    //     setDateInTable(true);
+    //     setIsLoading(true);
+    //     setErrorPaymentsByDateRange("");
 
-    // if (startDate && endDate) {
-    // axios
-    // .get(
-    // `${process.env.NEXT_PUBLIC_URL_BACKEND_CASH_REGISTER}?start_date=${startDate}&end_date=${endDate}`, {
-    // headers: {
-    // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-    // 'Content-Type': 'application/json',
-    // },
-    // }
-    // )
-    // .then((response) => {
-    // setCashRegister(response.data);
-    // setIsFiltered(true); // Activar el filtrado
-    // })
-    // .catch((error) => {
-    // console.log(error);
-    // setCashRegister("")
-    // })
-    // .finally(() => {
-    // setIsLoading(false); // Desactivar el estado de carga
-    // });
-    // } else {
-    // onOpenAlertDialogUndated();
-    // }
+    //     if (startDate && endDate) {
+    //         axios
+    //             .get(
+    //                 `${process.env.NEXT_PUBLIC_URL_BACKEND_CASH_REGISTER}?start_date=${startDate}&end_date=${endDate}`, {
+    //                 headers: {
+    //                     'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //             }
+    //             )
+    //             .then((response) => {
+    //                 setCashRegister(response.data);
+    //                 setIsFiltered(true); // Activar el filtrado
+    //             })
+    //             .catch((error) => {
+    //                 console.log(error);
+    //                 setCashRegister("")
+    //             })
+    //             .finally(() => {
+    //                 setIsLoading(false); // Desactivar el estado de carga
+    //             });
+    //     } else {
+    //         onOpenAlertDialogUndated();
+    //     }
     // };
 
 
 
     // useEffect(() => {
-    // if (!cashRegister || cashRegister.length === 0) {
-    // setSortedData([]); // Si cashRegister está vacío, limpia sortedData
-    // return;
-    // }
+    //     if (!cashRegister || cashRegister.length === 0) {
+    //         setSortedData([]); // Si cashRegister está vacío, limpia sortedData
+    //         return;
+    //     }
 
-    // // Combina y ordena los datos basados en `cashRegister`
-    // let combinedData = [];
-    // if (tipo === "Consultor") {
-    // combinedData = [
-    // ...(cashRegister.payments || []).map(payment => ({
-    // ...payment,
-    // type: 'payments',
-    // })),
-    // ...(cashRegister.expenses_chicos || []).map(expense => ({
-    // ...expense,
-    // type: 'expenses_chicos',
-    // })),
-    // ];
-    // } else {
-    // combinedData = [
-    // ...(cashRegister.payments || []).map(payment => ({
-    // ...payment,
-    // type: 'payments',
-    // })),
-    // ...(cashRegister.expenses || []).map(expense => ({
-    // ...expense,
-    // type: 'expenses',
-    // })),
-    // ];
-    // }
+    //     // Combina y ordena los datos basados en `cashRegister`
+    //     let combinedData = [];
+    //     if (tipo === "Consultor") {
+    //         combinedData = [
+    //             ...(cashRegister.payments || []).map(payment => ({
+    //                 ...payment,
+    //                 type: 'payments',
+    //             })),
+    //             ...(cashRegister.expenses_chicos || []).map(expense => ({
+    //                 ...expense,
+    //                 type: 'expenses_chicos',
+    //             })),
+    //         ];
+    //     } else {
+    //         combinedData = [
+    //             ...(cashRegister.payments || []).map(payment => ({
+    //                 ...payment,
+    //                 type: 'payments',
+    //             })),
+    //             ...(cashRegister.expenses || []).map(expense => ({
+    //                 ...expense,
+    //                 type: 'expenses',
+    //             })),
+    //         ];
+    //     }
 
 
 const sortedData = Object.entries(list || {})
@@ -404,11 +404,13 @@ const sortedData = Object.entries(list || {})
                 </Table>
             </Box>
 
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box display="flex" justifyContent="center" mt={4} w="100%">
                 <Pagination
                     count={countPagination}
                     pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredData.length}
                     defaultPage={1}
+                    page={currentPage}
                     onPageChange={setCurrentPage}
                 />
             </Box>

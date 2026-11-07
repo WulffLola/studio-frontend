@@ -39,7 +39,7 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
     const { studios } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
-    // Filtrado robusto (si studios viene undefined al principio)
+    // ✅ Filtrado robusto (si studios viene undefined al principio)
     const filteredItems = (studios ?? []).filter((item: any) => {
         const combined = `${item.name ?? ""} ${item.address ?? ""} ${item.deleted === null ? "ACTIVO" : "DADO DE BAJA"}`;
         const normalized = combined.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -47,7 +47,7 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
         return normalized.includes(normalizedSearch);
     });
 
-    // Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
+    // ✅ Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
     useEffect(() => {
         setCurrentPage(1);
     }, [filteredItems.length, searchTerm]);
@@ -67,9 +67,9 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
     } = useDisclosure();
 
     // const {
-    // isOpen: isAlertCodeOpen,
-    // onOpen: onOpenModalCode,
-    // onClose: onCloseModalCode,
+    //     isOpen: isAlertCodeOpen,
+    //     onOpen: onOpenModalCode,
+    //     onClose: onCloseModalCode,
     // } = useDisclosure();
 
 
@@ -131,15 +131,15 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
     };
 
     // const handleDeletePlanAndPrice = (item) => {
-    // setSelectedItem(item);
-    // handleDelete();
+    //     setSelectedItem(item);
+    //     handleDelete();
 
-    // const foundPayment = paymentsAmount.find((payment) => String(payment.plan) === String(item.id));
+    //     const foundPayment = paymentsAmount.find((payment) => String(payment.plan) === String(item.id));
 
-    // if (foundPayment) {
-    // setSelectedItemPrice(foundPayment.id); // Guardamos el id en SelectedItemPrice
-    // handleDeletePrice(); // Finalmente, ejecutamos la eliminación del precio
-    // }
+    //     if (foundPayment) {
+    //         setSelectedItemPrice(foundPayment.id); // Guardamos el id en SelectedItemPrice
+    //         handleDeletePrice(); // Finalmente, ejecutamos la eliminación del precio
+    //     }
     // };
 
     /* const handleDelete = () => {
@@ -165,9 +165,9 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
             })
             .catch((error) => {
                 // if (error.response && error.response.data.detail === "This plan is associated with one or more people and cannot be deleted.") {
-                // onOpenAlertDialogAssociated();
+                //     onOpenAlertDialogAssociated();
                 // } else {
-                // console.error(error);
+                //     console.error(error);
                 toast({
                     title: "Error",
                     description: "Ocurrió un error al eliminar un plan.",
@@ -263,28 +263,28 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
 
 
     // const handleDeletePrice = () => {
-    // axios.delete(`${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENT_AMOUNT}${selectedItemPrice.id}/`, {
-    // headers: {
-    // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-    // 'Content-Type': 'application/json',
-    // },
-    // })
-    // .then((data) => {
-    // onCloseAlertDialogDelete();
-    // onCloseAlertDialogPrice();
-    // getPaymentsAmount();
-    // })
-    // .catch((error) => {
-    // console.error(error);
-    // toast({
-    // title: "Error",
-    // description: "Ocurrió un error al eliminar un precio.",
-    // status: "error",
-    // duration: 5000,
-    // isClosable: true,
-    // position: "bottom-right",
-    // });
-    // });
+    //     axios.delete(`${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENT_AMOUNT}${selectedItemPrice.id}/`, {
+    //         headers: {
+    //             'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+    //             'Content-Type': 'application/json',
+    //         },
+    //     })
+    //         .then((data) => {
+    //             onCloseAlertDialogDelete();
+    //             onCloseAlertDialogPrice();
+    //             getPaymentsAmount();
+    //         })
+    //         .catch((error) => {
+    //             console.error(error);
+    //             toast({
+    //                 title: "Error",
+    //                 description: "Ocurrió un error al eliminar un precio.",
+    //                 status: "error",
+    //                 duration: 5000,
+    //                 isClosable: true,
+    //                 position: "bottom-right",
+    //             });
+    //         });
     // };
 
     useEffect(() => {
@@ -706,11 +706,13 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
                 </Table>
             </Box>
 
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box display="flex" justifyContent="center" mt={4} w="100%">
                 <Pagination
                     count={countPagination}
                     pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredItems.length}
                     defaultPage={1}
+                    page={currentPage}
                     onPageChange={setCurrentPage}
                 />
             </Box>

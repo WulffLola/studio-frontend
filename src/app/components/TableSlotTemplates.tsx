@@ -526,7 +526,9 @@ const TableSlotTemplates: React.FC<TableSlotTemplatesProps> = ({
                 <Pagination
                     count={countPagination}
                     pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredItems.length}
                     defaultPage={1}
+                    page={currentPage}
                     onPageChange={setCurrentPage}
                 />
             </Flex>

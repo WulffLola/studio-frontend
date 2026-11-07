@@ -40,7 +40,7 @@ const TableRooms = ({ onOpen }: { onOpen: () => void; }) => {
     const { rooms } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
-    // Filtrado robusto (name, studio_name, capacity, deleted)
+    // ✅ Filtrado robusto (name, studio_name, capacity, deleted)
     const filteredItems = (rooms ?? []).filter((item: any) => {
         const status =
             item?.deleted === null
@@ -62,7 +62,7 @@ const TableRooms = ({ onOpen }: { onOpen: () => void; }) => {
         return normalized.includes(normalizedSearch);
     });
 
-    // Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
+    // ✅ Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
     useEffect(() => {
         setCurrentPage(1);
     }, [filteredItems.length, searchTerm]);
@@ -82,9 +82,9 @@ const TableRooms = ({ onOpen }: { onOpen: () => void; }) => {
     } = useDisclosure();
 
     // const {
-    // isOpen: isAlertCodeOpen,
-    // onOpen: onOpenModalCode,
-    // onClose: onCloseModalCode,
+    //     isOpen: isAlertCodeOpen,
+    //     onOpen: onOpenModalCode,
+    //     onClose: onCloseModalCode,
     // } = useDisclosure();
 
 
@@ -134,15 +134,15 @@ const TableRooms = ({ onOpen }: { onOpen: () => void; }) => {
     };
 
     // const handleDeletePlanAndPrice = (item) => {
-    // setSelectedItem(item);
-    // handleDelete();
+    //     setSelectedItem(item);
+    //     handleDelete();
 
-    // const foundPayment = paymentsAmount.find((payment) => String(payment.plan) === String(item.id));
+    //     const foundPayment = paymentsAmount.find((payment) => String(payment.plan) === String(item.id));
 
-    // if (foundPayment) {
-    // setSelectedItemPrice(foundPayment.id); // Guardamos el id en SelectedItemPrice
-    // handleDeletePrice(); // Finalmente, ejecutamos la eliminación del precio
-    // }
+    //     if (foundPayment) {
+    //         setSelectedItemPrice(foundPayment.id); // Guardamos el id en SelectedItemPrice
+    //         handleDeletePrice(); // Finalmente, ejecutamos la eliminación del precio
+    //     }
     // };
 
     /*   const handleDelete = () => {
@@ -638,11 +638,13 @@ const TableRooms = ({ onOpen }: { onOpen: () => void; }) => {
                 </Table>
             </Box>
 
-            <Box display="flex" justifyContent="center" mt={4}>
+            <Box display="flex" justifyContent="center" mt={4} w="100%">
                 <Pagination
                     count={countPagination}
                     pageSize={ITEMS_PER_PAGE}
+                    totalItems={filteredItems.length}
                     defaultPage={1}
+                    page={currentPage}
                     onPageChange={setCurrentPage}
                 />
             </Box>

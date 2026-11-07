@@ -75,7 +75,7 @@ const ModalStudioAdd = (
             const createdStudio = res.data;
 
             if (isFirstStudio && createdStudio) {
-                // Primer estudio -> se selecciona automáticamente
+                // ✅ Primer estudio → se selecciona automáticamente
                 setSelectedStudio({
                     id: createdStudio.id,
                     name: createdStudio.name,

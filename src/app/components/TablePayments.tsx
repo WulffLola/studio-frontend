@@ -66,6 +66,7 @@ import { Select as Select2 } from "./ui/Select";
 import { formatAmount, formatCurrency } from "../utils/amount";
 import { LoadingOverlay } from "./ui/Loaders";
 import { TableState } from "./ui/StateMessage";
+import { useStudioStore } from "../stores/studio";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -180,6 +181,9 @@ const TablePayments = ({
     value: "all",
     label: "Todos los estudios",
   });
+  const selectedStudioFromHeader = useStudioStore((state) => state.selectedStudio);
+  const studioStoreHasHydrated = useStudioStore((state) => state.hasHydrated);
+  const studioFilterInitialized = React.useRef(false);
 
   const { payments, amounts, studios, plansSubType } = useSelector((state: any) => state.studio);
   const dispatch = useAppDispatch();
@@ -193,6 +197,33 @@ const TablePayments = ({
       label: studio.name,
     })),
   ];
+
+  useEffect(() => {
+    if (!studioStoreHasHydrated) return;
+
+    if (tipo === "Consultor") {
+      setSelectedStudio(
+        selectedStudioFromHeader?.id
+          ? {
+              value: selectedStudioFromHeader.id,
+              label: selectedStudioFromHeader.name,
+            }
+          : { value: "all", label: "Todos los estudios" }
+      );
+      return;
+    }
+
+    if (studioFilterInitialized.current) return;
+
+    if (selectedStudioFromHeader?.id) {
+      setSelectedStudio({
+        value: selectedStudioFromHeader.id,
+        label: selectedStudioFromHeader.name,
+      });
+    }
+
+    studioFilterInitialized.current = true;
+  }, [selectedStudioFromHeader, studioStoreHasHydrated, tipo]);
 
   const studiosMap = useMemo(() => {
     const map = new Map();
@@ -214,47 +245,69 @@ const TablePayments = ({
     return map;
   }, [plansSubType]);
 
+  const getStudioIdFromEntity = (entity: any): string => {
+    if (!entity) return "";
+    if (entity.studio_id !== undefined && entity.studio_id !== null) {
+      return String(entity.studio_id);
+    }
+    if (typeof entity.studio === "number" || typeof entity.studio === "string") {
+      return String(entity.studio);
+    }
+    if (entity.studio?.id !== undefined && entity.studio?.id !== null) {
+      return String(entity.studio.id);
+    }
+    return "";
+  };
+
+  const getStudioNameFromEntity = (entity: any): string =>
+    String(entity?.studio_name || entity?.studio?.name || "");
+
+  const getPaymentStudioSources = (item: any): any[] => {
+    const paymentItems = Array.isArray(item?.items) ? item.items : [];
+    const planSources = [
+      item?.plan,
+      item?.plan_subtype,
+      item?.plans_subtype,
+      item?.person?.plan,
+      ...paymentItems.flatMap((paymentItem: any) => [
+        paymentItem,
+        paymentItem?.plan,
+        paymentItem?.plan_subtype,
+        paymentItem?.plans_subtype,
+      ]),
+    ];
+
+    // Algunas respuestas sólo incluyen el id del plan. En ese caso se usa el
+    // catálogo para recuperar el estudio asociado al subtipo.
+    const planFromCatalog = [item, ...paymentItems]
+      .map((source: any) => plansSubTypeMap.get(getPlanSubTypeId(source)))
+      .filter(Boolean);
+
+    // La prioridad preserva el estudio explícito del pago y luego prueba las
+    // relaciones que usan las distintas variantes del endpoint.
+    return [
+      item,
+      item?.payment,
+      item?.person,
+      item?.type,
+      ...planSources,
+      ...planFromCatalog,
+    ].filter(Boolean);
+  };
+
   const getPaymentStudioId = (item: any) => {
-    if (item?.studio_id) return String(item.studio_id);
-
-    if (typeof item?.studio === "number" || typeof item?.studio === "string") {
-      return String(item.studio);
+    for (const source of getPaymentStudioSources(item)) {
+      const studioId = getStudioIdFromEntity(source);
+      if (studioId) return studioId;
     }
-
-    if (item?.studio?.id) return String(item.studio.id);
-
-    if (item?.type?.studio_id) return String(item.type.studio_id);
-
-    if (
-      typeof item?.type?.studio === "number" ||
-      typeof item?.type?.studio === "string"
-    ) {
-      return String(item.type.studio);
-    }
-
-    if (item?.type?.studio?.id) return String(item.type.studio.id);
-
-    if (item?.person?.studio_id) return String(item.person.studio_id);
-
-    if (
-      typeof item?.person?.studio === "number" ||
-      typeof item?.person?.studio === "string"
-    ) {
-      return String(item.person.studio);
-    }
-
-    if (item?.person?.studio?.id) return String(item.person.studio.id);
-
     return "";
   };
 
   const getPaymentStudioName = (item: any) => {
-    if (item?.studio_name) return item.studio_name;
-    if (item?.studio?.name) return item.studio.name;
-    if (item?.type?.studio_name) return item.type.studio_name;
-    if (item?.type?.studio?.name) return item.type.studio.name;
-    if (item?.person?.studio_name) return item.person.studio_name;
-    if (item?.person?.studio?.name) return item.person.studio.name;
+    for (const source of getPaymentStudioSources(item)) {
+      const studioName = getStudioNameFromEntity(source);
+      if (studioName) return studioName;
+    }
 
     const studioId = getPaymentStudioId(item);
     if (!studioId) return "-";
@@ -293,17 +346,17 @@ const TablePayments = ({
       .toLowerCase();
 
     const dni =
-      item?.person.dni
+      item?.person?.dni
         ?.normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase() || "";
     const name =
-      item?.person.name
+      item?.person?.name
         ?.normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase() || "";
     const lastName =
-      item?.person.last_name
+      item?.person?.last_name
         ?.normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase() || "";
@@ -375,17 +428,17 @@ const TablePayments = ({
       .toLowerCase();
 
     const dni =
-      item?.person.dni
+      item?.person?.dni
         ?.normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase() || "";
     const name =
-      item?.person.name
+      item?.person?.name
         ?.normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase() || "";
     const lastName =
-      item?.person.last_name
+      item?.person?.last_name
         ?.normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .toLowerCase() || "";
@@ -440,7 +493,16 @@ const TablePayments = ({
     ? Math.max(Math.ceil(filteredItemsByRange.length / ITEMS_PER_PAGE), 1)
     : Math.max(Math.ceil(filteredItems.length / ITEMS_PER_PAGE), 1);
 
+  const totalFilteredItems = isFiltering
+    ? filteredItemsByRange.length
+    : filteredItems.length;
+
   const emptyRowsCount = ITEMS_PER_PAGE - currentItems.length;
+
+  useEffect(() => {
+    // Evita quedar en una página vacía al cambiar cualquiera de los filtros.
+    setCurrentPage(1);
+  }, [searchTerm, selectedStudio?.value, isFiltering, paymentsByDateRange]);
 
   const {
     isOpen: isAlertEditOpen,
@@ -539,7 +601,11 @@ const TablePayments = ({
         setPaymentsByDateRange((currentPayments) =>
           currentPayments.filter((payment: any) => payment.id !== selectedItem.id)
         );
-        dispatch(getPayments());
+        dispatch(
+          getPayments(
+            selectedStudio?.value === "all" ? undefined : selectedStudio.value
+          )
+        );
         dispatch(getPaymentsLastMonth());
       })
       .catch((error) => {
@@ -598,12 +664,8 @@ const TablePayments = ({
 
   useEffect(() => {
     dispatch(getPaymentAmount());
-    dispatch(getPayments());
     dispatch(getPlanSubType());
-
-    if (tipo !== "Consultor") {
-      dispatch(getStudios());
-    }
+    dispatch(getStudios());
 
     setLoadingTable(true);
 
@@ -613,6 +675,29 @@ const TablePayments = ({
 
     return () => clearTimeout(timer);
   }, [dispatch, tipo]);
+
+  useEffect(() => {
+    const studio =
+      selectedStudio?.value === "all" ? undefined : selectedStudio?.value;
+
+    dispatch(getPayments(studio))
+      .unwrap()
+      .then((response) => {
+        if (response?.detail) {
+          toast({
+            title: "Estudio dado de baja",
+            description: response.detail,
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+            position: "bottom-right",
+          });
+        }
+      })
+      .catch(() => {
+        // El estado global ya expone el error del request.
+      });
+  }, [dispatch, selectedStudio?.value, toast]);
 
   return (
     <>
@@ -879,7 +964,8 @@ const TablePayments = ({
             )}
 
             <SearchField
-              w={{ base: "100%", md: "50%", lg: "40%", xl: "20%" }}
+              w={{ base: "100%", md: "360px" }}
+              minW={{ md: "360px" }}
               placeholder="Buscar por fecha, alumno, plan, método de pago, monto…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -1091,11 +1177,13 @@ const TablePayments = ({
         </Table>
       </Box>
 
-      <Box display="flex" justifyContent="center" mt={4}>
+      <Box mt={4} w="100%">
         <Pagination
           count={countPagination}
           pageSize={ITEMS_PER_PAGE}
           defaultPage={1}
+          page={currentPage}
+          totalItems={totalFilteredItems}
           onPageChange={setCurrentPage}
         />
       </Box>

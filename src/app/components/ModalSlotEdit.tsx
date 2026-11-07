@@ -12,6 +12,7 @@ import {
     SimpleGrid,
     Spinner,
     Stack,
+    Text,
     Wrap,
     WrapItem,
     useToast,
@@ -20,6 +21,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { useAuthStore } from "../stores/auth";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
 type DayOfWeek = {
     id: number;
@@ -110,6 +112,16 @@ const ModalSlotEdit = ({ product, onClose, getSlots }: ModalSlotEditProps) => {
         () => (rooms || []).filter((room: any) => getRoomStudioId(room) === studioId),
         [rooms, studioId]
     );
+
+    const currentRoom = rooms?.find(
+        (room: any) => String(room.id) === String(product.room || "")
+    );
+    const originalStudioId = getRoomStudioId(currentRoom);
+    const originalStudio = studios?.find(
+        (studio: any) => String(studio.id) === String(originalStudioId)
+    );
+    const isHistoricalStudioLocked =
+        Boolean(originalStudio) && !isSelectableStudio(originalStudio);
 
     useEffect(() => {
         setSelectedDays(getSelectedDays(product.days_of_week));
@@ -213,17 +225,26 @@ const ModalSlotEdit = ({ product, onClose, getSlots }: ModalSlotEditProps) => {
                             <Select
                                 placeholder="Seleccionar..."
                                 value={studioId}
+                                isDisabled={isHistoricalStudioLocked}
                                 onChange={(event) => {
                                     setStudioId(event.target.value);
                                     setRoomId("");
                                 }}
                             >
-                                {studios?.map((studio: any) => (
+                                {studios?.filter((studio: any) =>
+                                    isSelectableStudio(studio) ||
+                                    String(studio.id) === String(originalStudioId)
+                                ).map((studio: any) => (
                                     <option key={studio.id} value={studio.id}>
                                         {studio.name}
                                     </option>
                                 ))}
                             </Select>
+                            {isHistoricalStudioLocked && (
+                                <Text mt={1} fontSize="xs" color="orange.600">
+                                    El estudio histórico no está habilitado y no puede cambiarse.
+                                </Text>
+                            )}
                         </FormControl>
 
                         <FormControl isRequired>

@@ -68,9 +68,9 @@ const ModalExpensesTypeEdit = ({ product, onClose }: any) => {
     const toast = useToast();
 
     // const {
-    // isOpen: isAlertCodeOpen,
-    // onOpen: onOpenModalCode,
-    // onClose: onCloseModalCode,
+    //     isOpen: isAlertCodeOpen,
+    //     onOpen: onOpenModalCode,
+    //     onClose: onCloseModalCode,
     // } = useDisclosure();
 
     const handleSubmitExpenseType = async () => {

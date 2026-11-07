@@ -147,7 +147,7 @@ const ModalWaitingListView = ({ onClose, hour, day, getAppointments, appointment
             return;
         }
 
-        const isDuplicate = Array.isArray(appointments) && appointments.some(
+        const duplicateAppointment = Array.isArray(appointments) && appointments.find(
             (appointment) =>
                 appointment.person &&
                 appointment.slot &&
@@ -155,7 +155,42 @@ const ModalWaitingListView = ({ onClose, hour, day, getAppointments, appointment
                 appointment.slot.id === selectedItem.slot.id
         );
 
-        if (isDuplicate) {
+        if (duplicateAppointment?.reserved === true || duplicateAppointment?.reserved === "true") {
+            try {
+                await axios.patch(
+                    `${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMENTS}${duplicateAppointment.id}/`,
+                    { reserved: false, code },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${tokens?.access}`,
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+                toast({
+                    title: "Turno confirmado correctamente.",
+                    description: "La reserva de la lista de espera quedó confirmada.",
+                    status: "success",
+                    duration: 3000,
+                    position: "bottom-right",
+                    isClosable: true,
+                });
+                getAppointments();
+                return true;
+            } catch (error) {
+                toast({
+                    title: "Error",
+                    description: error.response?.data?.detail || "No se pudo confirmar el turno reservado.",
+                    status: "error",
+                    position: "bottom-right",
+                    duration: 5000,
+                    isClosable: true,
+                });
+                return false;
+            }
+        }
+
+        if (duplicateAppointment) {
             toast({
                 title: "Turno duplicado.",
                 description: "Esta persona ya tiene un turno disponible en este dia y horario.",
@@ -202,25 +237,10 @@ const ModalWaitingListView = ({ onClose, hour, day, getAppointments, appointment
     };
 
     const handleSubmitAppointments2 = async (item, code) => {
-
-        const formData = new FormData();
-        formData.append('person_id', item.person.id);
-        formData.append('slot_id', item.slot.id);
-        formData.append('code', code);
-        formData.append('reserved', true);
-
-        // Validar si algún campo está vacío
-        let isFormValid = true;
-        formData.forEach((value) => {
-            if ((value === "") || value === "--:--") {
-                isFormValid = false;
-            }
-        });
-
-        if (!isFormValid) {
+        if (!item?.person?.id || !item?.slot?.id || !code) {
             toast({
                 title: "Faltan completar campos.",
-                description: "Por favor complete todos los campos.",
+                description: "No se pudo identificar la persona, el turno o el código.",
                 status: "error",
                 position: "bottom-right",
                 duration: 5000,
@@ -229,57 +249,48 @@ const ModalWaitingListView = ({ onClose, hour, day, getAppointments, appointment
             return;
         }
 
-        const isDuplicate = Array.isArray(appointments) && appointments.some(
-            (appointment) =>
-                appointment.person &&
-                appointment.slot &&
-                appointment.person.id === item.person.id &&
-                appointment.slot.id === item.slot.id
-        );
-
-        if (isDuplicate) {
-            toast({
-                title: "Turno duplicado.",
-                description: "Esta persona ya tiene un turno disponible en este dia y horario.",
-                status: "error",
-                position: "bottom-right",
-                duration: 5000,
-                isClosable: true,
-            });
-            return;
-        }
-
-        // Verifica si el slot ya no tiene disponibilidad
-        const selectedSlot = slots.find(slot => slot.id === item.slot.id);
-        if (selectedSlot && selectedSlot.availability < 1) {
-            toast({
-                title: "Sin disponibilidad.",
-                description: "No hay disponibilidad en este día y horario.",
-                status: "error",
-                position: "bottom-right",
-                duration: 5000,
-                isClosable: true,
-            });
-            return;
-        }
+        const formData = new FormData();
+        formData.append("person_id", String(item.person.id));
+        formData.append("slot_id", String(item.slot.id));
+        formData.append("code", String(code));
+        formData.append("reserved", "true");
 
         try {
-            await axios.post(`${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMENTS}`, formData, {
-                headers: { 'Authorization': `Bearer ${tokens?.access}`, 'Content-Type': 'multipart/form-data' }
-            });
+            const response = await axios.post(
+                `${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMENTS}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${tokens?.access}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+
+            const warning = response?.data?.warning;
+            const hasWarning = Boolean(warning) || response?.data?.code === "warning";
             toast({
-                title: "Mensaje enviado correctamente.",
-                description: "Se envió la notificación de WhatsApp y se reservó el lugar.",
-                status: "success", duration: 3000, position: "bottom-right",
+                title: hasWarning ? "Turno reservado con advertencia." : "Mensaje enviado correctamente.",
+                description: hasWarning
+                    ? warning || "El lugar se reservó, pero el backend informó un problema al enviar WhatsApp."
+                    : "El backend envió la notificación de WhatsApp y reservó el lugar.",
+                status: hasWarning ? "warning" : "success",
+                duration: hasWarning ? 7000 : 3000,
+                position: "bottom-right",
                 isClosable: true,
             });
-            // onClose();
             getAppointments();
-            return true;
+            return !hasWarning;
         } catch (error) {
-            toast({ title: "Error", description: error.response?.data?.detail || "Ocurrió un error.", status: "error", position: "bottom-right", duration: 5000, isClosable: true });
+            toast({
+                title: "Error",
+                description: error.response?.data?.detail || "No se pudo enviar la notificación de WhatsApp.",
+                status: "error",
+                position: "bottom-right",
+                duration: 5000,
+                isClosable: true,
+            });
             return false;
-
         }
     };
 
@@ -410,8 +421,11 @@ const ModalWaitingListView = ({ onClose, hour, day, getAppointments, appointment
                                     </Flex>
 
                                     <Flex justifyContent="flex-end" alignItems="center" flexShrink={0}>
-                                        {(sentIds.includes(filteredProduct.id) || isReserved) && (
+                                        {sentIds.includes(filteredProduct.id) && (
                                             <StatusBadge label="Enviado" tone="success" />
+                                        )}
+                                        {!sentIds.includes(filteredProduct.id) && isReserved && (
+                                            <Badge colorScheme="gray" fontSize="0.6rem">Reservado</Badge>
                                         )}
 
                                         <Button
@@ -430,7 +444,6 @@ const ModalWaitingListView = ({ onClose, hour, day, getAppointments, appointment
                                                     setLoadingAdd(null);
                                                 }
                                             }}
-                                            isDisabled={sentIds.includes(filteredProduct.id) || isReserved}
                                         >
 
                                             <Icon path={mdiPlusCircleOutline} size={1} />

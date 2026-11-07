@@ -36,6 +36,8 @@ import {
     getCalendar,
 } from "../stores/studioSlice";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
+import { isSlotCapacityError, isSlotFull } from "../utils/slots";
 
 const ModalAppointmentsEdit = ({
     product,
@@ -56,6 +58,8 @@ const ModalAppointmentsEdit = ({
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [selectedStudio, setSelectedStudio] = useState<any>(null);
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
+
+    const currentSlotId = String(product?.slot?.id || "");
 
     const { tipo, tokens } = useAuthStore();
     const selectedStudioFromStore = useStudioStore(
@@ -146,11 +150,34 @@ const ModalAppointmentsEdit = ({
                 label: item.name,
             })) || [];
 
-    const studioOptions =
-        studios
+    const originalRoomId =
+        typeof product?.slot?.room === "object"
+            ? product?.slot?.room?.id
+            : product?.slot?.room;
+    const originalRoom = rooms?.find(
+        (room: any) => String(room.id) === String(originalRoomId)
+    );
+    const originalStudioId =
+        product?.slot?.room?.studio?.id ??
+        product?.slot?.room?.studio_id ??
+        product?.slot?.room?.studio ??
+        originalRoom?.studio?.id ??
+        originalRoom?.studio_id ??
+        originalRoom?.studio;
+    const originalStudio = studios?.find(
+        (studio: any) => String(studio.id) === String(originalStudioId)
+    );
+    const isHistoricalStudioLocked =
+        Boolean(originalStudio) && !isSelectableStudio(originalStudio);
+
+    const studioOptions = useMemo(
+        () => studios
             ?.filter((studio: any) => {
-                if (studio.is_active === false) return false;
+                const isOriginal = String(studio.id) === String(originalStudioId);
+                if (!isOriginal && !isSelectableStudio(studio)) return false;
                 if (!selectedActivity?.value) return false;
+
+                if (isOriginal) return true;
 
                 const hasMatchingSlot = slots.some((slot: any) => {
                     const slotRoomId =
@@ -184,7 +211,9 @@ const ModalAppointmentsEdit = ({
             .map((studio: any) => ({
                 value: studio.id,
                 label: studio.name,
-            })) || [];
+            })) || [],
+        [studios, selectedActivity?.value, slots, rooms, originalStudioId]
+    );
 
     const roomOptions =
         rooms
@@ -238,13 +267,13 @@ const ModalAppointmentsEdit = ({
                             selectedActivity?.value &&
                             String(slotRoomId) === String(selectedRoom.value) &&
                             String(slotActivityId) === String(selectedActivity.value) &&
-                            Number(slot.availability) > 0
+                            (!isSlotFull(slot) || String(slot.id) === currentSlotId)
                         );
                     })
                     .map((slot: any) => slot.date)
             ),
         ];
-    }, [slots, selectedRoom, selectedActivity]);
+    }, [slots, selectedRoom, selectedActivity, currentSlotId]);
 
     const includeDateObjects = availableDates
         .map((dateStr: string) => parseLocalDate(dateStr))
@@ -267,10 +296,10 @@ const ModalAppointmentsEdit = ({
                 selectedActivity?.value &&
                 String(slotRoomId) === String(selectedRoom.value) &&
                 String(slotActivityId) === String(selectedActivity.value) &&
-                Number(slot.availability) > 0
+                (!isSlotFull(slot) || String(slot.id) === currentSlotId)
             );
         });
-    }, [slots, date, selectedRoom, selectedActivity]);
+    }, [slots, date, selectedRoom, selectedActivity, currentSlotId]);
 
     const hasSlots = availableSlotsByFilters.length > 0;
 
@@ -286,6 +315,13 @@ const ModalAppointmentsEdit = ({
             ])
         ).values(),
     ];
+
+    useEffect(() => {
+        setIdAppointment(product?.id || "");
+        setStudent(String(product?.person?.id || ""));
+        setDate(product?.slot?.date || "");
+        setSelectedSlotId(String(product?.slot?.id || ""));
+    }, [product]);
 
     useEffect(() => {
         if (!peoples?.length || !product?.person?.id) return;
@@ -319,7 +355,7 @@ const ModalAppointmentsEdit = ({
 
                 const matchingStudio = studios.find(
                     (item: any) =>
-                        item.is_active !== false &&
+                        isSelectableStudio(item) &&
                         String(item.id) === String(studioIdFromStore)
                 );
 
@@ -357,9 +393,7 @@ const ModalAppointmentsEdit = ({
                 : matchingRoom?.studio;
 
         const matchingStudio = studios?.find(
-            (item: any) =>
-                item.is_active !== false &&
-                String(item.id) === String(studioId)
+            (item: any) => String(item.id) === String(studioId)
         );
 
         if (matchingActivity) {
@@ -398,6 +432,8 @@ const ModalAppointmentsEdit = ({
         }
 
         setSelectedSlotId(String(currentSlot.id));
+        // La selección inicial se reconstruye cuando terminan de cargar los catálogos.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [slots, rooms, studios, activitySubType, product, selectedStudioFromStore]);
 
     useEffect(() => {
@@ -419,22 +455,23 @@ const ModalAppointmentsEdit = ({
     const handleSubmitAppointments = async (codeValue: string) => {
         setIsLoading(true);
 
-        const formData = new FormData();
-        formData.append("person_id", student);
-        formData.append("slot_id", selectedSlotId);
-        formData.append("code", codeValue);
+        const requiredFields = {
+            persona: student,
+            actividad: selectedActivity?.value,
+            estudio: selectedStudio?.value,
+            sala: selectedRoom?.value,
+            día: date,
+            horario: hours?.value && selectedSlotId,
+        };
 
-        let isFormValid = true;
-        formData.forEach((value) => {
-            if (value === "" || value === "--:--") {
-                isFormValid = false;
-            }
-        });
+        const missingFields = Object.entries(requiredFields)
+            .filter(([, value]) => value === "" || value === null || value === undefined)
+            .map(([field]) => field);
 
-        if (!isFormValid) {
+        if (missingFields.length > 0) {
             toast({
                 title: "Faltan completar campos.",
-                description: "Por favor complete todos los campos.",
+                description: `Complete: ${missingFields.join(", ")}.`,
                 status: "error",
                 position: "bottom-right",
                 duration: 5000,
@@ -443,6 +480,11 @@ const ModalAppointmentsEdit = ({
             setIsLoading(false);
             return;
         }
+
+        const formData = new FormData();
+        formData.append("person_id", student);
+        formData.append("slot_id", selectedSlotId);
+        formData.append("code", codeValue);
 
         const isDuplicate =
             Array.isArray(appointments) &&
@@ -459,6 +501,23 @@ const ModalAppointmentsEdit = ({
             toast({
                 title: "Turno duplicado.",
                 description: "Esta persona ya tiene un turno disponible en este día y horario.",
+                status: "error",
+                position: "bottom-right",
+                duration: 5000,
+                isClosable: true,
+            });
+            setIsLoading(false);
+            return;
+        }
+
+        const selectedSlot = slots.find(
+            (slot: any) => String(slot.id) === String(selectedSlotId)
+        );
+
+        if (selectedSlotId !== currentSlotId && isSlotFull(selectedSlot)) {
+            toast({
+                title: "Cupo completo.",
+                description: "Este horario alcanzó su capacidad máxima. Elegí otro horario.",
                 status: "error",
                 position: "bottom-right",
                 duration: 5000,
@@ -490,20 +549,30 @@ const ModalAppointmentsEdit = ({
             });
 
             onClose();
-            dispatch(getAppointments());
-            dispatch(getCalendar());
+            await Promise.all([
+                dispatch(getAppointments()),
+                dispatch(getCalendar()),
+                dispatch(getSlots()),
+            ]);
         } catch (error: any) {
             const errorMessage =
                 error.response?.data?.detail || "Ocurrió un error al editar el turno.";
 
             toast({
-                title: "Error",
+                title: isSlotCapacityError(errorMessage) ? "Cupo completo." : "Error",
                 description: errorMessage,
                 status: "error",
                 duration: 5000,
                 isClosable: true,
                 position: "bottom-right",
             });
+            if (isSlotCapacityError(errorMessage)) {
+                await Promise.all([
+                    dispatch(getAppointments()),
+                    dispatch(getCalendar()),
+                    dispatch(getSlots()),
+                ]);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -559,7 +628,7 @@ const ModalAppointmentsEdit = ({
                             <Select2
                                 w="100%"
                                 placeholder="Seleccionar"
-                                value={selectedStudent || undefined}
+                                value={selectedStudent}
                                 onChange={(selectedOption: any) => {
                                     setSelectedStudent(selectedOption || null);
                                     setStudent(String(selectedOption?.value || ""));
@@ -580,7 +649,7 @@ const ModalAppointmentsEdit = ({
                             <Select2
                                 w="100%"
                                 placeholder="Seleccionar"
-                                value={selectedActivity || undefined}
+                                value={selectedActivity}
                                 options={activityOptions}
                                 onChange={(selectedOption: any) => {
                                     setSelectedActivity(selectedOption);
@@ -602,14 +671,19 @@ const ModalAppointmentsEdit = ({
                                         ? "Sin estudios disponibles"
                                         : "Seleccionar"
                                 }
-                                value={selectedStudio || undefined}
-                                isDisabled={!selectedActivity}
+                                value={selectedStudio}
+                                isDisabled={!selectedActivity || isHistoricalStudioLocked}
                                 options={studioOptions}
                                 onChange={(selectedOption: any) => {
                                     setSelectedStudio(selectedOption);
                                     resetFromStudio();
                                 }}
                             />
+                            {isHistoricalStudioLocked && (
+                                <Text mt={1} fontSize="xs" color="orange.600">
+                                    El estudio histórico no está habilitado y no puede cambiarse.
+                                </Text>
+                            )}
                         </FormControl>
                     </Box>
 
@@ -625,7 +699,7 @@ const ModalAppointmentsEdit = ({
                                         ? "Sin salas disponibles"
                                         : "Seleccionar"
                                 }
-                                value={selectedRoom || undefined}
+                                value={selectedRoom}
                                 isDisabled={!selectedStudio || !selectedActivity}
                                 options={roomOptions}
                                 onChange={(selectedOption: any) => {
@@ -684,7 +758,7 @@ const ModalAppointmentsEdit = ({
                             <FormLabel>Horario</FormLabel>
                             <Select2
                                 w="100%"
-                                value={hours || undefined}
+                                value={hours}
                                 isDisabled={!date || !selectedRoom || !selectedActivity || !hasSlots}
                                 placeholder={
                                     !selectedRoom

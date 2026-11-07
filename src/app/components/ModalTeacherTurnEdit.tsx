@@ -37,6 +37,7 @@ import ModalCode from "./ModalCode";
 import { useAuthStore } from "../stores/auth";
 import { Select as Select2 } from "./ui/Select";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
 const getSlotDateValue = (slot: any) =>
     slot?.date || slot?.week_day?.day || "";
@@ -242,6 +243,8 @@ const ModalTeacherTurnEdit = ({ product, onClose, getTeachersTurn }: any) => {
         getSlots()
         getStudios()
         getRooms()
+        // Estas funciones cargan los catálogos una sola vez al abrir el modal.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -295,6 +298,47 @@ const ModalTeacherTurnEdit = ({ product, onClose, getTeachersTurn }: any) => {
                 value: slot.id,
             }));
     }, [date, room, slots, product]);
+
+    const originalRoomId = product?.slot?.room?.id ?? product?.slot?.room;
+    const originalRoom = rooms.find(
+        (item: any) => String(item.id) === String(originalRoomId)
+    ) as any;
+    const originalStudioId =
+        product?.slot?.room?.studio?.id ??
+        product?.slot?.room?.studio_id ??
+        product?.slot?.room?.studio ??
+        originalRoom?.studio?.id ??
+        originalRoom?.studio_id ??
+        originalRoom?.studio;
+    const originalStudio = studios.find(
+        (item: any) => String(item.id) === String(originalStudioId)
+    ) as any;
+    const isHistoricalStudioLocked =
+        Boolean(originalStudio) && !isSelectableStudio(originalStudio);
+
+    const studioOptions = studios
+        .filter((item: any) => {
+            const isOriginal = String(item.id) === String(originalStudioId);
+            if (isOriginal) return true;
+            if (!isSelectableStudio(item)) return false;
+
+            return rooms.some((roomItem: any) => {
+                const roomStudioId =
+                    roomItem?.studio?.id ??
+                    roomItem?.studio_id ??
+                    roomItem?.studio;
+
+                return (
+                    roomItem?.is_active !== false &&
+                    roomItem?.deleted == null &&
+                    String(roomStudioId) === String(item.id)
+                );
+            });
+        })
+        .map((item: any) => ({
+            label: item.name,
+            value: item.id,
+        }));
 
 
     return (
@@ -414,33 +458,19 @@ const ModalTeacherTurnEdit = ({ product, onClose, getTeachersTurn }: any) => {
                             <Select2
                                 placeholder="Seleccionar"
                                 value={studio}
+                                isDisabled={isHistoricalStudioLocked}
                                 onChange={(selectedOption) => {
                                     setStudio(selectedOption || null);
                                     setRoom(null);
                                     setSelectedSlotId("");
                                 }}
-                                options={studios
-                                    .filter((item: any) => {
-                                        if (item?.is_active === false) return false;
-
-                                        return rooms.some((roomItem: any) => {
-                                            const roomStudioId =
-                                                roomItem?.studio?.id ??
-                                                roomItem?.studio_id ??
-                                                roomItem?.studio;
-
-                                            return (
-                                                roomItem?.is_active !== false &&
-                                                roomItem?.deleted == null &&
-                                                String(roomStudioId) === String(item.id)
-                                            );
-                                        });
-                                    })
-                                    .map((item: any) => ({
-                                        label: item.name,
-                                        value: item.id,
-                                    }))}
+                                options={studioOptions}
                             />
+                            {isHistoricalStudioLocked && (
+                                <Text mt={1} fontSize="xs" color="orange.600">
+                                    El estudio histórico no está habilitado y no puede cambiarse.
+                                </Text>
+                            )}
                         </FormControl>
                     </Box>
                     <Box>

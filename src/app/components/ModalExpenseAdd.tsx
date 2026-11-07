@@ -53,6 +53,7 @@ import {
 import { useStudioStore } from "../stores/studio";
 import { formatAmount, formatCurrency } from "../utils/amount";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
 const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
     // const [idPayment, setIdPayment] = useState("")
@@ -73,9 +74,6 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
     const { teacherHours, teachers, expenseType, studios } = useSelector((state: any) => state.studio);
     const selectedStudioFromStore = useStudioStore((state: any) => state.selectedStudio);
     const [studio, setStudio] = useState({ id: "", name: "" });
-
-
-    console.log(selectedStudioFromStore)
 
     const dispatch = useAppDispatch();
 
@@ -98,14 +96,21 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
     const handleSubmitExpense = async (code) => {
         setLoading(true)
 
-        console.log(studio.id)
+        const effectiveStudio =
+            tipo === "Consultor" && selectedStudioFromStore?.id
+                ? {
+                    id: selectedStudioFromStore.id,
+                    name: selectedStudioFromStore.name,
+                }
+                : studio;
+
         const formData = new FormData();
         formData.append('type_id', type.id);
         formData.append('amount', amount);
         formData.append('method', method);
         formData.append('code', code);
         formData.append('observation', observation);
-        formData.append("studio", String(studio.id));
+        formData.append("studio", String(effectiveStudio.id));
 
         if (type.name.includes("Sueldo")) {
             formData.append('teacher', teacher.id);
@@ -186,7 +191,7 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
             return;
         }
 
-        if (!studio.id) {
+        if (!effectiveStudio.id) {
             toast({
                 title: "Faltan completar campos.",
                 description: "Por favor, seleccioná un estudio.",
@@ -308,7 +313,7 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
     }, [dispatch]);
 
     useEffect(() => {
-        if (selectedStudioFromStore) {
+        if (selectedStudioFromStore && isSelectableStudio(selectedStudioFromStore)) {
             setStudio({
                 id: selectedStudioFromStore.id,
                 name: selectedStudioFromStore.name,
@@ -389,8 +394,8 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
                             onChange={event => handleSelectChange(event)}
                             value={type.id || ""}
                         // tipo === "Consultor"
-                        // ? expensesType.find((expense) => expense.name === "Gastos Chicos")?.id || "" // Buscar el ID de "Gastos Chicos"
-                        // : selectedExpense?.id || "" // Usar el valor del estado cuando no es Consultor
+                        //     ? expensesType.find((expense) => expense.name === "Gastos Chicos")?.id || "" // Buscar el ID de "Gastos Chicos"
+                        //     : selectedExpense?.id || "" // Usar el valor del estado cuando no es Consultor
                         >
                             {tipo === "Consultor" ? (
                                 expensesType
@@ -495,7 +500,7 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
 
                                 return hour.teacher?.id == teacher.id
                                 // &&
-                                // hourMonth === currentMonth; // Compara como enteros
+                                //     hourMonth === currentMonth; // Compara como enteros
                             }) &&
                             (
                                 <Text color="text.muted" fontSize="sm" mt={"5px"} pl={"5px"}>
@@ -506,13 +511,13 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
                     </Box>
 
                     {/*                     {!type.name.includes("Sueldo") && (
- */}                  <Box>
+ */}                  {tipo !== "Consultor" && <Box>
                         <FormControl id="studio" isRequired>
                             <FormLabel>Estudio</FormLabel>
                             <Select2
                                 placeholder="Seleccionar estudio..."
                                 options={studios
-                                    .filter((s: any) => s.is_active)
+                                    .filter(isSelectableStudio)
                                     .map((s: any) => ({
                                         label: s.name,
                                         value: s.id,
@@ -534,7 +539,7 @@ const ModalExpenseAdd = ({ product, onClose, onAddExpense }: any) => {
                                 }
                             />
                         </FormControl>
-                    </Box>
+                    </Box>}
                     {/*                     )}
  */}                </SimpleGrid>
 

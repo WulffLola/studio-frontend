@@ -42,19 +42,20 @@ import ModalCode from "./ModalCode";
 import { useAuthStore } from "../stores/auth";
 import { Select as Select2 } from "./ui/Select";
 import { useAppDispatch } from "../stores/hooks";
+import { getPaymentErrorMessage } from "../utils/paymentError";
 import { useSelector } from "react-redux";
 import {
     getPayments,
     getPeoples,
     getPaymentsLastMonth,
     getPaymentAmount,
-    getPlans,
     getPlanSubType,
     getStudios,
 } from '../stores/studioSlice';
 import { useStudioStore } from "../stores/studio";
 import { formatAmount, isValidAmountInput, normalizeAmountInput, formatCurrency } from "../utils/amount";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
 
 const getPaymentPlanId = (item: any): string => {
     if (!item) return "";
@@ -172,12 +173,11 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
         ""
     );
 
-    const { appointments, plans, plansSubType, peoples, amounts, studios } = useSelector((state: any) => state.studio);
+    const { appointments, plansSubType, peoples, amounts, studios } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
     // const [peoples, setPeoples] = useState([])
     // const [paymentAmount, setPaymentAmount] = useState([])
-    // const [plans, setPlans] = useState([])
 
     const toast = useToast();
     const selectedStudioFromHeader = useStudioStore((state: any) => state.selectedStudio);
@@ -190,47 +190,33 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
 
     // // get Peoples for table
     // async function getPeoples() {
-    // try {
-    // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PEOPLE}`, {
-    // headers: {
-    // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-    // 'Content-Type': 'application/json',
-    // },
-    // });
-    // setPeoples(response.data)
-    // } catch (error) {
-    // console.log(error);
-    // }
+    //     try {
+    //         const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PEOPLE}`, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+    //                 'Content-Type': 'application/json',
+    //             },
+    //         });
+    //         setPeoples(response.data)
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
     // };
 
 
     // // get Payment-Amount for table
     // async function getPaymentAmount() {
-    // try {
-    // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENT_AMOUNT}`, {
-    // headers: {
-    // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-    // 'Content-Type': 'application/json',
-    // },
-    // });
-    // setPaymentAmount(response.data)
-    // } catch (error) {
-    // console.log(error);
-    // }
-    // };
-
-    // async function getPlans() {
-    // try {
-    // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PLAN}`, {
-    // headers: {
-    // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-    // 'Content-Type': 'application/json',
-    // },
-    // });
-    // setPlans(response.data)
-    // } catch (error) {
-    // console.log(error);
-    // }
+    //     try {
+    //         const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENT_AMOUNT}`, {
+    //             headers: {
+    //                 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+    //                 'Content-Type': 'application/json',
+    //             },
+    //         });
+    //         setPaymentAmount(response.data)
+    //     } catch (error) {
+    //         console.log(error);
+    //     }
     // };
 
     const paymentMethods = [
@@ -332,9 +318,25 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
 
     const canSelectStudio = ["Administrador", "ADMIN", "Admin", "Super", "SUPER"].includes(String(tipo));
 
+    const originalPaymentStudioId =
+        product?.studio_id ||
+        (typeof product?.studio === "number" || typeof product?.studio === "string" ? product.studio : product?.studio?.id) ||
+        product?.type?.studio_id ||
+        (typeof product?.type?.studio === "number" || typeof product?.type?.studio === "string" ? product.type.studio : product?.type?.studio?.id) ||
+        product?.person?.studio_id ||
+        (typeof product?.person?.studio === "number" || typeof product?.person?.studio === "string" ? product.person.studio : product?.person?.studio?.id);
+    const originalPaymentStudio = studios?.find(
+        (studio: any) => String(studio.id) === String(originalPaymentStudioId)
+    );
+    const isHistoricalStudioLocked =
+        Boolean(originalPaymentStudio) && !isSelectableStudio(originalPaymentStudio);
+
     const studioOptions =
         studios
-            ?.filter((studio: any) => !studio?.deleted)
+            ?.filter((studio: any) =>
+                isSelectableStudio(studio) ||
+                String(studio.id) === String(originalPaymentStudioId)
+            )
             .map((studio: any) => ({
                 value: studio.id,
                 label: studio.name,
@@ -458,29 +460,21 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
             dispatch(getPayments());
             dispatch(getPaymentsLastMonth())
 
-        } catch (error) {
+        } catch (error: any) {
 
-            const errorMessage = error.response?.data?.detail || "Ocurrió un error al editar el pago.";
+            const errorMessage = getPaymentErrorMessage(
+                error.response?.data,
+                "Ocurrió un error al editar el pago."
+            );
 
-            if (errorMessage === "El código proporcionado no corresponde a ningún usuario.") {
-                toast({
-                    title: "Error",
-                    description: errorMessage, // Muestra el mensaje de código incorrecto
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                    position: "bottom-right",
-                });
-            } else {
-                toast({
-                    title: "Error",
-                    description: errorMessage,
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                    position: "bottom-right",
-                });
-            }
+            toast({
+                title: "Error",
+                description: errorMessage,
+                status: "error",
+                duration: 7000,
+                isClosable: true,
+                position: "bottom-right",
+            });
         } finally {
             setLoading(false)
         }
@@ -489,7 +483,6 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
     useEffect(() => {
         dispatch(getPeoples())
         dispatch(getPaymentAmount())
-        dispatch(getPlans())
         dispatch(getPlanSubType())
         dispatch(getPayments())
         dispatch(getPaymentsLastMonth())
@@ -671,17 +664,17 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
 
     // // useEffect para manejar los cambios de `plan` y `paymentMethod`
     // useEffect(() => {
-    // const selectedAmount = paymentAmount.find(
-    // (item) => String(item.plan) === String(plan.id) && item.method === paymentMethod
-    // );
+    //     const selectedAmount = paymentAmount.find(
+    //         (item) => String(item.plan) === String(plan.id) && item.method === paymentMethod
+    //     );
 
-    // if (selectedAmount) {
-    // setAmountId(selectedAmount.id);
-    // setAmountValue(selectedAmount.amount);
-    // } else {
-    // setAmountId("");
-    // setAmountValue("");
-    // }
+    //     if (selectedAmount) {
+    //         setAmountId(selectedAmount.id);
+    //         setAmountValue(selectedAmount.amount);
+    //     } else {
+    //         setAmountId("");
+    //         setAmountValue("");
+    //     }
     // }, [plan, paymentMethod]);
 
     useEffect(() => {
@@ -832,6 +825,7 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
                                 <Select2
                                     placeholder="Seleccionar estudio..."
                                     options={studioOptions}
+                                    isDisabled={isHistoricalStudioLocked}
                                     value={
                                         studioOptions.find(
                                             (option: any) => String(option.value) === String(paymentStudio)
@@ -841,6 +835,11 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
                                         setPaymentStudio(selectedOption?.value ? String(selectedOption.value) : "")
                                     }
                                 />
+                                {isHistoricalStudioLocked && (
+                                    <Text mt={1} fontSize="xs" color="orange.600">
+                                        El estudio histórico no está habilitado y no puede cambiarse.
+                                    </Text>
+                                )}
                             </FormControl>
                         </Box>
                     )}
@@ -859,9 +858,9 @@ const ModalPaymentEdit = ({ product, onClose }: any) => {
                                     maxLength={100} // Limita la entrada a 30 caracteres
                                     onChange={(event) => setObservation(event.target.value)}
                                 // value={
-                                // paymentAmount.find(
-                                // (item) => item.plan === plan && item.method === paymentMethod
-                                // )?.amount || ''
+                                //     paymentAmount.find(
+                                //         (item) => item.plan === plan && item.method === paymentMethod
+                                //     )?.amount || ''
                                 // }
                                 // value={amountValue}
                                 // isDisabled

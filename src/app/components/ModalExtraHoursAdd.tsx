@@ -23,27 +23,48 @@ import { Select as Select2 } from "./ui/Select";
 import ModalCode from "./ModalCode";
 import { useAuthStore } from "../stores/auth";
 import { useAppDispatch } from "../stores/hooks";
+import { useStudioStore } from "../stores/studio";
 import { useSelector } from "react-redux";
 import {
     getExtraHours,
+    getRooms,
+    getStudios,
     getTeachers,
     getSlots,
 } from "../stores/studioSlice";
 import DatePicker from "react-datepicker";
 import { LoadingOverlay } from "./ui/Loaders";
+import { isSelectableStudio } from "../utils/studios";
+
+const getSlotRoomId = (slot: any) =>
+    typeof slot?.room === "object" ? slot.room?.id : slot?.room;
+
+const getRoomStudioId = (room: any) =>
+    typeof room?.studio === "object"
+        ? room.studio?.id
+        : room?.studio_id ?? room?.studio;
 
 const ModalExtraHoursAdd = ({ product, onClose }: any) => {
-    const [date, setDate] = useState<Date | null>(null);
-    const [teacher, setTeacher] = useState("");
+    const isEditing = Boolean(product?.id);
+    const productDate = product?.slot?.date
+        ? (() => { const [year, month, day] = product.slot.date.split("-").map(Number); return new Date(year, month - 1, day); })()
+        : null;
+    const [date, setDate] = useState<Date | null>(productDate);
+    const [teacher, setTeacher] = useState(product?.teacher?.id ? String(product.teacher.id) : "");
+    const [selectedStudio, setSelectedStudio] = useState<any>(null);
+    const [selectedRoom, setSelectedRoom] = useState<any>(null);
     const [hours, setHours] = useState<any>(null);
-    const [price, setPrice] = useState("");
+    const [price, setPrice] = useState(product?.price != null ? String(product.price) : "");
     const { tipo, tokens } = useAuthStore();
     const [loading, setLoading] = useState(false);
 
-    const { teachers, slots } = useSelector((state: any) => state.studio);
+    const { teachers, slots, rooms, studios } = useSelector((state: any) => state.studio);
+    const selectedStudioFromHeader = useStudioStore(
+        (state: any) => state.selectedStudio
+    );
     const dispatch = useAppDispatch();
 
-    const [selectedSlotId, setSelectedSlotId] = useState("");
+    const [selectedSlotId, setSelectedSlotId] = useState(product?.slot?.id ? String(product.slot.id) : "");
 
     const toast = useToast();
 
@@ -59,8 +80,104 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
           ).padStart(2, "0")}`
         : "";
 
-    const availableSlotsByDate = slots.filter(
-        (slot: any) => slot.deleted === null && slot.date === formattedDate
+    const activeSlots = (Array.isArray(slots) ? slots : []).filter(
+        (slot: any) => slot.deleted === null
+    );
+
+    const originalRoomId = getSlotRoomId(product?.slot);
+    const originalRoom = (Array.isArray(rooms) ? rooms : []).find(
+        (room: any) => String(room.id) === String(originalRoomId)
+    );
+    const originalStudioId = getRoomStudioId(originalRoom) ?? product?.studio?.id ?? product?.studio_id;
+
+    const studioOptions = (Array.isArray(studios) ? studios : [])
+        .filter((studio: any) => isSelectableStudio(studio) || (isEditing && String(studio.id) === String(originalStudioId)))
+        .map((studio: any) => ({
+            label: studio.name,
+            value: String(studio.id),
+        }));
+
+    useEffect(() => {
+        if (selectedStudio) return;
+
+        if (isEditing && originalStudioId) {
+            const historicalStudio = (Array.isArray(studios) ? studios : []).find(
+                (studio: any) => String(studio.id) === String(originalStudioId)
+            );
+            if (historicalStudio) {
+                setSelectedStudio({ label: historicalStudio.name, value: String(historicalStudio.id) });
+                return;
+            }
+        }
+
+        const headerStudioId =
+            typeof selectedStudioFromHeader === "object"
+                ? selectedStudioFromHeader?.id
+                : selectedStudioFromHeader;
+        if (!headerStudioId) return;
+
+        const matchingStudio = (Array.isArray(studios) ? studios : []).find(
+            (studio: any) =>
+                studio.is_active !== false &&
+                !studio.deleted &&
+                String(studio.id) === String(headerStudioId)
+        );
+
+        if (matchingStudio) {
+            setSelectedStudio({
+                label: matchingStudio.name,
+                value: String(matchingStudio.id),
+            });
+        }
+    }, [isEditing, originalStudioId, selectedStudio, selectedStudioFromHeader, studios]);
+
+    useEffect(() => {
+        if (!isEditing || selectedRoom || !originalRoom) return;
+        setSelectedRoom({ label: originalRoom.name, value: String(originalRoom.id) });
+    }, [isEditing, originalRoom, selectedRoom]);
+
+    useEffect(() => {
+        if (!isEditing || !product?.slot?.id || hours) return;
+        setHours({ label: product.slot.start_time?.slice(0, 5), value: String(product.slot.id) });
+    }, [hours, isEditing, product]);
+
+    const roomOptions = (Array.isArray(rooms) ? rooms : [])
+        .filter((room: any) => {
+            if (!selectedStudio || room.is_active === false || room.deleted) return false;
+            if (String(getRoomStudioId(room)) !== String(selectedStudio.value)) return false;
+
+            return activeSlots.some(
+                (slot: any) => String(getSlotRoomId(slot)) === String(room.id)
+            );
+        })
+        .map((room: any) => ({
+            label: room.name,
+            value: String(room.id),
+        }));
+
+    const availableDateStrings = Array.from(
+        new Set(
+            activeSlots
+                .filter(
+                    (slot: any) =>
+                        selectedRoom &&
+                        String(getSlotRoomId(slot)) === String(selectedRoom.value)
+                )
+                .map((slot: any) => slot.date)
+                .filter(Boolean)
+        )
+    ) as string[];
+
+    const availableDates = availableDateStrings.map((dateString) => {
+        const [year, month, day] = dateString.split("-").map(Number);
+        return new Date(year, month - 1, day);
+    });
+
+    const availableSlotsByDate = activeSlots.filter(
+        (slot: any) =>
+            selectedRoom &&
+            String(getSlotRoomId(slot)) === String(selectedRoom.value) &&
+            slot.date === formattedDate
     );
 
     const hasSlots = availableSlotsByDate.length > 0;
@@ -69,32 +186,6 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
         label: slot.start_time?.slice(0, 5),
         value: String(slot.id),
     }));
-
-    useEffect(() => {
-        if (!formattedDate) {
-            setHours(null);
-            setSelectedSlotId("");
-            return;
-        }
-
-        const firstAvailableSlot = slots.find(
-            (slot: any) => slot.deleted === null && slot.date === formattedDate
-        );
-
-        if (!firstAvailableSlot) {
-            setHours(null);
-            setSelectedSlotId("");
-            return;
-        }
-
-        const option = {
-            label: firstAvailableSlot.start_time?.slice(0, 5),
-            value: String(firstAvailableSlot.id),
-        };
-
-        setHours(option);
-        setSelectedSlotId(option.value);
-    }, [formattedDate, slots]);
 
     const handleSubmitExtraHours = async () => {
         setLoading(true);
@@ -127,20 +218,21 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
         }
 
         try {
-            await axios.post(
-                `${process.env.NEXT_PUBLIC_URL_BACKEND_EXTRA_HOURS}`,
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${tokens?.access}`,
-                        "Content-Type": "multipart/form-data",
-                    },
-                }
-            );
+            await axios.request({
+                method: isEditing ? "put" : "post",
+                url: isEditing
+                    ? `${process.env.NEXT_PUBLIC_URL_BACKEND_EXTRA_HOURS}${product.id}/`
+                    : `${process.env.NEXT_PUBLIC_URL_BACKEND_EXTRA_HOURS}`,
+                data: formData,
+                headers: {
+                    Authorization: `Bearer ${tokens?.access}`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
 
             toast({
-                title: "Hora extra registrada correctamente.",
-                description: "La hora extra fue registrada con éxito.",
+                title: isEditing ? "Hora extra editada correctamente." : "Hora extra registrada correctamente.",
+                description: isEditing ? "Los cambios fueron guardados con éxito." : "La hora extra fue registrada con éxito.",
                 status: "success",
                 duration: 3000,
                 isClosable: true,
@@ -191,6 +283,8 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
     useEffect(() => {
         dispatch(getTeachers());
         dispatch(getSlots());
+        dispatch(getRooms());
+        dispatch(getStudios());
     }, [dispatch]);
 
     return (
@@ -210,7 +304,7 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
                     pr={8}
                     mb={1} position="sticky" top={0} zIndex={2} bg="bg.surface" py={2} mt={-2}
                 >
-                    Nueva hora extra
+                    {isEditing ? "Editar hora extra" : "Nueva hora extra"}
                 </Heading>
 
                 <SimpleGrid columns={[1, 1, 2]} spacing={4}>
@@ -218,7 +312,6 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
                         <FormControl id="teacher" isRequired>
                             <FormLabel>Profesora</FormLabel>
                             <Select2
-                                w="100%"
                                 placeholder="Seleccionar"
                                 value={
                                     teacher
@@ -245,6 +338,53 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
                     </Box>
 
                     <Box>
+                        <FormControl id="studio" isRequired>
+                            <FormLabel>Estudio</FormLabel>
+                            <Select2
+                                value={selectedStudio}
+                                options={studioOptions}
+                                isClearable={false}
+                                placeholder={
+                                    studioOptions.length
+                                        ? "Seleccionar"
+                                        : "Sin estudios disponibles"
+                                }
+                                onChange={(selectedOption: any) => {
+                                    setSelectedStudio(selectedOption || null);
+                                    setSelectedRoom(null);
+                                    setDate(null);
+                                    setHours(null);
+                                    setSelectedSlotId("");
+                                }}
+                            />
+                        </FormControl>
+                    </Box>
+
+                    <Box>
+                        <FormControl id="room" isRequired>
+                            <FormLabel>Sala</FormLabel>
+                            <Select2
+                                value={selectedRoom}
+                                options={roomOptions}
+                                isDisabled={!selectedStudio}
+                                placeholder={
+                                    !selectedStudio
+                                        ? "Seleccionar estudio primero"
+                                        : roomOptions.length
+                                        ? "Seleccionar"
+                                        : "Sin salas disponibles"
+                                }
+                                onChange={(selectedOption: any) => {
+                                    setSelectedRoom(selectedOption || null);
+                                    setDate(null);
+                                    setHours(null);
+                                    setSelectedSlotId("");
+                                }}
+                            />
+                        </FormControl>
+                    </Box>
+
+                    <Box>
                         <FormControl id="day" isRequired>
                             <FormLabel>Fecha</FormLabel>
                             <Box
@@ -264,8 +404,16 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
                                         setHours(null);
                                         setSelectedSlotId("");
                                     }}
+                                    includeDates={availableDates}
                                     dateFormat="dd/MM/yyyy"
-                                    placeholderText="Seleccionar"
+                                    placeholderText={
+                                        !selectedRoom
+                                            ? "Seleccionar sala primero"
+                                            : availableDates.length
+                                            ? "Seleccionar"
+                                            : "Sin fechas disponibles"
+                                    }
+                                    disabled={!selectedRoom || availableDates.length === 0}
                                     customInput={
                                         <input
                                             style={{
@@ -285,12 +433,12 @@ const ModalExtraHoursAdd = ({ product, onClose }: any) => {
                         <FormControl id="hours" isRequired>
                             <FormLabel>Horario</FormLabel>
                             <Select2
-                                h="40px"
-                                w="100%"
-                                value={hours || undefined}
+                                value={hours}
                                 isDisabled={!formattedDate || !hasSlots}
                                 placeholder={
-                                    !formattedDate
+                                    !selectedRoom
+                                        ? "Seleccionar sala primero"
+                                        : !formattedDate
                                         ? "Seleccionar fecha primero"
                                         : !hasSlots
                                         ? "Sin horarios disponibles"

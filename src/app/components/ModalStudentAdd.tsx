@@ -56,7 +56,6 @@ const ModalStudentAdd = ({ product, onClose }: any) => {
     const dispatch = useAppDispatch();
 
 
-    const [plans, setPlans] = useState([])
     const { tipo, tokens } = useAuthStore();
 
     const toast = useToast();
@@ -347,12 +346,6 @@ const ModalStudentAdd = ({ product, onClose }: any) => {
     const capitalizeFirstLetter = (text: string) => {
         return text.replace(/(^|\s)\w/g, match => match.toUpperCase());
     };
-
-
-
-    // useEffect(() => {
-    // getPlans()
-    // }, []);
 
     const handleDniChange = (event) => {
         const newDni = event.target.value;

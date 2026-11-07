@@ -42,6 +42,8 @@ import {
 } from "../stores/studioSlice";
 import { AddIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useStudioStore } from "../stores/studio";
+import { isSelectableStudio } from "../utils/studios";
+import { getPaymentErrorMessage } from "../utils/paymentError";
 import { formatAmount, isValidAmountInput, normalizeAmountInput, formatCurrency } from "../utils/amount";
 import { LoadingOverlay } from "./ui/Loaders";
 
@@ -92,7 +94,7 @@ const ModalPaymentAdd = ({ product, onClose, updatedAppointments, setUpdatedAppo
 
     const studioOptions =
         studios
-            ?.filter((studio: any) => !studio?.deleted)
+            ?.filter(isSelectableStudio)
             .map((studio: any) => ({
                 value: studio.id,
                 label: studio.name,
@@ -534,28 +536,19 @@ const ModalPaymentAdd = ({ product, onClose, updatedAppointments, setUpdatedAppo
         } catch (error: any) {
             console.error("Error al crear pago:", error);
 
-            const errorMessage =
-                error.response?.data?.detail || "Ocurrió un error al registrar el pago.";
+            const errorMessage = getPaymentErrorMessage(
+                error.response?.data,
+                "Ocurrió un error al registrar el pago."
+            );
 
-            if (errorMessage === "El código proporcionado no corresponde a ningún usuario.") {
-                toast({
-                    title: "Error",
-                    description: errorMessage,
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                    position: "bottom-right",
-                });
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Ocurrió un error al registrar el pago.",
-                    status: "error",
-                    duration: 5000,
-                    isClosable: true,
-                    position: "bottom-right",
-                });
-            }
+            toast({
+                title: "Error",
+                description: errorMessage,
+                status: "error",
+                duration: 7000,
+                isClosable: true,
+                position: "bottom-right",
+            });
         } finally {
             setLoading(false);
         }
@@ -616,16 +609,16 @@ const ModalPaymentAdd = ({ product, onClose, updatedAppointments, setUpdatedAppo
             onClose();
         } catch (error: any) {
             console.error("Error al crear pagos diferenciales:", error);
-            const errorMessage = error.response?.data?.detail || "Ocurrió un error al registrar el pago.";
+            const errorMessage = getPaymentErrorMessage(
+                error.response?.data,
+                "Ocurrió un error al registrar el pago."
+            );
 
             toast({
                 title: "Error",
-                description:
-                    errorMessage === "El código proporcionado no corresponde a ningún usuario."
-                        ? errorMessage
-                        : "Ocurrió un error al registrar el pago. Inténtalo de nuevo.",
+                description: errorMessage,
                 status: "error",
-                duration: 5000,
+                duration: 7000,
                 isClosable: true,
                 position: "bottom-right",
             });
@@ -704,7 +697,9 @@ const ModalPaymentAdd = ({ product, onClose, updatedAppointments, setUpdatedAppo
     };
 
     const handleAddPayment = (student: string) => {
-        setUpdatedAppointments((prev: any) => [...prev, student]);
+        if (typeof setUpdatedAppointments === "function") {
+            setUpdatedAppointments((prev: any) => [...prev, student]);
+        }
     };
 
     const handlePaymentClick = () => {

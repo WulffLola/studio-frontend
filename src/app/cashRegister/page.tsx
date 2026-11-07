@@ -32,7 +32,6 @@ import {
     getPaymentsToday,
     getExpenses,
 } from '../stores/studioSlice';
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 
 interface Transaction {
@@ -50,7 +49,6 @@ const CashRegister = () => {
     const [cashRegister, setCashRegister] = useState([]);
     const { tipo, tokens } = useAuthStore();
     const [shouldRefetch, setShouldRefetch] = useState(false);
-    const [loading, setLoading] = useState(true);
 
     const {payments, paymentsToday, expenses } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
@@ -87,27 +85,10 @@ const CashRegister = () => {
 
 
     useEffect(() => {
-        // Simulamos una carga de datos o componentes
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 2000); // Cambia este tiempo según tus necesidades
-
-        return () => clearTimeout(timer);
-    }, []);
-
-    useEffect(() => {
-        if (!loading) {
-            dispatch(getPaymentsToday());
-            dispatch(getExpenses());
-            dispatch(getPayments());
-        }
-    }, [loading]);
-
-    if (loading) {
-        return (
-            <FullPageLoader />
-        );
-    }
+        dispatch(getPaymentsToday());
+        dispatch(getExpenses());
+        dispatch(getPayments());
+    }, [dispatch]);
 
     return (
         <>

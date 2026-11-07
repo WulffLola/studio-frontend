@@ -939,7 +939,9 @@ const HomeContentPage = () => {
                                                     <Pagination
                                                         count={countPagination}
                                                         pageSize={ITEMS_PER_PAGE}
+                                                        totalItems={filteredPosts.length}
                                                         defaultPage={1}
+                                                        page={currentPage}
                                                         onPageChange={setCurrentPage}
                                                     />
                                                 </Box>

@@ -25,12 +25,19 @@ const studioIdOf = (r: any): string | null => {
 // 1. appointments
 export const getAppointments = createAsyncThunk(
   "studio/getAppointments",
-  async () => {
+  async (studio?: string | number) => {
     const res = await axios.get(
       `${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMENTS}`,
-      { headers: getHeaders() },
+      {
+        headers: getHeaders(),
+        params: studio === undefined ? undefined : { studio },
+      },
     );
-    return res.data;
+
+    return {
+      results: Array.isArray(res.data) ? res.data : (res.data?.results ?? []),
+      detail: Array.isArray(res.data) ? null : (res.data?.detail ?? null),
+    };
   },
 );
 
@@ -163,13 +170,23 @@ export const getExpenseType = createAsyncThunk(
 );
 
 // 12. expenses
-export const getExpenses = createAsyncThunk("studio/getExpenses", async () => {
-  const res = await axios.get(
-    `${process.env.NEXT_PUBLIC_URL_BACKEND_EXPENSES}`,
-    { headers: getHeaders() },
-  );
-  return res.data;
-});
+export const getExpenses = createAsyncThunk(
+  "studio/getExpenses",
+  async (studio?: string | number) => {
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_URL_BACKEND_EXPENSES}`,
+      {
+        headers: getHeaders(),
+        params: studio === undefined ? undefined : { studio },
+      },
+    );
+
+    return {
+      results: Array.isArray(res.data) ? res.data : (res.data?.results ?? []),
+      detail: Array.isArray(res.data) ? null : (res.data?.detail ?? null),
+    };
+  },
+);
 
 // 13. expenses_by_range
 export const getExpensesByRange = createAsyncThunk(
@@ -306,13 +323,23 @@ export const getPaymentsStatusCurrentMonth = createAsyncThunk(
 );
 
 // 24. payments
-export const getPayments = createAsyncThunk("studio/getPayments", async () => {
-  const res = await axios.get(
-    `${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENTS}`,
-    { headers: getHeaders() },
-  );
-  return res.data;
-});
+export const getPayments = createAsyncThunk(
+  "studio/getPayments",
+  async (studio?: string | number) => {
+    const res = await axios.get(
+      `${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENTS}`,
+      {
+        headers: getHeaders(),
+        params: studio === undefined ? undefined : { studio },
+      },
+    );
+
+    return {
+      results: Array.isArray(res.data) ? res.data : (res.data?.results ?? []),
+      detail: Array.isArray(res.data) ? null : (res.data?.detail ?? null),
+    };
+  },
+);
 
 // 25. payments-by-day-range
 export const getPaymentsByDayRange = createAsyncThunk(
@@ -340,14 +367,14 @@ export const getPaymentsLastMonth = createAsyncThunk(
 
 // //payment-status-current-month
 // export const getPaymentStatusCurrentMonth = createAsyncThunk(
-// 'studio/getPaymentStatusCurrentMonth',
-// async () => {
-// const res = await axios.get(
-// `${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENTS_STATUS_CURRENT_MONTH}`,
-// { headers: getHeaders() }
-// );
-// return res.data;
-// }
+//   'studio/getPaymentStatusCurrentMonth',
+//   async () => {
+//     const res = await axios.get(
+//       `${process.env.NEXT_PUBLIC_URL_BACKEND_PAYMENTS_STATUS_CURRENT_MONTH}`,
+//       { headers: getHeaders() }
+//     );
+//     return res.data;
+//   }
 // );
 
 // 27. payments-today
@@ -379,15 +406,7 @@ export const getPeoples = createAsyncThunk("studio/getPeoples", async () => {
   return res.data;
 });
 
-// 30. plan
-export const getPlans = createAsyncThunk("studio/getPlans", async () => {
-  const res = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PLAN}`, {
-    headers: getHeaders(),
-  });
-  return res.data;
-});
-
-// 31. retention-rate
+// 30. retention-rate
 export const getRetentionRate = createAsyncThunk(
   "studio/getRetentionRate",
   async () => {
@@ -452,9 +471,10 @@ export const getStudios = createAsyncThunk("studio/getStudios", async () => {
 // 34. teacher-extra-hours
 export const getTeacherExtraHours = createAsyncThunk(
   "studio/getTeacherExtraHours",
-  async () => {
+  async (teacherId: string | number) => {
+    const baseUrl = `${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHER_EXTRA_HOURS}`;
     const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHER_EXTRA_HOURS}`,
+      `${baseUrl.replace(/\/$/, "")}/${teacherId}/`,
       { headers: getHeaders() },
     );
     return res.data;
@@ -496,12 +516,19 @@ export const getTeachers = createAsyncThunk("studio/getTeachers", async () => {
 // 37. teachers-turn
 export const getTeachersTurn = createAsyncThunk(
   "studio/getTeachersTurn",
-  async () => {
+  async (studio?: string | number) => {
     const res = await axios.get(
       `${process.env.NEXT_PUBLIC_URL_BACKEND_TEACHERS_TURN}`,
-      { headers: getHeaders() },
+      {
+        headers: getHeaders(),
+        params: studio === undefined ? undefined : { studio },
+      },
     );
-    return res.data;
+
+    return {
+      results: Array.isArray(res.data) ? res.data : (res.data?.results ?? []),
+      detail: Array.isArray(res.data) ? null : (res.data?.detail ?? null),
+    };
   },
 );
 
@@ -684,8 +711,11 @@ export const getOverduePayments = createAsyncThunk(
 export const getSlotTemplates = createAsyncThunk(
   "studio/getSlotTemplates",
   async () => {
+    const slotTemplatesUrl =
+      process.env.NEXT_PUBLIC_URL_BACKEND_SLOT_TEMPLATES ||
+      `${process.env.NEXT_PUBLIC__URL_BACKEND}slot-templates/`;
     const res = await axios.get(
-      `${process.env.NEXT_PUBLIC_URL_BACKEND_SLOT_TEMPLATES}`,
+      slotTemplatesUrl,
       { headers: getHeaders() },
     );
     return res.data;
@@ -781,7 +811,7 @@ interface StudioState {
   peakHours: any;
   peoples: any;
 /*   personLastPlan: any;
- */  plans: any;
+ */
   plansSubType: any;
   posts: any;
   retentionRate: any;
@@ -851,7 +881,7 @@ const initialState: StudioState = {
   peakHours: [],
   peoples: [],
 /*   personLastPlan: [],
- */  plans: [],
+ */
   plansSubType: [],
   posts: [],
   retentionRate: [],
@@ -891,7 +921,7 @@ const studioSlice = createSlice({
     builder.addCase(getAppointments.fulfilled, (state, { payload }) => {
       state.loading = false;
       state.error = null;
-      state.appointments = payload ?? [];
+      state.appointments = payload?.results ?? [];
     });
     builder.addCase(getAppointments.rejected, (state, action: any) => {
       state.loading = false;
@@ -1106,7 +1136,7 @@ const studioSlice = createSlice({
     builder.addCase(getExpenses.fulfilled, (state, { payload }) => {
       state.loading = false;
       state.error = null;
-      state.expenses = payload ?? [];
+      state.expenses = payload?.results ?? [];
     });
     builder.addCase(getExpenses.rejected, (state, action: any) => {
       state.loading = false;
@@ -1355,18 +1385,18 @@ const studioSlice = createSlice({
 
     // // getPaymentStatusCurrentMonth -> paymentStatusCurrentMonth
     // builder.addCase(getPaymentStatusCurrentMonth.pending, (state) => {
-    // state.error = null;
-    // state.loading = true;
+    //   state.error = null;
+    //   state.loading = true;
     // });
     // builder.addCase(getPaymentStatusCurrentMonth.fulfilled, (state, { payload }) => {
-    // state.loading = false;
-    // state.error = null;
-    // state.paymentStatusCurrentMonth = payload ?? [];
+    //   state.loading = false;
+    //   state.error = null;
+    //   state.paymentStatusCurrentMonth = payload ?? [];
     // });
     // builder.addCase(getPaymentStatusCurrentMonth.rejected, (state, action: any) => {
-    // state.loading = false;
-    // state.error = action.payload ?? { message: action.error?.message || 'Error' };
-    // state.paymentStatusCurrentMonth = [];
+    //   state.loading = false;
+    //   state.error = action.payload ?? { message: action.error?.message || 'Error' };
+    //   state.paymentStatusCurrentMonth = [];
     // });
 
     // getPayments -> payments
@@ -1377,7 +1407,7 @@ const studioSlice = createSlice({
     builder.addCase(getPayments.fulfilled, (state, { payload }) => {
       state.loading = false;
       state.error = null;
-      state.payments = payload ?? [];
+      state.payments = payload?.results ?? [];
     });
     builder.addCase(getPayments.rejected, (state, action: any) => {
       state.loading = false;
@@ -1499,24 +1529,6 @@ const studioSlice = createSlice({
         message: action.error?.message || "Error",
       };
       state.peoples = [];
-    });
-
-    // getPlan -> plan
-    builder.addCase(getPlans.pending, (state) => {
-      state.error = null;
-      state.loading = true;
-    });
-    builder.addCase(getPlans.fulfilled, (state, { payload }) => {
-      state.loading = false;
-      state.error = null;
-      state.plans = payload ?? [];
-    });
-    builder.addCase(getPlans.rejected, (state, action: any) => {
-      state.loading = false;
-      state.error = action.payload ?? {
-        message: action.error?.message || "Error",
-      };
-      state.plans = [];
     });
 
     // getRetentionRate -> retentionRate
@@ -1718,7 +1730,7 @@ const studioSlice = createSlice({
     builder.addCase(getTeachersTurn.fulfilled, (state, { payload }) => {
       state.loading = false;
       state.error = null;
-      state.teachersTurn = payload ?? [];
+      state.teachersTurn = payload?.results ?? [];
     });
     builder.addCase(getTeachersTurn.rejected, (state, action: any) => {
       state.loading = false;

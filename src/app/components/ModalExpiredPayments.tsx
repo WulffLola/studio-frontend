@@ -159,7 +159,10 @@ export default function ModalExpiredPayments({
     const filteredExpiredPayments = useMemo(() => {
         const normalizedSearch = normalizeSearchText(search.trim());
         const activeExpiredPayments = expiredPayments.filter(
-            (item: OverduePaymentItem) => peopleMap[getPersonId(item)]?.deleted == null
+            (item: OverduePaymentItem) => {
+                const person = peopleMap[getPersonId(item)];
+                return Boolean(person) && person.deleted == null;
+            }
         );
 
         if (!normalizedSearch) return activeExpiredPayments;

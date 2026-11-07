@@ -35,10 +35,7 @@ import axios from "axios";
 import { useAuthStore } from "../stores/auth";
 import { useAppDispatch } from "../stores/hooks";
 import { useSelector } from "react-redux";
-import {
-    getPeoples,
-    getPlans
-} from '../stores/studioSlice';
+import { getPeoples } from '../stores/studioSlice';
 import { LoadingOverlay } from "./ui/Loaders";
 
 
@@ -58,7 +55,7 @@ const ModalStudentEdit = ({ product, onClose }: any) => {
     const [dadoDeBaja, setDadoDeBaja] = useState("No")
     const [loading, setLoading] = useState(false);
 
-    const { peoples, plans } = useSelector((state: any) => state.studio);
+    const { peoples } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
     const toast = useToast();
@@ -78,7 +75,7 @@ const ModalStudentEdit = ({ product, onClose }: any) => {
         formData.append('observation', observation);
 
         // if (expDate) {
-        // formData.append('exp_date', expDate);
+        //     formData.append('exp_date', expDate);
         // }
         // formData.append('last_payment', "");
         // formData.append('plan_id', plan);
@@ -348,11 +345,6 @@ const ModalStudentEdit = ({ product, onClose }: any) => {
         const formattedDate = parsedDate.toISOString().split("T")[0]; // Formatear la fecha como yyyy-mm-dd
         setBirthDate(formattedDate);
     };
-
-    useEffect(() => {
-        dispatch(getPlans())
-    }, []);
-
 
     const capitalizeFirstLetter = (text: string) => {
         return text.replace(/(^|\s)\w/g, match => match.toUpperCase());

@@ -48,15 +48,17 @@ import {
   getRooms,
   getSlots,
   getStudios,
+  getCalendar,
 } from "../stores/studioSlice";
 import { FiPlus, FiSearch } from "react-icons/fi";
 import { Select as Select2 } from "./ui/Select";
 import { LoadingOverlay } from "./ui/Loaders";
 import { TableState } from "./ui/StateMessage";
 import SearchField from "./ui/SearchField";
+import StatusBadge from "./ui/StatusBadge";
+import { useStudioStore } from "../stores/studio";
 
 const ITEMS_PER_PAGE = 10;
-
 const hasSignedClassDeclaration = (appointment: any) =>
   appointment?.firmo_declaracion_clase === true ||
   (appointment?.firmo_declaracion_clase === undefined && appointment?.declaration_signed === true);
@@ -64,9 +66,11 @@ const hasSignedClassDeclaration = (appointment: any) =>
 const TableAppointments = ({
   list,
   onOpen,
+  refreshKey,
 }: {
   list: Array<any>;
   onOpen: () => void;
+  refreshKey: number;
 }) => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedRow, setSelectedRow] = useState<any>([]);
@@ -76,17 +80,35 @@ const TableAppointments = ({
     value: "all",
     label: "Todos los estudios",
   });
-  const [code, setCode] = useState("admin");
-  const { tipo, tokens } = useAuthStore();
+  const selectedStudioFromHeader = useStudioStore((state) => state.selectedStudio);
+  const studioStoreHasHydrated = useStudioStore((state) => state.hasHydrated);
+  const studioFilterInitialized = React.useRef(false);
+  const { tipo, tokens, code } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(false);
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
 
   const { appointments, activitySubType, rooms, slots, studios } = useSelector(
     (state: any) => state.studio
   );
   const dispatch = useAppDispatch();
+  const isStudent = tipo === "Estudiante" || tipo === "Alumno";
+  const canUseAuthenticatedCode = ["Super", "SUPER", "Administrador", "ADMIN", "Admin"].includes(tipo || "");
 
-  const sortByLastNameAndFirstName = (items = []) => {
+  useEffect(() => {
+    if (!studioStoreHasHydrated || studioFilterInitialized.current) return;
+
+    if (!isStudent && selectedStudioFromHeader?.id) {
+      setSelectedStudio({
+        value: selectedStudioFromHeader.id,
+        label: selectedStudioFromHeader.name,
+      });
+    }
+
+    studioFilterInitialized.current = true;
+  }, [isStudent, selectedStudioFromHeader, studioStoreHasHydrated]);
+
+  const sortByLastNameAndFirstName = (items: any[] = []) => {
     return [...items].sort((a: any, b: any) => {
       const lastNameComparison = (a.person?.last_name || "").localeCompare(
         b.person?.last_name || ""
@@ -255,6 +277,7 @@ const TableAppointments = ({
 
   const filteredItems = sortedList.filter((item: any) => {
     const matchesStudio =
+      isStudent ||
       selectedStudio.value === "all" ||
       normalizeText(getStudioName(item)) === normalizeText(selectedStudio.label);
     if (!matchesStudio) return false;
@@ -316,7 +339,6 @@ const TableAppointments = ({
   const toast = useToast();
 
   useEffect(() => {
-    dispatch(getAppointments());
     dispatch(getSlots());
     dispatch(getRooms());
     dispatch(getStudios());
@@ -329,6 +351,49 @@ const TableAppointments = ({
 
     return () => clearTimeout(timer);
   }, [dispatch]);
+
+  const refreshAppointments = () => {
+    const studio =
+      isStudent || selectedStudio.value === "all"
+        ? undefined
+        : selectedStudio.value;
+
+    dispatch(getAppointments(studio))
+      .unwrap()
+      .then((response) => {
+        if (response?.detail) {
+          toast({
+            title: "Estudio dado de baja",
+            description: response.detail,
+            status: "warning",
+            duration: 5000,
+            isClosable: true,
+            position: "bottom-right",
+          });
+        }
+      })
+      .catch(() => {
+        // El estado global ya expone el error del request.
+      });
+  };
+
+  useEffect(() => {
+    refreshAppointments();
+    // La consulta depende del estudio y del rol normalizados arriba.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedStudio.value, isStudent]);
+
+  useEffect(() => {
+    if (refreshKey > 0 || localRefreshKey > 0) {
+      refreshAppointments();
+    }
+    // Las claves cambian después de crear o editar un turno.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey, localRefreshKey]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStudio.value]);
 
   const handleDelete = async (code: string) => {
     setLoading(true);
@@ -356,7 +421,8 @@ const TableAppointments = ({
       });
 
       onCloseAlertDialogDelete();
-      dispatch(getAppointments());
+      refreshAppointments();
+      await Promise.all([dispatch(getSlots()), dispatch(getCalendar())]);
     } catch (error) {
       console.error(error);
       toast({
@@ -402,7 +468,10 @@ const TableAppointments = ({
         >
           <ModalCloseButton />
           <ModalAppointmentsEdit
-            onClose={onCloseModalEdit}
+            onClose={() => {
+              onCloseModalEdit();
+              setLocalRefreshKey((current) => current + 1);
+            }}
             product={selectedItem}
             getAppointments={getAppointments}
             appointments={appointments}
@@ -447,7 +516,7 @@ const TableAppointments = ({
           <AlertDialogOverlay>
             <AlertDialogContent>
               <AlertDialogCloseButton />
-              <AlertDialogHeader>
+              <AlertDialogHeader fontSize="lg" fontWeight="bold">
                 Eliminar turno alumno
               </AlertDialogHeader>
               <AlertDialogBody>
@@ -488,7 +557,9 @@ const TableAppointments = ({
                 </Button>
                 <Button
                   onClick={() =>
-                    tipo === "Consultor" ? onOpenModalCode() : handleDelete(code)
+                    canUseAuthenticatedCode
+                        ? handleDelete(code || "")
+                        : onOpenModalCode()
                   }
                   ml={3}
                   w={["100%", "135px"]}
@@ -526,7 +597,7 @@ const TableAppointments = ({
             flexWrap={{ base: "wrap", md: "wrap", lg: "nowrap" }}
             pl={{ base: "", md: "10px" }}
           >
-            <Box w={{ base: "100%", md: "260px" }}>
+            {!isStudent && <Box w={{ base: "100%", md: "260px" }}>
               <Select2
                 options={studioOptions}
                 value={selectedStudio}
@@ -538,7 +609,7 @@ const TableAppointments = ({
                 selectedOptionStyle="check"
                 appearance="filter"
               />
-            </Box>
+            </Box>}
             <SearchField
                 w={{ base: "100%", md: "50%", lg: "350px", xl: "350px" }}
                 placeholder="Buscar por alumno, día, horario…"
@@ -550,6 +621,9 @@ const TableAppointments = ({
               leftIcon={<FiPlus />}
               onClick={onOpen}
               w={{ base: "100%", md: "auto" }}
+              flexBasis={{ base: "100%", md: "auto" }}
+              flexShrink={0}
+              whiteSpace="nowrap"
               variant="primary"
             >
               Registrar Turno
@@ -572,20 +646,24 @@ const TableAppointments = ({
         <Table size={"sm"} minW={{ base: "1080px", md: "100%" }} data-sticky-actions>
           <Thead>
             <Tr>
-              <Th>Alumno</Th>
-              <Th>Dni</Th>
-              <Th>Día</Th>
-              <Th>Horario</Th>
-              <Th>Actividad</Th>
-              <Th>Sala</Th>
-              <Th>Estudio</Th>
-              <Th textAlign="center">Declaración</Th>
-              <Th>Acciones</Th>
+              <Th textTransform="uppercase">Alumno</Th>
+              <Th textTransform="uppercase">Dni</Th>
+              <Th textTransform="uppercase">Día</Th>
+              <Th textTransform="uppercase">Horario</Th>
+              <Th textTransform="uppercase">Actividad</Th>
+              <Th textTransform="uppercase">Sala</Th>
+              <Th textTransform="uppercase">Estudio</Th>
+              <Th textTransform="uppercase" textAlign="center">Declaración</Th>
+              <Th textTransform="uppercase">Acciones</Th>
             </Tr>
           </Thead>
           <Tbody style={{ overflowY: "scroll" }}>
             {loadingTable ? (
-              <TableState kind="loading" colSpan={9} />
+              <Tr>
+                <Td colSpan={9} textAlign="center">
+                  Cargando...
+                </Td>
+              </Tr>
             ) : currentItems.length > 0 ? (
               currentItems.map((item: any, index: number) => (
                 <Tr
@@ -595,11 +673,13 @@ const TableAppointments = ({
                   data-selected={selectedRow?.id === item.id || undefined}
                     cursor="pointer"
                 >
-                  <Td>
+                  <Td fontWeight={300}>
                     {item?.person?.last_name} {item?.person?.name}
                   </Td>
                   <Td>{item?.person?.dni}</Td>
-                  <Td>{getDayAndDateLabel(item)}</Td>
+                  <Td>
+                    {getDayAndDateLabel(item)}
+                  </Td>
                   <Td>{getStartTimeLabel(item)}</Td>
                   <Td>{getActivityName(item)}</Td>
                   <Td>{getRoomName(item)}</Td>
@@ -617,7 +697,7 @@ const TableAppointments = ({
                   </Td>
                   <Td isNumeric>
                     <HStack justify="flex-start" spacing={1}>
-                      <Tooltip hasArrow label="Editar">
+                      <Tooltip hasArrow label="Editar" bg="studio.tooltipBg" borderRadius={4}>
                         <IconButton
                           aria-label="Editar"
                           icon={<Icon path={mdiPencilOutline} size={0.9} />}
@@ -626,7 +706,7 @@ const TableAppointments = ({
                           variant="ghost"
                         />
                       </Tooltip>
-                      <Tooltip hasArrow label="Eliminar">
+                      <Tooltip hasArrow label="Eliminar" bg="studio.tooltipBg" borderRadius={4}>
                         <IconButton
                           aria-label="Eliminar"
                           icon={<Icon path={mdiDeleteOutline} size={0.9} />}
@@ -642,18 +722,24 @@ const TableAppointments = ({
             ) : (
               !loadingTable &&
               currentItems.length === 0 && (
-                <TableState kind="empty" colSpan={9} title="No se encontraron datos" />
+                <Tr>
+                  <Td colSpan={9} textAlign="center">
+                    No se encontraron datos
+                  </Td>
+                </Tr>
               )
             )}
           </Tbody>
         </Table>
       </Box>
 
-      <Box display="flex" justifyContent="center" mt={4}>
+      <Box display="flex" justifyContent="center" mt={4} w="100%">
         <Pagination
           count={countPagination}
           pageSize={ITEMS_PER_PAGE}
+          totalItems={filteredItems.length}
           defaultPage={1}
+          page={currentPage}
           onPageChange={setCurrentPage}
         />
       </Box>

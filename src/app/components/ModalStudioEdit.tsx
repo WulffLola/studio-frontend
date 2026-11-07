@@ -36,35 +36,35 @@ const ModalStudioEdit = ({ product, onClose, getStudios, isCancel }: any) => {
     const dispatch = useAppDispatch();
 
     // const handleValidate = () => {
-    // if (!days || days.trim() === "") {
-    // toast({
-    // title: "Faltan completar campos.",
-    // description: "Por favor complete el campo 'Días'.",
-    // status: "error",
-    // position: "bottom-right",
-    // duration: 5000,
-    // isClosable: true,
-    // });
-    // setLoading(false);
-    // return false;
-    // }
+    //     if (!days || days.trim() === "") {
+    //         toast({
+    //             title: "Faltan completar campos.",
+    //             description: "Por favor complete el campo 'Días'.",
+    //             status: "error",
+    //             position: "bottom-right",
+    //             duration: 5000,
+    //             isClosable: true,
+    //         });
+    //         setLoading(false);
+    //         return false;
+    //     }
 
-    // // Validar si el campo "days" contiene solo palabras
-    // const wordsRegex = /^[a-zA-Z\s]+$/;
-    // if (!wordsRegex.test(days)) {
-    // toast({
-    // title: "Error en el campo Días",
-    // description: "Por favor ingrese solo letras.",
-    // status: "error",
-    // position: "bottom-right",
-    // duration: 5000,
-    // isClosable: true,
-    // });
-    // setLoading(false);
-    // return false;
-    // }
+    //     // Validar si el campo "days" contiene solo palabras
+    //     const wordsRegex = /^[a-zA-Z\s]+$/;
+    //     if (!wordsRegex.test(days)) {
+    //         toast({
+    //             title: "Error en el campo Días",
+    //             description: "Por favor ingrese solo letras.",
+    //             status: "error",
+    //             position: "bottom-right",
+    //             duration: 5000,
+    //             isClosable: true,
+    //         });
+    //         setLoading(false);
+    //         return false;
+    //     }
 
-    // return true;
+    //     return true;
     // };
 
 

@@ -59,6 +59,7 @@ export const useAuthStore = create<AuthState>()(
       tipo: null,
       dni: null,
       email: null,
+      code: null,
       profile_photo: null,
       tokens: null,
 
@@ -74,6 +75,7 @@ export const useAuthStore = create<AuthState>()(
           tipo: userData.tipo,
           dni: userData.dni,
           email: userData.email,
+          code: userData.code ?? null,
           profile_photo: userData.profile_photo ?? null,
           tokens: {
             refresh: userData.tokens.refresh,

@@ -118,10 +118,14 @@ const TableTeachersTurn = ({
   list,
   view,
   searchTerm,
+  selectedStudio,
+  refreshKey,
 }: {
   list: Array<any>;
   view: "grill" | "table";
   searchTerm: string;
+  selectedStudio: any;
+  refreshKey: number;
 }) => {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
@@ -129,22 +133,18 @@ const TableTeachersTurn = ({
   const { tokens } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(false);
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
+  const toast = useToast();
 
-  const { teachersTurn, studios, rooms } = useSelector((state: any) => state.studio);
-
-  const selectedStudioFromStore = useStudioStore((s) => s.selectedStudio);
-
-  const [selectedStudioLocal, setSelectedStudioLocal] = useState<string>("");
-
-  useEffect(() => {
-    setSelectedStudioLocal("");
-  }, []);
+  const { teachersTurn, studios, rooms, slots } = useSelector((state: any) => state.studio);
+  const selectedStudioLocal =
+    selectedStudio?.value === "all" ? "" : String(selectedStudio?.value || "");
 
   // filtra por el estudio seleccionado en el studioSlection
-  // useEffect(() => {
-  // setSelectedStudioLocal(
-  // selectedStudioFromStore?.id ? String(selectedStudioFromStore.id) : ""
-  // );
+  //   useEffect(() => {
+  //   setSelectedStudioLocal(
+  //     selectedStudioFromStore?.id ? String(selectedStudioFromStore.id) : ""
+  //   );
   // }, [selectedStudioFromStore]);
 
   const studiosOptions = React.useMemo(() => {
@@ -164,11 +164,34 @@ const TableTeachersTurn = ({
 
   const dispatch = useAppDispatch();
   const refreshTeachersTurn = React.useCallback(() => {
-    dispatch(getTeachersTurn());
-  }, [dispatch]);
+    return dispatch(
+      getTeachersTurn(selectedStudioLocal || undefined)
+    ).unwrap().then((response) => {
+      if (response?.detail) {
+        toast({
+          title: "Estudio dado de baja",
+          description: response.detail,
+          status: "warning",
+          duration: 5000,
+          isClosable: true,
+          position: "bottom-right",
+        });
+      }
+      return response;
+    });
+  }, [dispatch, selectedStudioLocal, toast]);
+
+  const getSlotData = (item: any) => {
+    if (item?.slot && typeof item.slot === "object") return item.slot;
+    const slotId = item?.slot_id || item?.slot;
+    return slots?.find((slot: any) => String(slot.id) === String(slotId)) || null;
+  };
 
   const getRoomData = (item: any) => {
-    const roomId = item?.slot?.room;
+    const slot = getSlotData(item);
+    if (slot?.room && typeof slot.room === "object") return slot.room;
+    if (item?.room && typeof item.room === "object") return item.room;
+    const roomId = slot?.room_id || slot?.room || item?.room_id || item?.room;
     if (!roomId || !Array.isArray(rooms)) return null;
 
     return rooms.find((room: any) => String(room.id) === String(roomId)) || null;
@@ -176,25 +199,32 @@ const TableTeachersTurn = ({
 
   const getStudioId = (item: any) => {
     const roomData = getRoomData(item);
-    console.log(roomData)
-    return roomData?.studio?.id || roomData?.studio || "";
+    const slot = getSlotData(item);
+    const studio =
+      item?.studio_id || item?.studio ||
+      slot?.studio_id || slot?.studio ||
+      roomData?.studio_id || roomData?.studio;
+    return typeof studio === "object" ? studio?.id || "" : studio || "";
   };
 
   const getStudioName = (item: any) => {
     const roomData = getRoomData(item);
+    const slot = getSlotData(item);
 
-    if (typeof roomData?.studio === "object") {
-      return roomData?.studio?.name || "-";
+    const explicitStudio = item?.studio || slot?.studio || roomData?.studio;
+    if (typeof explicitStudio === "object" && explicitStudio?.name) {
+      return explicitStudio.name;
     }
 
-    if (roomData?.studio) {
-      const studioFound = studios?.find(
-        (studio: any) => String(studio.id) === String(roomData.studio)
-      );
-      return studioFound?.name || "-";
-    }
+    const explicitName =
+      item?.studio_name || slot?.studio_name || roomData?.studio_name;
+    if (explicitName) return explicitName;
 
-    return "-";
+    const studioId = getStudioId(item);
+    const studioFound = studios?.find(
+      (studio: any) => String(studio.id) === String(studioId)
+    );
+    return studioFound?.name || "-";
   };
 
   const getRoom = (item: any) => {
@@ -314,7 +344,6 @@ const TableTeachersTurn = ({
   } = useDisclosure();
 
   const cancelRef = React.useRef<any>();
-  const toast = useToast();
 
   const handleDelete = () => {
     if (!selectedItem) return;
@@ -340,7 +369,7 @@ const TableTeachersTurn = ({
           position: "bottom-right",
         });
         onCloseAlertDialogDelete();
-        dispatch(getTeachersTurn());
+        refreshTeachersTurn();
       })
       .catch((error) => {
         console.error(error);
@@ -381,13 +410,17 @@ const TableTeachersTurn = ({
   }, [dispatch]);
 
 
-  console.log("list original", list);
-  console.log("sortedList", sortedList);
-  console.log("filteredItems", filteredItems);
-  console.log("selectedStudioLocal", selectedStudioLocal);
-  console.log("filteredByStudio", filteredByStudio);
-  console.log("currentItems", currentItems);
-  console.log("searchTerm", searchTerm);
+  useEffect(() => {
+    refreshTeachersTurn();
+  }, [refreshTeachersTurn]);
+
+  useEffect(() => {
+    if (refreshKey > 0 || localRefreshKey > 0) refreshTeachersTurn();
+  }, [localRefreshKey, refreshKey, refreshTeachersTurn]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedStudioLocal]);
 
   return (
     <>
@@ -405,7 +438,10 @@ const TableTeachersTurn = ({
           >
             <ModalCloseButton />
             <ModalTeacherTurnEdit
-              onClose={onCloseModalEdit}
+              onClose={() => {
+                onCloseModalEdit();
+                setLocalRefreshKey((current) => current + 1);
+              }}
               product={selectedItem}
               getTeachersTurn={() => dispatch(getTeachersTurn())}
             />
@@ -524,6 +560,7 @@ const TableTeachersTurn = ({
 
             <TeachersShiftTable
               getTeachersTurn={refreshTeachersTurn}
+              studioId={selectedStudioLocal}
             />
           </>
         )
@@ -614,11 +651,13 @@ const TableTeachersTurn = ({
             </Table>
           </Box>
 
-          <Box display="flex" justifyContent="center" mt={4}>
+          <Box display="flex" justifyContent="center" mt={4} w="100%">
             <Pagination
               count={countPagination}
               pageSize={ITEMS_PER_PAGE}
+              totalItems={filteredByStudio.length}
               defaultPage={1}
+              page={currentPage}
               onPageChange={setCurrentPage}
             />
           </Box>

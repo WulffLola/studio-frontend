@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { HStack, Button, IconButton, Box, Text } from "@chakra-ui/react";
+import { ReactNode, useEffect, useState } from "react";
+import { HStack, Button, IconButton, Box, Grid, Text } from "@chakra-ui/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
 interface PaginationProps {
@@ -7,12 +7,34 @@ interface PaginationProps {
   pageSize: number; // Número de elementos por página
   defaultPage: number; // Página inicial
   onPageChange: (page: number) => void; // Función de callback para el cambio de página
+  totalItems: number;
+  page?: number;
+  leftContent?: ReactNode;
 }
 
-const Pagination = ({ count, pageSize, defaultPage = 1, onPageChange }) => {
+const Pagination = ({
+  count,
+  pageSize,
+  defaultPage = 1,
+  onPageChange,
+  totalItems,
+  page,
+  leftContent,
+}: PaginationProps) => {
   const [currentPage, setCurrentPage] = useState(defaultPage || 1);
 
-  const handlePageChange = (page) => {
+  useEffect(() => {
+    if (page !== undefined) setCurrentPage(page);
+  }, [page]);
+
+  useEffect(() => {
+    if (currentPage > count) {
+      setCurrentPage(count);
+      onPageChange(count);
+    }
+  }, [count, currentPage, onPageChange]);
+
+  const handlePageChange = (page: number) => {
     if (page < 1 || page > count) return;
     setCurrentPage(page);
     onPageChange(page);
@@ -25,7 +47,7 @@ const Pagination = ({ count, pageSize, defaultPage = 1, onPageChange }) => {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    const pages = [1];
+    const pages: Array<number | string> = [1];
 
     if (currentPage <= 3) {
       // Para las primeras páginas, mostramos 1 2 3 4 ... 31
@@ -44,11 +66,27 @@ const Pagination = ({ count, pageSize, defaultPage = 1, onPageChange }) => {
 
 
   const pagesToShow = getPagesToShow();
+  const firstVisibleItem = !totalItems ? 0 : (currentPage - 1) * pageSize + 1;
+  const lastVisibleItem = !totalItems
+    ? 0
+    : Math.min(currentPage * pageSize, totalItems);
 
 
   return (
-    <Box as="nav" aria-label="Paginación" width="fit-content" maxW="100%">
-      <HStack spacing={1} justify="center" flexWrap="wrap">
+    <Grid
+      as="nav"
+      aria-label="Paginación"
+      templateColumns={{ base: "1fr", md: "minmax(0, 1fr) auto minmax(0, 1fr)" }}
+      alignItems="center"
+      gap={3}
+      width="100%"
+      minWidth={0}
+      flex="1 1 100%"
+    >
+      <Box justifySelf={{ base: "center", md: "start" }} minW={0}>
+        {leftContent}
+      </Box>
+      <HStack spacing={1} justify="center" justifySelf="center" flexWrap="wrap">
         <IconButton
           onClick={() => handlePageChange(currentPage - 1)}
           icon={<ChevronLeftIcon boxSize={5} />}
@@ -89,7 +127,15 @@ const Pagination = ({ count, pageSize, defaultPage = 1, onPageChange }) => {
           size="sm"
         />
       </HStack>
-    </Box>
+      <Text
+        fontSize="13px"
+        color="text.muted"
+        whiteSpace="nowrap"
+        justifySelf={{ base: "center", md: "end" }}
+      >
+        Mostrando {firstVisibleItem}–{lastVisibleItem} de {totalItems}
+      </Text>
+    </Grid>
 
   );
 };

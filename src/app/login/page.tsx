@@ -110,9 +110,9 @@ export default function Login() {
         <Flex minH="100dvh" direction={{ base: "column", lg: "row" }} bg="bg.surface">
             {/* Panel de marca */}
             <Flex
-                w={{ base: "100%", lg: "44%" }}
-                maxW={{ lg: "620px" }}
-                minH={{ base: "auto", lg: "100dvh" }}
+                w={{ base: "100%", lg: "40%" }}
+                flex={{ base: "0 0 auto", lg: "0 0 40%" }}
+                minH={{ base: "38dvh", md: "40dvh", lg: "100dvh" }}
                 bg="brand.primary"
                 color="white"
                 direction="column"
@@ -145,7 +145,8 @@ export default function Login() {
 
             {/* Formulario */}
             <Flex
-                flex="1"
+                w={{ base: "100%", lg: "60%" }}
+                flex={{ base: "1", lg: "0 0 60%" }}
                 align={{ base: "flex-start", lg: "center" }}
                 justify="center"
                 px={{ base: 5, sm: 8, md: 12 }}
