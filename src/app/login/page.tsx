@@ -23,6 +23,9 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "../stores/auth";
 import { brandAssets, brandName } from "../../theme/brand";
 
+// Cartel de entorno de demostración: se activa con NEXT_PUBLIC_DEMO_MODE=true.
+const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 const EmailOutlineIcon = () => (
     <Icon viewBox="0 0 24 24" boxSize={5} fill="none">
         <path d="M4 6.75h16v10.5H4z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
@@ -159,6 +162,33 @@ export default function Login() {
                     <Text mt={1.5} mb={{ base: 6, md: 8 }} color="text.secondary" fontSize="14px">
                         Accedé a tu espacio de gestión.
                     </Text>
+
+                    {isDemo && (
+                        <Box
+                            role="note"
+                            bg="info.bg"
+                            border="1px solid"
+                            borderColor="info.border"
+                            color="info.fg"
+                            fontSize="13px"
+                            lineHeight="1.5"
+                            px={3.5}
+                            py={3}
+                            mb={{ base: 6, md: 7 }}
+                            mt={{ base: -2, md: -3 }}
+                            borderRadius="control"
+                        >
+                            <Text fontWeight={600} mb={1}>
+                                Entorno de demostración
+                            </Text>
+                            <Text>
+                                Todos los datos (alumnos, profesoras, pagos y clases) son ficticios y se generaron para esta demo.
+                            </Text>
+                            <Text mt={1.5}>
+                                El envío de correos y de mensajes de WhatsApp no está configurado, así que el sistema no contacta a nadie aunque un correo o un número generado coincida con uno real. El resto del flujo funciona con normalidad: cuando una acción intenta enviar un mensaje, se muestra un aviso.
+                            </Text>
+                        </Box>
+                    )}
 
                     <Stack spacing={5} as="form" onSubmit={handleSubmit}>
                         <FormControl isRequired>
