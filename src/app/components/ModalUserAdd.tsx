@@ -261,8 +261,19 @@ const ModalUserAdd = ({ product, onClose }: any) => {
             if (error.response && error.response.data) {
                 const { data } = error.response;
 
+                // Contraseña rechazada por los validadores del backend
+                if (Array.isArray(data.password) && data.password.length > 0) {
+                    toast({
+                        title: "Contraseña no válida.",
+                        description: data.password.join(" "),
+                        status: "error",
+                        position: "bottom-right",
+                        duration: 7000,
+                        isClosable: true,
+                    });
+                }
                 // Verifica si el error está relacionado con el DNI
-                if (data.dni && Array.isArray(data.dni) && data.dni.includes("Este DNI ya está registrado.")) {
+                else if (data.dni && Array.isArray(data.dni) && data.dni.includes("Este DNI ya está registrado.")) {
                     toast({
                         title: "DNI ya registrado.",
                         description: "El DNI ingresado ya está en uso. Por favor, ingrese un DNI diferente.",

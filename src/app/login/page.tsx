@@ -43,6 +43,7 @@ export default function Login() {
     const [username, setUsername] = useState("");
     const [error, setError] = useState(false);
     const [invalidCredentials, setInvalidCredentials] = useState(false);
+    const [lockedMessage, setLockedMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const { login } = useAuthStore();
     const router = useRouter();
@@ -55,6 +56,7 @@ export default function Login() {
         event.preventDefault();
         setError(false);
         setInvalidCredentials(false);
+        setLockedMessage(null);
         setLoading(true);
 
         try {
@@ -87,7 +89,13 @@ export default function Login() {
                 router.push("/"); // 👈 si no hay studios
             }
         } catch (e) {
-            if (axios.isAxiosError(e)) {
+            if (axios.isAxiosError(e) && e.response?.status === 429) {
+                // Bloqueo temporal por intentos fallidos (mensaje genérico del backend)
+                setLockedMessage(
+                    String(e.response?.data?.detail ?? "Demasiados intentos fallidos. Esperá unos minutos e intentá de nuevo.")
+                );
+                setPassword("");
+            } else if (axios.isAxiosError(e)) {
                 const hasInvalidCredentials =
                     e.response?.data?.non_field_errors?.includes("Credenciales incorrectas");
 
@@ -222,6 +230,22 @@ export default function Login() {
                                 borderRadius="control"
                             >
                                 No pudimos iniciar sesión. Comuníquese con soporte.
+                            </Box>
+                        )}
+
+                        {lockedMessage && (
+                            <Box
+                                role="alert"
+                                bg="error.bg"
+                                border="1px solid"
+                                borderColor="error.border"
+                                color="error.fg"
+                                fontSize="13px"
+                                px={3}
+                                py={2.5}
+                                borderRadius="control"
+                            >
+                                {lockedMessage}
                             </Box>
                         )}
 

@@ -74,7 +74,7 @@ const ModalUserEdit = ({ product, onClose }: any) => {
         onClose: onCloseModalPassword,
     } = useDisclosure();
 
-    const handleSubmitUser = async (password = null, fromModalPassword = false) => {
+    const handleSubmitUser = async (password = null, fromModalPassword = false, currentPassword: string | undefined = undefined) => {
         setLoading(true);
 
         const formData = new FormData();
@@ -88,6 +88,8 @@ const ModalUserEdit = ({ product, onClose }: any) => {
         // Solo agregar el password si viene desde ModalPassword y no es nulo o vacío
         if (fromModalPassword && password && String(password).trim() !== "") {
             formData.append('password', String(password).trim());
+            // Cambio de la propia contraseña: el backend exige la actual.
+            if (currentPassword) formData.append('current_password', currentPassword);
         }
 
 
@@ -256,8 +258,31 @@ const ModalUserEdit = ({ product, onClose }: any) => {
             if (error.response && error.response.data) {
                 const { data } = error.response;
 
+                const passwordErrors = [
+                    ...(Array.isArray(data.current_password) ? data.current_password : []),
+                    ...(Array.isArray(data.password) ? data.password : []),
+                ];
+                if ((error as any).response?.status === 429) {
+                    toast({
+                        title: "Demasiados intentos",
+                        description: String(data.detail ?? "Esperá unos minutos e intentá de nuevo."),
+                        status: "error",
+                        position: "bottom-right",
+                        duration: 6000,
+                        isClosable: true,
+                    });
+                } else if (passwordErrors.length > 0) {
+                    toast({
+                        title: "Contraseña no válida.",
+                        description: passwordErrors.join(" "),
+                        status: "error",
+                        position: "bottom-right",
+                        duration: 7000,
+                        isClosable: true,
+                    });
+                }
                 // Verifica si el error está relacionado con el DNI
-                if (data.dni && Array.isArray(data.dni) && data.dni.includes("Este DNI ya está registrado.")) {
+                else if (data.dni && Array.isArray(data.dni) && data.dni.includes("Este DNI ya está registrado.")) {
                     toast({
                         title: "DNI ya registrado.",
                         description: "El DNI ingresado ya está en uso. Por favor, ingrese un DNI diferente.",
@@ -364,7 +389,8 @@ const ModalUserEdit = ({ product, onClose }: any) => {
                             // get={getPeoples}
                             // onCloseAlert={onClose}
                             // entityType={"paymentsAdd"}
-                            action={(password) => handleSubmitUser(password, true)} />
+                            requireCurrent={Number(idUser) === Number(id)}
+                            action={(password, current) => handleSubmitUser(password, true, current)} />
                     </ModalContent>
                 </Modal>
 

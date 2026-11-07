@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import axios from "axios";
 
 export interface AuthState {
   id: number | null;
@@ -19,6 +18,7 @@ export interface AuthState {
     access: string;
   } | null;
   login: (userData: any) => void;
+  setTokens: (tokens: { access: string; refresh: string; session_expires_at?: string }, opts?: { persist?: boolean }) => void;
   edit: (userData: any) => void;
   logout: () => void;
   checkSession: () => void;
@@ -27,9 +27,18 @@ export interface AuthState {
 
 let sessionInterval: NodeJS.Timeout | null = null;
 
+// Máximo absoluto de la sesión: lo informa el backend (session_expires_at,
+// 8 h desde el login). Esto es solo el valor de respaldo.
 const DEFAULT_SESSION_DURATION_MINUTES = 480;
-const SESSION_CHECK_INTERVAL_MS = 60000;
-const BACKEND_SESSION_CHECK_INTERVAL_MS = 300000;
+const SESSION_CHECK_INTERVAL_MS = 30000;
+
+const serverExpiry = (tokens: any): number | null => {
+  const t = Date.parse(tokens?.session_expires_at ?? "");
+  return Number.isFinite(t) ? t : null;
+};
+
+// Import diferido para evitar el ciclo store <-> lib/session.
+const sessionLib = () => import("../lib/session");
 
 const getSessionDurationMs = () => {
   const configuredMinutes = Number(process.env.NEXT_PUBLIC_SESSION_DURATION_MINUTES);
@@ -66,9 +75,12 @@ export const useAuthStore = create<AuthState>()(
       setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
 
       login: (userData: any) => {
+        const fallback = Date.now() + getSessionDurationMs();
+        const fromServer = serverExpiry(userData?.tokens);
+        sessionLib().then((m) => m.markActivity(true));
         set({
           isAuthenticated: true,
-          sessionExpiresAt: Date.now() + getSessionDurationMs(),
+          sessionExpiresAt: fromServer ? Math.min(fromServer, fallback) : fallback,
           id: userData.id,
           name: userData.name,
           last_name: userData.last_name,
@@ -84,6 +96,19 @@ export const useAuthStore = create<AuthState>()(
         });
 
         get().checkSession();
+      },
+
+      setTokens: (tokens, opts) => {
+        if (!get().isAuthenticated || !tokens?.access || !tokens?.refresh) return;
+        const fromServer = serverExpiry(tokens);
+        const patch: any = { tokens: { access: tokens.access, refresh: tokens.refresh } };
+        if (fromServer) patch.sessionExpiresAt = fromServer;
+        if (opts?.persist === false) {
+          // cambio llegado desde otra pestaña: ya está persistido
+          useAuthStore.setState(patch, false);
+        } else {
+          set(patch);
+        }
       },
 
       edit: (userData: any) => {
@@ -103,6 +128,13 @@ export const useAuthStore = create<AuthState>()(
           clearInterval(sessionInterval);
           sessionInterval = null;
         }
+
+        // Revocar la sesión en el backend (refresh + access) antes de limpiar.
+        const tokens = get().tokens;
+        sessionLib().then((m) => {
+          m.notifyBackendLogout(tokens);
+          m.clearActivity();
+        });
 
         if (typeof window !== "undefined") {
           localStorage.removeItem("studio-storage");
@@ -126,38 +158,18 @@ export const useAuthStore = create<AuthState>()(
       checkSession: () => {
         if (sessionInterval) return;
 
-        let lastBackendCheck = 0;
-
-        sessionInterval = setInterval(async () => {
-          const { isAuthenticated, sessionExpiresAt, tokens, logout } = get();
-
+        // Solo controles locales (8 h). Ya no se hace polling al backend: eso
+        // mantenía viva la sesión aunque el usuario estuviera inactivo. La
+        // inactividad la controlan lib/session.ts y, sobre todo, el backend.
+        sessionInterval = setInterval(() => {
+          const { isAuthenticated, sessionExpiresAt, logout } = get();
           if (hasSessionExpired(isAuthenticated, sessionExpiresAt)) {
             logout();
             return;
           }
-
-          if (isAuthenticated && tokens?.access) {
-            try {
-              const now = Date.now();
-              if (now - lastBackendCheck < BACKEND_SESSION_CHECK_INTERVAL_MS) {
-                return;
-              }
-
-              lastBackendCheck = now;
-              await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_SLOTS}`, {
-                headers: {
-                  Authorization: `Bearer ${tokens.access}`,
-                },
-              });
-            } catch (error) {
-              console.error("La sesión ha expirado o no es válida.", error);
-              logout();
-            }
-          } else {
-            if (sessionInterval) {
-              clearInterval(sessionInterval);
-              sessionInterval = null;
-            }
+          if (!isAuthenticated && sessionInterval) {
+            clearInterval(sessionInterval);
+            sessionInterval = null;
           }
         }, SESSION_CHECK_INTERVAL_MS);
       },
@@ -174,6 +186,10 @@ export const useAuthStore = create<AuthState>()(
         }
 
         if (state?.isAuthenticated && state?.tokens?.access) {
+          // Recarga de página: si pasó el límite de inactividad, se cierra.
+          sessionLib().then((m) => {
+            if (m.idleMs() >= m.IDLE_LIMIT_MS) state.logout();
+          });
           state.checkSession();
         }
       },
