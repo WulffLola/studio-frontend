@@ -66,9 +66,14 @@ public/brand/            # logos de STUDIO
 
 No hace falta instalar Node: corre dentro del contenedor.
 
-### 2. Descomprimir
+### 2. Obtener el código
 
-Descomprimir `studio-frontend.zip` y abrir una terminal dentro de la carpeta `studio-frontend`.
+```bash
+git clone https://github.com/WulffLola/studio-frontend.git
+cd studio-frontend
+```
+
+O descomprimir `studio-frontend.zip` y abrir una terminal dentro de la carpeta `studio-frontend`.
 
 ### 3. Levantar
 
@@ -85,9 +90,9 @@ Durante la instalación aparecen avisos de paquetes deprecados y de vulnerabilid
 
 ### 4. Entrar
 
-Abrir **http://localhost:4010** y entrar con `admin@studio.local` / `studio1234`. Después de iniciar sesión se elige el estudio con el que se va a trabajar (por ejemplo *Studio Central*).
+Abrir **http://localhost:4010** y entrar con `admin@studio.local` / `studio1234`. Después de iniciar sesión se elige el estudio con el que se va a trabajar (por ejemplo *Aura Casanova*).
 
-También se puede entrar con `super@studio.local` o `recepcion@studio.local` (misma contraseña) para ver las pantallas según cada rol. El Consultor solo ve los estudios completamente configurados; con los datos de prueba es *Studio Central*.
+También se puede entrar con `super@studio.local` o `recepcion@studio.local` (misma contraseña) para ver las pantallas según cada rol. El Consultor solo ve los estudios completamente configurados; con los datos de prueba están las dos sedes.
 
 ### 5. Apagar
 
@@ -95,21 +100,31 @@ También se puede entrar con `super@studio.local` o `recepcion@studio.local` (mi
 docker compose -f docker-compose.production.yml down
 ```
 
-## Desarrollo sin Docker (opcional)
+## Instalación sin Docker (opcional)
 
-Requisitos: Node 18 o superior.
+Requisitos: Node 18 o superior y el backend levantado en `http://localhost:8000/` (con Docker o sin Docker, ver el README de `studio-backend`).
 
 ```bash
 cp .env.example .env.local
-npm install
+npm ci
 npm run dev
 ```
 
-Queda en `http://localhost:3000`.
+Queda en `http://localhost:3000` y se entra con los mismos usuarios de prueba.
+
+Para probar el build de producción en lugar del modo desarrollo:
+
+```bash
+cp .env.example .env.production
+npm run build
+npm start
+```
 
 ## Variables de entorno
 
 Están todas en [`.env.example`](.env.example). Cada endpoint del backend tiene su variable `NEXT_PUBLIC_URL_BACKEND_*`, así se puede apuntar a otro servidor cambiando solo la URL base. Si el backend corre en otro host o puerto, hay que reemplazar `http://localhost:8000` en todo el archivo y volver a construir la imagen (`up -d --build`), porque las variables se fijan al compilar.
+
+`NEXT_PUBLIC_DEMO_MODE=true` muestra en el login el cartel de entorno de demostración (se usa en la demo publicada).
 
 ## Entorno de pruebas
 
