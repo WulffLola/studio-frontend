@@ -365,7 +365,7 @@ const ModalGenerateSlots = ({ onClose, isCancel }: { onClose: () => void; isCanc
 
                 <Stack spacing={4} w={"full"} p={{ base: 5, md: 6 }}>
                     <Heading as="h2" size="lg" pr={8} mb={1} position="sticky" top={0} zIndex={2} bg="bg.surface" py={2} mt={-2}>
-                        Nueva plantilla horario
+                        Nueva plantilla de horario
                     </Heading>
 
                     <Tabs variant="line" onChange={handleTabChange}>

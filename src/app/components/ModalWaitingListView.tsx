@@ -421,7 +421,7 @@ const ModalWaitingListView = ({ onClose, hour, day, getAppointments, appointment
                                     </Flex>
 
                                     <Flex justifyContent="flex-end" alignItems="center" flexShrink={0}>
-                                        {(sentIds.includes(filteredProduct.id) || isReserved) && (
+                                        {sentIds.includes(filteredProduct.id) && (
                                             <StatusBadge label="Enviado" tone="success" />
                                         )}
                                         {!sentIds.includes(filteredProduct.id) && isReserved && (

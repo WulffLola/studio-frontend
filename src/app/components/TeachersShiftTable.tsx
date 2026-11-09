@@ -768,6 +768,7 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
                                                     borderColor="border.subtle"
                                                     borderRadius="card"
                                                     overflow="hidden"
+                                                    transition="border-color 120ms ease, background-color 120ms ease"
                                                     cursor={!entries.length && hasAvailableSlot ? "pointer" : "default"}
                                                     role={!entries.length && hasAvailableSlot ? "button" : undefined}
                                                     tabIndex={!entries.length && hasAvailableSlot ? 0 : undefined}
@@ -844,6 +845,7 @@ const TeachersShiftTable: React.FC<TeachersShiftTableProps> = ({
                                                                     openEmptyCell(date, time);
                                                                 }
                                                             } : undefined}
+                                                            transition="background-color 120ms ease"
                                                             _hover={!entries.length && hasAvailableSlot ? { bg: "brand.50" } : undefined}
                                                             _focusVisible={{ boxShadow: "focusRing", outline: "none" }}
                                                         >

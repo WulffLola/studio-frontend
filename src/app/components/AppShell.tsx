@@ -3,6 +3,7 @@
 import {
   Avatar,
   Box,
+  Button,
   Drawer,
   DrawerBody,
   DrawerCloseButton,
@@ -36,6 +37,7 @@ import {
   mdiMenu,
   mdiNewspaperVariantOutline,
   mdiOfficeBuildingOutline,
+  mdiLightbulbOnOutline,
   mdiShieldAccountOutline,
   mdiStorefrontOutline,
   mdiSwapHorizontal,
@@ -44,7 +46,7 @@ import {
 } from "@mdi/js";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import { useSelector } from "react-redux";
 import { useAuthStore } from "../stores/auth";
 import { useStudioStore } from "../stores/studio";
@@ -98,6 +100,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { logout, name, last_name, tipo, profile_photo } = useAuthStore();
   const [isNavigating, setIsNavigating] = useState(false);
+  const [navigationLabel, setNavigationLabel] = useState("");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const studioHasHydrated = useStudioStore((s: any) => s.hasHydrated as boolean);
@@ -167,12 +170,13 @@ const AppShell = ({ children }: { children: ReactNode }) => {
       { name: "Historial de Bajas", path: "/lowsHistory", icon: mdiAccountMinusOutline },
       ...(tipo !== "Consultor" ? [{ name: "Acciones", path: "/actions", icon: mdiLightningBoltOutline }] : []),
       ...(tipo !== "Consultor" ? [{ name: "Estadísticas", path: "/stadistics", icon: mdiChartBoxOutline }] : []),
+      ...(tipo !== "Consultor" ? [{ name: "Recomendaciones", path: "/recommendations", icon: mdiLightbulbOnOutline }] : []),
       ...(tipo !== "Consultor" ? [{ name: "Usuarios", path: "/users", icon: mdiShieldAccountOutline }] : []),
       ...(tipo !== "Consultor" ? [{ name: "Contenido para alumnos", path: "/feed", icon: mdiNewspaperVariantOutline }] : []),
       // Integración de WhatsApp pausada temporalmente.
       // ...(tipo?.toLowerCase() === "super"
-      // ? [{ name: "Configuración", path: "/settings", icon: mdiCogOutline }]
-      // : []),
+      //   ? [{ name: "Configuración", path: "/settings", icon: mdiCogOutline }]
+      //   : []),
     ],
     [tipo]
   );
@@ -204,13 +208,25 @@ const AppShell = ({ children }: { children: ReactNode }) => {
     }
 
     setIsNavigating(true);
+    const destination = LinkItems.find((link) => link.path === path)?.name ?? extraPageTitles[path] ?? "página";
+    setNavigationLabel(destination);
     onClose();
-    router.push(path);
+    router.push(path, { scroll: true });
   };
 
   useEffect(() => {
     setIsNavigating(false);
+    setNavigationLabel("");
     setIsLoggingOut(false);
+  }, [pathname]);
+
+  // El shell se conserva entre rutas, por lo que también se conserva el scroll
+  // del documento. Reiniciarlo antes de pintar evita mostrar un fragmento de la
+  // página anterior durante la navegación.
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, [pathname]);
 
   const onNavClick = (event: MouseEvent<HTMLAnchorElement>, path: string) => {
@@ -366,7 +382,7 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
   return (
     <>
-      {isLoggingOut && <FullPageLoader position="fixed" inset={0} minH="100vh" bg="bg.canvas" zIndex={1600} />}
+      {isLoggingOut && <FullPageLoader position="fixed" inset={0} minH="100vh" bg="bg.canvas" zIndex={1600} message="Cerrando sesión" />}
 
       {/* Sidebar fija (desktop) */}
       {showNavigation && (
@@ -449,46 +465,52 @@ const AppShell = ({ children }: { children: ReactNode }) => {
 
           <HStack ml="auto" spacing={3} flexShrink={0}>
             {canShowStudio && (
-              <HStack
+              <Button
                 display={{ base: "none", md: "flex" }}
-                spacing={1.5}
+                leftIcon={<Icon path={mdiStorefrontOutline} size={0.65} />}
                 px={2.5}
                 h="30px"
                 borderRadius="full"
                 bg="bg.muted"
                 color="text.secondary"
                 maxW="260px"
-                title="Estudio activo"
+                fontSize="13px"
+                fontWeight={500}
+                variant="ghost"
+                title="Cambiar de estudio"
+                aria-label={`Cambiar de estudio. Estudio actual: ${studioLabel}`}
+                onClick={() => handleLinkClick("/studioSelection")}
+                _hover={{ bg: "bg.hover", color: "text.primary" }}
+                _focusVisible={{ boxShadow: "focusRing", outline: "none" }}
               >
-                <Icon path={mdiStorefrontOutline} size={0.65} />
-                <Text fontSize="13px" fontWeight={500} noOfLines={1}>
+                <Text as="span" fontSize="13px" fontWeight={500} noOfLines={1}>
                   {studioLabel}
                 </Text>
-              </HStack>
+              </Button>
             )}
             {!showNavigation && userMenu("bottom-end", true)}
           </HStack>
         </Flex>
 
-        <Box as="main" position="relative">
-          {children}
+        <Box
+          as="main"
+          key={pathname}
+          position="relative"
+          minH={`calc(100vh - ${TOPBAR_HEIGHT})`}
+          bg="bg.canvas"
+        >
+          {isNavigating ? (
+            <FullPageLoader
+              minH={`calc(100vh - ${TOPBAR_HEIGHT})`}
+              bg="bg.canvas"
+              message={`Cargando ${navigationLabel || "página"}`}
+              aria-label="Cargando página"
+            />
+          ) : (
+            children
+          )}
         </Box>
       </Box>
-
-      {isNavigating && (
-        <FullPageLoader
-          position="fixed"
-          top={TOPBAR_HEIGHT}
-          left={0}
-          sx={showNavigation ? { [DESKTOP]: { left: SIDEBAR_WIDTH } } : undefined}
-          right={0}
-          bottom={0}
-          minH="auto"
-          bg="bg.canvas"
-          zIndex={14}
-          aria-label="Cargando página"
-        />
-      )}
     </>
   );
 };

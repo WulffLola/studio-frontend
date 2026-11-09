@@ -13,8 +13,8 @@ import ModalExpensesTypeAdd from "../components/ModalExpensesTypeAdd";
 import { useAppDispatch } from "../stores/hooks";
 import { useSelector } from "react-redux";
 import { getPayments, getPaymentsLastMonth, getPaymentsToday, getExpenseType, getExpensesTodayTeachers, getExpenses } from '../stores/studioSlice';
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
+import { FullPageLoader } from "../components/ui/Loaders";
 import { useStudioStore } from "../stores/studio";
 
 const Payments = () => {
@@ -22,9 +22,9 @@ const Payments = () => {
   // const [paymentsToday, setPaymentsToday] = useState([]);
   // const [expenses, setExpenses] = useState([]); // Estado para gastos
   const [activeTab, setActiveTab] = useState(0); // Estado para controlar la pestaña activa
+  const [loading, setLoading] = useState(true);
   // const [expensesType, setExpensesType] = useState([])
   // const [expensesToday, setExpensesToday] = useState([]);
-  const [loading, setLoading] = useState(true);
   // const [paymentsLastMonth, setPaymentsLastMonth] = useState([]);
   const [updatedAppointments, setUpdatedAppointments] = useState([]);
   const [selectedExpenseStudio, setSelectedExpenseStudio] = useState<any>({

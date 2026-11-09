@@ -21,8 +21,10 @@ Consume la API del proyecto `studio-backend`.
 | `/cashRegister` | Caja diaria: pagos y gastos. |
 | `/stadistics` | Indicadores de ocupación, alumnos y finanzas. |
 | `/feed` | Contenido para alumnos: publicaciones del inicio y, en la pestaña *Studio Tips*, notas y recetas (`/studio-tips`). |
+| `/recommendations` | Recomendaciones sobre la grilla de clases (por ahora muestra datos de ejemplo). |
 | `/users` | Usuarios del sistema y sus roles. |
 | `/actions` | Registro de acciones de los operadores. |
+| `/settings` | Configuración del estudio. |
 
 Lo que ve cada usuario depende de su rol (Super, Administrador o Consultor).
 

@@ -7,7 +7,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogOverlay,
-  Badge,
   Box,
   Button,
   Checkbox,
@@ -50,21 +49,15 @@ import {
   getSlots,
   getStudios,
   getCalendar,
-  getPeoples,
 } from "../stores/studioSlice";
 import { FiPlus, FiSearch } from "react-icons/fi";
 import { Select as Select2 } from "./ui/Select";
 import { LoadingOverlay } from "./ui/Loaders";
 import { TableState } from "./ui/StateMessage";
 import SearchField from "./ui/SearchField";
-import StatusBadge from "./ui/StatusBadge";
 import { useStudioStore } from "../stores/studio";
 
 const ITEMS_PER_PAGE = 10;
-const fixedSlotsUrl = () =>
-  process.env.NEXT_PUBLIC_URL_BACKEND_FIXED_SLOTS ||
-  `${process.env.NEXT_PUBLIC__URL_BACKEND}fixed-slots/`;
-
 const hasSignedClassDeclaration = (appointment: any) =>
   appointment?.firmo_declaracion_clase === true ||
   (appointment?.firmo_declaracion_clase === undefined && appointment?.declaration_signed === true);
@@ -93,15 +86,13 @@ const TableAppointments = ({
   const [loading, setLoading] = useState(false);
   const [loadingTable, setLoadingTable] = useState(false);
   const [localRefreshKey, setLocalRefreshKey] = useState(0);
-  const [fixedSlots, setFixedSlots] = useState<any[]>([]);
 
-  const { appointments, activitySubType, rooms, slots, studios, peoples } = useSelector(
+  const { appointments, activitySubType, rooms, slots, studios } = useSelector(
     (state: any) => state.studio
   );
   const dispatch = useAppDispatch();
   const isStudent = tipo === "Estudiante" || tipo === "Alumno";
   const canUseAuthenticatedCode = ["Super", "SUPER", "Administrador", "ADMIN", "Admin"].includes(tipo || "");
-  const canDeleteFixed = ["Super", "SUPER", "Administrador", "ADMIN", "Admin", "Consultor"].includes(tipo || "");
 
   useEffect(() => {
     if (!studioStoreHasHydrated || studioFilterInitialized.current) return;
@@ -273,28 +264,7 @@ const TableAppointments = ({
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
 
-  const fixedRows = fixedSlots.map((fixedSlot: any) => {
-    const person = typeof fixedSlot.person === "object"
-      ? fixedSlot.person
-      : peoples?.find((candidate: any) => String(candidate.id) === String(fixedSlot.person));
-
-    return {
-      ...fixedSlot,
-      id: `fixed-${fixedSlot.id}`,
-      fixedSlotId: fixedSlot.id,
-      __type: "fixed",
-      person: person || { id: fixedSlot.person },
-      slot: {
-        ...(fixedSlot.template || {}),
-        days_week: fixedSlot.template?.days_of_week || [],
-      },
-    };
-  });
-  const combinedList = [
-    ...list.map((item: any) => ({ ...item, __type: "appointment" })),
-    ...fixedRows,
-  ];
-  const sortedList = sortByLastNameAndFirstName(combinedList);
+  const sortedList = sortByLastNameAndFirstName(list);
 
   const studioOptions = [
     { value: "all", label: "Todos los estudios" },
@@ -372,7 +342,6 @@ const TableAppointments = ({
     dispatch(getRooms());
     dispatch(getStudios());
     dispatch(getActivitySubType());
-    dispatch(getPeoples());
     setLoadingTable(true);
 
     const timer = setTimeout(() => {
@@ -381,23 +350,6 @@ const TableAppointments = ({
 
     return () => clearTimeout(timer);
   }, [dispatch]);
-
-  const refreshFixedSlots = async () => {
-    try {
-      const { data } = await axios.get(fixedSlotsUrl(), {
-        headers: { Authorization: `Bearer ${tokens?.access}` },
-      });
-      const results = Array.isArray(data) ? data : data?.results || [];
-      setFixedSlots(results.filter((item: any) => !item.deleted));
-    } catch (error: any) {
-      toast({
-        title: "No se pudieron cargar los turnos fijos",
-        description: error.response?.data?.detail,
-        status: "error",
-        position: "bottom-right",
-      });
-    }
-  };
 
   const refreshAppointments = () => {
     const studio =
@@ -426,7 +378,6 @@ const TableAppointments = ({
 
   useEffect(() => {
     refreshAppointments();
-    refreshFixedSlots();
     // La consulta depende del estudio y del rol normalizados arriba.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedStudio.value, isStudent]);
@@ -434,7 +385,6 @@ const TableAppointments = ({
   useEffect(() => {
     if (refreshKey > 0 || localRefreshKey > 0) {
       refreshAppointments();
-      refreshFixedSlots();
     }
     // Las claves cambian después de crear o editar un turno.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -447,27 +397,6 @@ const TableAppointments = ({
   const handleDelete = async (code: string) => {
     setLoading(true);
     try {
-      if (selectedItem?.__type === "fixed") {
-        await axios.delete(`${fixedSlotsUrl()}${selectedItem.fixedSlotId}/`, {
-          headers: { Authorization: `Bearer ${tokens?.access}` },
-        });
-        toast({
-          title: "Turno fijo dado de baja",
-          description: "Se cancelaron las reservas automáticas futuras y se liberaron los cupos.",
-          status: "success",
-          duration: 4500,
-          isClosable: true,
-          position: "bottom-right",
-        });
-        onCloseAlertDialogDelete();
-        await Promise.all([
-          refreshFixedSlots(),
-          dispatch(getAppointments()),
-          dispatch(getSlots()),
-          dispatch(getCalendar()),
-        ]);
-        return;
-      }
       await axios.delete(
         `${process.env.NEXT_PUBLIC_URL_BACKEND_APPOINTMENTS}${selectedItem.id}/`,
         {
@@ -514,13 +443,11 @@ const TableAppointments = ({
   };
 
   const handleClickEdit = (item: any) => {
-    if (item.__type === "fixed") return;
     onOpenModalEdit();
     setSelectedItem(item);
   };
 
   const handleRowDoubleClick = (_index: number, item: any) => {
-    if (item.__type === "fixed") return;
     setSelectedItem(item);
     onOpenModalEdit();
   };
@@ -589,15 +516,11 @@ const TableAppointments = ({
             <AlertDialogContent>
               <AlertDialogCloseButton />
               <AlertDialogHeader>
-                {selectedItem?.__type === "fixed" ? "Dar de baja turno fijo" : "Eliminar turno alumno"}
+                Eliminar turno alumno
               </AlertDialogHeader>
               <AlertDialogBody>
                 {selectedItem ? (
-                  selectedItem.__type === "fixed" ? (
-                    <>
-                      ¿Dar de baja el turno fijo de <strong>{selectedItem.person?.name} {selectedItem.person?.last_name}</strong>? Se cancelarán las reservas automáticas futuras, se devolverán las sesiones y se liberarán los cupos. Las reservas pasadas y manuales no serán modificadas.
-                    </>
-                  ) : <>
+                  <>
                     ¿Está seguro que quiere eliminar el turno del alumno{" "}
                     <span style={{ fontWeight: 600 }}>
                       {selectedItem?.person?.name} {selectedItem?.person?.last_name}
@@ -633,9 +556,7 @@ const TableAppointments = ({
                 </Button>
                 <Button
                   onClick={() =>
-                    selectedItem?.__type === "fixed"
-                      ? handleDelete(code || "")
-                      : canUseAuthenticatedCode
+                    canUseAuthenticatedCode
                         ? handleDelete(code || "")
                         : onOpenModalCode()
                   }
@@ -643,7 +564,7 @@ const TableAppointments = ({
                   w={["100%", "135px"]}
                   variant="danger"
                 >
-                  {selectedItem?.__type === "fixed" ? "Dar de baja" : "Eliminar"}
+                  Eliminar
                 </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -724,7 +645,6 @@ const TableAppointments = ({
         <Table size={"sm"} minW={{ base: "1080px", md: "100%" }} data-sticky-actions>
           <Thead>
             <Tr>
-              <Th>Tipo</Th>
               <Th>Alumno</Th>
               <Th>Dni</Th>
               <Th>Día</Th>
@@ -738,7 +658,7 @@ const TableAppointments = ({
           </Thead>
           <Tbody style={{ overflowY: "scroll" }}>
             {loadingTable ? (
-              <TableState kind="loading" colSpan={10} />
+              <TableState kind="loading" colSpan={9} />
             ) : currentItems.length > 0 ? (
               currentItems.map((item: any, index: number) => (
                 <Tr
@@ -749,31 +669,18 @@ const TableAppointments = ({
                     cursor="pointer"
                 >
                   <Td>
-                    <StatusBadge
-                      label={item.__type === "fixed" ? "Fijo" : "Individual"}
-                      tone={item.__type === "fixed" ? "brand" : "neutral"}
-                      showDot={false}
-                    />
-                    {item.__type === "fixed" && <Text fontSize="xs" color="text.muted">{item.reservas_count ?? 0} reservas</Text>}
-                  </Td>
-                  <Td>
                     {item?.person?.last_name} {item?.person?.name}
                   </Td>
                   <Td>{item?.person?.dni}</Td>
                   <Td>
                     {getDayAndDateLabel(item)}
-                    {item.__type === "fixed" && (
-                      <Text fontSize="xs" color="text.muted">
-                        {formatDate(item.start_date)} – {item.end_date ? formatDate(item.end_date) : "sin vencimiento"}
-                      </Text>
-                    )}
                   </Td>
                   <Td>{getStartTimeLabel(item)}</Td>
                   <Td>{getActivityName(item)}</Td>
                   <Td>{getRoomName(item)}</Td>
                   <Td>{getStudioName(item)}</Td>
                   <Td textAlign="center">
-                    {item.__type === "fixed" ? "—" : <Checkbox
+                    <Checkbox
                       isChecked={hasSignedClassDeclaration(item)}
                       isReadOnly
                       aria-label={
@@ -781,11 +688,11 @@ const TableAppointments = ({
                           ? "Declaración firmada"
                           : "Declaración no firmada"
                       }
-                    />}
+                    />
                   </Td>
                   <Td isNumeric>
                     <HStack justify="flex-start" spacing={1}>
-                      {item.__type !== "fixed" && <Tooltip hasArrow label="Editar">
+                      <Tooltip hasArrow label="Editar">
                         <IconButton
                           aria-label="Editar"
                           icon={<Icon path={mdiPencilOutline} size={0.9} />}
@@ -793,8 +700,8 @@ const TableAppointments = ({
                           onClick={() => handleClickEdit(item)}
                           variant="ghost"
                         />
-                      </Tooltip>}
-                      {(item.__type !== "fixed" || canDeleteFixed) && <Tooltip hasArrow label={item.__type === "fixed" ? "Dar de baja" : "Eliminar"}>
+                      </Tooltip>
+                      <Tooltip hasArrow label="Eliminar">
                         <IconButton
                           aria-label="Eliminar"
                           icon={<Icon path={mdiDeleteOutline} size={0.9} />}
@@ -802,7 +709,7 @@ const TableAppointments = ({
                           onClick={() => handleClickDelete(item)}
                           variant="ghostDanger"
                         />
-                      </Tooltip>}
+                      </Tooltip>
                     </HStack>
                   </Td>
                 </Tr>
@@ -810,7 +717,7 @@ const TableAppointments = ({
             ) : (
               !loadingTable &&
               currentItems.length === 0 && (
-                <TableState kind="empty" colSpan={10} title="No se encontraron datos" />
+                <TableState kind="empty" colSpan={9} title="No se encontraron datos" />
               )
             )}
           </Tbody>

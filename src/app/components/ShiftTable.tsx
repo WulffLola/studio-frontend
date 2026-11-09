@@ -1062,7 +1062,7 @@
 // activityName.toLowerCase() === "libre";
 // */
 // const cupos = getCuposForHour(hour, slotForHour);
-// // SIEMPRE 8 visibles (aunque cupos sea menor)
+//                                 // ✅ SIEMPRE 8 visibles (aunque cupos sea menor)
 // const isExpanded = !!expandedHours[hour];
 // const visibleCupos = isExpanded ? cupos : DEFAULT_VISIBLE_SLOTS;
 // const hasMore = cupos > DEFAULT_VISIBLE_SLOTS;
@@ -1187,7 +1187,7 @@
 // })}
 // </Box>
 
-// {/*  FLECHA PARA DESPLEGAR */}
+//                                                     {/* ✅ FLECHA PARA DESPLEGAR */}
 // {/* {hasMore && (
 // <Box
 // display="flex"
@@ -1467,7 +1467,7 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
         ? flattenedAppointments
         : [];
 
-    const slots = useSelector((state: any) => state.studio.slots);
+    const { slots, appointments } = useSelector((state: any) => state.studio);
 
 
     const availableDateKeys = useMemo(() => {
@@ -1901,15 +1901,52 @@ const ShiftTable: React.FC<ShiftTableProps> = ({
         }
     };
 
+    const resolveCurrentAppointment = (calendarAppointment: any) => {
+        if (!calendarAppointment || !Array.isArray(appointments)) {
+            return calendarAppointment;
+        }
+
+        const directMatch = appointments.find(
+            (appointment: any) => String(appointment.id) === String(calendarAppointment.id)
+        );
+
+        const personId = calendarAppointment.person?.id ?? calendarAppointment.person_id;
+        const slotId = calendarAppointment.slot?.id ?? calendarAppointment.slot_id;
+        const relationMatch = appointments.find((appointment: any) => {
+            const currentPersonId = appointment.person?.id ?? appointment.person;
+            const currentSlotId = appointment.slot?.id ?? appointment.slot;
+            return (
+                String(currentPersonId) === String(personId) &&
+                String(currentSlotId) === String(slotId)
+            );
+        });
+
+        const currentAppointment = directMatch || relationMatch;
+        if (!currentAppointment) return calendarAppointment;
+
+        return {
+            ...calendarAppointment,
+            ...currentAppointment,
+            person: {
+                ...(calendarAppointment.person || {}),
+                ...(typeof currentAppointment.person === "object" ? currentAppointment.person : {}),
+            },
+            slot: {
+                ...(calendarAppointment.slot || {}),
+                ...(typeof currentAppointment.slot === "object" ? currentAppointment.slot : {}),
+            },
+        };
+    };
+
     const handleEditAppointment = (appointment: any) => {
         if (!appointment) return;
-        setSelectedItem(appointment);
+        setSelectedItem(resolveCurrentAppointment(appointment));
         onOpenModalAppointmentsEdit();
     };
 
     const handleDeleteAppointment = (appointment: any) => {
         if (!appointment) return;
-        setSelectedItem(appointment);
+        setSelectedItem(resolveCurrentAppointment(appointment));
         onOpenAlertDialogDelete();
     };
 

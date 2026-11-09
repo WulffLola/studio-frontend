@@ -46,7 +46,15 @@ import { isSelectableStudio } from "../utils/studios";
 import { isSlotCapacityError, isSlotFull } from "../utils/slots";
 import ModalFixedSlotAdd from "./ModalFixedSlotAdd";
 
-const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any) => {
+const ModalAppointmentsAdd = ({
+    product,
+    onClose,
+    hour,
+    day,
+    initialRoom,
+    initialTurnType = 0,
+    visibleTurnType,
+}: any) => {
     const [student, setStudent] = useState("");
     const [date, setDate] = useState(day?.date || "");
     const [hours, setHours] = useState(
@@ -59,7 +67,11 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
     const [selectedActivity, setSelectedActivity] = useState<any>(null);
     const [selectedStudio, setSelectedStudio] = useState<any>(null);
     const [selectedRoom, setSelectedRoom] = useState<any>(null);
-    const [turnType, setTurnType] = useState(0);
+    const [turnType, setTurnType] = useState(initialTurnType);
+
+    useEffect(() => {
+        setTurnType(initialTurnType);
+    }, [initialTurnType]);
 
     const selectedStudioFromStore = useStudioStore((state: any) => state.selectedStudio);
     const { appointments, peoples, slots, activitySubType, studios, rooms } =
@@ -581,13 +593,17 @@ const ModalAppointmentsAdd = ({ product, onClose, hour, day, initialRoom }: any)
                         pr={8}
                         mb={1} position="sticky" top={0} zIndex={2} bg="bg.surface" py={2} mt={-2}
                     >
-                        Nuevo turno
+                        {visibleTurnType === "fixed" ? "NUEVO TURNO FIJO" : "NUEVO TURNO"}
                     </Heading>
 
                     <Tabs variant="enclosed" index={turnType} onChange={setTurnType}>
-                        <TabList>
-                            <Tab>Turno individual</Tab>
-                            <Tab>Turno fijo</Tab>
+                        <TabList display={visibleTurnType ? "none" : "flex"}>
+                            <Tab display={visibleTurnType === "fixed" ? "none" : undefined}>
+                                Turno individual
+                            </Tab>
+                            <Tab display={visibleTurnType === "individual" ? "none" : undefined}>
+                                Turno fijo
+                            </Tab>
                         </TabList>
                         <TabPanels>
                             <TabPanel px={0} pt={5}>

@@ -26,6 +26,7 @@ import { useEffect, useRef, useState } from "react";
 import { isSelectableStudio } from "../utils/studios";
 import ModalAppointmentsAdd from "../components/ModalAppointmentsAdd";
 import TableAppointments from "../components/TableAppointments";
+import TableFixedSlots from "../components/TableFixedSlots";
 import ModalTeacherTurnAdd from "../components/ModalTeacherTurnAdd";
 import { useAuthStore } from "../stores/auth";
 import TableTeachersTurn from "../components/TableTeachersTurn";
@@ -45,6 +46,8 @@ const Appointments = () => {
   const { tipo } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [appointmentsRefreshKey, setAppointmentsRefreshKey] = useState(0);
+  const [appointmentFormType, setAppointmentFormType] = useState<0 | 1>(0);
+  const [visibleAppointmentType, setVisibleAppointmentType] = useState<"individual" | "fixed">("individual");
   const [teachersTurnRefreshKey, setTeachersTurnRefreshKey] = useState(0);
   const selectedStudioFromHeader = useStudioStore((state) => state.selectedStudio);
   const studioStoreHasHydrated = useStudioStore((state) => state.hasHydrated);
@@ -112,7 +115,7 @@ const Appointments = () => {
 
   if (loading) {
     return (
-      <FullPageLoader />
+      <FullPageLoader message="Cargando Turnos" />
     );
   }
 
@@ -142,11 +145,35 @@ const Appointments = () => {
             <TabPanels>
               {/* Panel de Turnos de Alumnos */}
               <TabPanel>
+                <Tabs variant="enclosed">
+                  <TabList>
+                    <Tab>Turnos</Tab>
+                    <Tab>Turnos fijos</Tab>
+                  </TabList>
+                  <TabPanels>
+                    <TabPanel px={0}>
                 <TableAppointments
                   list={appointments}
-                  onOpen={onOpenAdd}
+                        onOpen={() => {
+                          setAppointmentFormType(0);
+                          setVisibleAppointmentType("individual");
+                          onOpenAdd();
+                        }}
                   refreshKey={appointmentsRefreshKey}
                 />
+              </TabPanel>
+                    <TabPanel px={0}>
+                      <TableFixedSlots
+                        refreshKey={appointmentsRefreshKey}
+                        onOpenAdd={() => {
+                          setAppointmentFormType(1);
+                          setVisibleAppointmentType("fixed");
+                          onOpenAdd();
+                        }}
+                      />
+                    </TabPanel>
+                  </TabPanels>
+                </Tabs>
               </TabPanel>
 
               {/* Panel de Turnos de Profesoras */}
@@ -220,8 +247,8 @@ const Appointments = () => {
                       {/* BUSCADOR SOLO EN TABLA */}
                       {viewTeachers === "table" && (
                         <SearchField
-                            w={{ base: "100%", xl: "320px" }}
-                            order={{ base: 3, lg: 4, xl: 2 }}
+                            w={{ base: "100%", lg: "280px", xl: "320px" }}
+                            order={2}
                             placeholder="Buscar por profesora, día, horario…"
                             value={searchTeachers}
                             onChange={(e) => setSearchTeachers(e.target.value)}
@@ -284,7 +311,7 @@ const Appointments = () => {
                         flexBasis={{ base: "100%", md: "auto" }}
                         flexShrink={0}
                         whiteSpace="nowrap"
-                        order={{ base: 4, lg: 3, xl: 4 }}
+                        order={4}
                         variant="primary"
                       >
                         Registrar Turno Profesora
@@ -312,6 +339,8 @@ const Appointments = () => {
               >
                 <ModalCloseButton />
                 <ModalAppointmentsAdd
+                  initialTurnType={appointmentFormType}
+                  visibleTurnType={visibleAppointmentType}
                   onClose={() => {
                     onCloseAdd();
                     setAppointmentsRefreshKey((current) => current + 1);

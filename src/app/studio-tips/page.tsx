@@ -39,7 +39,6 @@ import {
 } from '../stores/studioSlice';
 import ModalNotesAdd from "../components/ModalNotesAdd";
 import ModalRecipesAdd from "../components/ModalRecipesAdd";
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 /* import ModalNotesAdd from "../components/ModalNotesAdd";
 import ModalRecipesAdd from "../components/ModalRecipesAdd";
@@ -47,7 +46,6 @@ import ModalRecipesAdd from "../components/ModalRecipesAdd";
 
 export default function Schedule() {
     const [activeTab, setActiveTab] = useState(0); // Estado para controlar la pestaña activa
-    const [loading, setLoading] = useState(true);
 
     const { recipes, notes } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
@@ -73,27 +71,10 @@ export default function Schedule() {
      } = useDisclosure();
     */
 
-    // 🔹 Simulación de carga inicial (cámbialo por tu fetch real si querés)
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1000); // 600ms solo para que se vea el spinner
-
-        return () => clearTimeout(timer);
-    }, []);
-
-    useEffect(() => {
-        if (!loading) {
-            dispatch(getNotes());
-            dispatch(getRecipes());
-        }
-    }, [loading]);
-
-    if (loading) {
-        return (
-            <FullPageLoader />
-        );
-    }
+        dispatch(getNotes());
+        dispatch(getRecipes());
+    }, [dispatch]);
     return (
         <>
             <PageContainer>

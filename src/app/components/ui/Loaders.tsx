@@ -1,11 +1,15 @@
 "use client";
 
-import { Flex, Spinner, type FlexProps } from "@chakra-ui/react";
+import { Flex, Spinner, Stack, Text, type FlexProps } from "@chakra-ui/react";
+
+type FullPageLoaderProps = FlexProps & {
+  message?: string;
+};
 
 /** Loader de pantalla completa (hidratación, carga inicial de página). */
-export const FullPageLoader = (props: FlexProps) => (
+export const FullPageLoader = ({ message = "Cargando", ...props }: FullPageLoaderProps) => (
   <Flex
-    minH="60vh"
+    minH="calc(100dvh - 60px)"
     w="100%"
     align="center"
     justify="center"
@@ -14,7 +18,12 @@ export const FullPageLoader = (props: FlexProps) => (
     aria-label="Cargando"
     {...props}
   >
-    <Spinner size="lg" thickness="3px" speed="0.7s" emptyColor="gray.200" color="brand.500" />
+    <Stack spacing={3} align="center" textAlign="center">
+      <Spinner size="lg" thickness="3px" speed="0.7s" emptyColor="gray.200" color="brand.500" />
+      <Text fontSize="sm" fontWeight={500} color="text.secondary">
+        {message}
+      </Text>
+    </Stack>
   </Flex>
 );
 

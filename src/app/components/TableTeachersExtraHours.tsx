@@ -382,6 +382,7 @@ const TableTeachersExtraHours = ({ list, onOpen, }: { list: Array<any>; onOpen: 
                         {/* Botón registrar */}
                         <Button
                             leftIcon={<FiPlus />}
+                            iconSpacing={2}
                             onClick={onOpen}
                             w={{ base: "100%", md: "auto" }}
                             flexBasis={{ base: "100%", md: "auto" }}
@@ -437,7 +438,7 @@ const TableTeachersExtraHours = ({ list, onOpen, }: { list: Array<any>; onOpen: 
                                     <Td isNumeric >
                                         <HStack justify="flex-start" spacing={1}>
                                             <Tooltip hasArrow label='Editar'>
-                                                <IconButton aria-label="Editar" icon={<Icon path={mdiPencilOutline} size={0.9} />} size="sm" onClick={() => handleClickEdit(item)} variant="ghost" />
+                                                <IconButton aria-label="Editar" icon={<Icon path={mdiPencilOutline} size={0.9} />} variant="ghost" size="sm" onClick={() => handleClickEdit(item)} />
                                             </Tooltip>
                                             <Tooltip hasArrow label='Eliminar'>
                                                 <IconButton

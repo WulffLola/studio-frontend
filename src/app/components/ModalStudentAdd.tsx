@@ -347,12 +347,6 @@ const ModalStudentAdd = ({ product, onClose }: any) => {
         return text.replace(/(^|\s)\w/g, match => match.toUpperCase());
     };
 
-
-
-    // useEffect(() => {
-    // getPlans()
-    // }, []);
-
     const handleDniChange = (event) => {
         const newDni = event.target.value;
 

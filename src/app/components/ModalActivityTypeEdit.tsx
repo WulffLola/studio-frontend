@@ -49,12 +49,12 @@ const ModalActivityTypeEdit = ({ onClose, isCancel, product }: any) => {
   const toast = useToast();
 
 // useEffect(() => {
-// if (product) {
-// setName(product.name || "");
-// setImagenFile(null);
-// setImagenUrl(product.photo || "");
-// setImagenPreview(null);
-// }
+//   if (product) {
+//     setName(product.name || "");
+//     setImagenFile(null);
+//     setImagenUrl(product.photo || "");
+//     setImagenPreview(null);
+//   }
 // }, [product]);
 
  useEffect(() => {

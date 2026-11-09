@@ -58,7 +58,7 @@ export default function AuthGate({
   }, [hasHydrated, isAuthenticated, isPublicRoute, isUnauthorizedRoute, router]);
 
   if (!hasHydrated) {
-    return <FullPageLoader minH="100vh" bg="bg.canvas" />;
+    return <FullPageLoader minH="100vh" bg="bg.canvas" message="Cargando aplicación" />;
   }
 
   if (!isAuthenticated && !isPublicRoute) {

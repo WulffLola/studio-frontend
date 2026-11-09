@@ -1,0 +1,13 @@
+name: studio_tfg_front
+
+services:
+  studio_tfg_front:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: studio_tfg_front
+    container_name: STUDIO_FRONTEND_TFG
+    restart: always
+    ports:
+      - "127.0.0.1:4012:3000"
+    env_file: .env.production

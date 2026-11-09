@@ -11,12 +11,10 @@ import {
   getPeoples,
   getAppointments,
 } from '../stores/studioSlice';
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 
 const Students = () => {
   // const [peoples, setPeoples] = useState([])
-  const [loading, setLoading] = useState(true);
 
   const { peoples } = useSelector((state: any) => state.studio);
   const dispatch = useAppDispatch();
@@ -38,37 +36,22 @@ const Students = () => {
   } = useDisclosure();
 
   // async function getPeoples() {
-  // try {
-  // const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PEOPLE}`, {
-  // headers: {
-  // 'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
-  // 'Content-Type': 'application/json',
-  // },
-  // });
-  // setPeoples(response.data)
-  // } catch (error) {
-  // console.log(error);
-  // }
+  //   try {
+  //     const response = await axios.get(`${process.env.NEXT_PUBLIC_URL_BACKEND_PEOPLE}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${tokens?.access}`, // Solo el token de acceso
+  //         'Content-Type': 'application/json',
+  //       },
+  //     });
+  //     setPeoples(response.data)
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
   // };
 
   useEffect(() => {
     dispatch(getPeoples());
   }, [dispatch]);
-
-  useEffect(() => {
-    // Simulamos una carga de datos o componentes
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000); // Cambia este tiempo según tus necesidades
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading) {
-    return (
-      <FullPageLoader />
-    );
-  }
 
   return (
     <>

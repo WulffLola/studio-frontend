@@ -481,10 +481,10 @@ const ModalUserEdit = ({ product, onClose }: any) => {
                             >
                                 {userType
                                     .filter((type) => {
-                                        // 🟣 SUPER -> ve todo
+                                        // 🟣 SUPER → ve todo
                                         if (type === "Super") return true;
 
-                                        // 🔵 ADMIN -> todos menos Super
+                                        // 🔵 ADMIN → todos menos Super
                                         if (type === "Administrador") {
                                             return type.user_type_name !== "Super";
                                         }

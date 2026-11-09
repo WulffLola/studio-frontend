@@ -39,7 +39,7 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
     const { studios } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
-    // Filtrado robusto (si studios viene undefined al principio)
+    // ✅ Filtrado robusto (si studios viene undefined al principio)
     const filteredItems = (studios ?? []).filter((item: any) => {
         const combined = `${item.name ?? ""} ${item.address ?? ""} ${item.deleted === null ? "ACTIVO" : "DADO DE BAJA"}`;
         const normalized = combined.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -47,7 +47,7 @@ const TableStudios = ({ onOpen }: { onOpen: () => void; }) => {
         return normalized.includes(normalizedSearch);
     });
 
-    // Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
+    // ✅ Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
     useEffect(() => {
         setCurrentPage(1);
     }, [filteredItems.length, searchTerm]);

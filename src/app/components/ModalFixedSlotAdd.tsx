@@ -2,6 +2,7 @@
 
 import {
   Alert,
+  AlertDescription,
   AlertIcon,
   Box,
   Button,
@@ -68,6 +69,7 @@ type Props = {
   onClose: () => void;
   onCreated: () => void;
   embedded?: boolean;
+  product?: any;
   initialPersonId?: string | number;
   initialStartDate?: string;
   conversionMode?: boolean;
@@ -77,19 +79,33 @@ const ModalFixedSlotAdd = ({
   onClose,
   onCreated,
   embedded = false,
+  product,
   initialPersonId,
   initialStartDate,
   conversionMode = false,
 }: Props) => {
-  const [personId, setPersonId] = useState(initialPersonId ? String(initialPersonId) : "");
-  const [templateId, setTemplateId] = useState("");
-  const [selectedActivityId, setSelectedActivityId] = useState("");
-  const [selectedRoomId, setSelectedRoomId] = useState("");
-  const [selectedDays, setSelectedDays] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [startDate, setStartDate] = useState(() => initialStartDate || formatDateInput(new Date()));
-  const [endDate, setEndDate] = useState("");
-  const [observation, setObservation] = useState("");
+  const initialTemplate = product?.template || product?.slot_template || {};
+  const [personId, setPersonId] = useState(
+    product ? entityId(product.person) : initialPersonId ? String(initialPersonId) : "",
+  );
+  const [templateId, setTemplateId] = useState(product ? entityId(initialTemplate) : "");
+  const [selectedActivityId, setSelectedActivityId] = useState(
+    product ? entityId(initialTemplate.activity_subtype || product.activity_subtype) : "",
+  );
+  const [selectedRoomId, setSelectedRoomId] = useState(
+    product ? entityId(initialTemplate.room || product.room) : "",
+  );
+  const [selectedDays, setSelectedDays] = useState(
+    product ? templateDaysKey(initialTemplate) : "",
+  );
+  const [selectedTime, setSelectedTime] = useState(
+    product ? templateTimeKey(initialTemplate) : "",
+  );
+  const [startDate, setStartDate] = useState(
+    () => product?.start_date || initialStartDate || formatDateInput(new Date()),
+  );
+  const [endDate, setEndDate] = useState(product?.end_date || "");
+  const [observation, setObservation] = useState(product?.observation || "");
   const [saving, setSaving] = useState(false);
   const { tokens } = useAuthStore();
   const dispatch = useAppDispatch();
@@ -178,8 +194,9 @@ const ModalFixedSlotAdd = ({
 
     setSaving(true);
     try {
-      const { data } = await axios.post(
-        fixedSlotsUrl(),
+      const request = product ? axios.put : axios.post;
+      const { data } = await request(
+        product ? `${fixedSlotsUrl()}${product.id}/` : fixedSlotsUrl(),
         {
           person: Number(personId),
           template_id: Number(templateId),
@@ -192,8 +209,10 @@ const ModalFixedSlotAdd = ({
 
       const warnings = Array.isArray(data?.warnings) ? data.warnings : [];
       toast({
-        title: "Turno fijo creado",
-        description: warnings.length
+        title: product ? "Turno fijo actualizado" : "Turno fijo creado",
+        description: product
+          ? "Los cambios se guardaron correctamente."
+          : warnings.length
           ? `Se crearon ${data?.reservas_creadas ?? 0} reservas. ${warnings.length} clase(s) no pudieron reservarse.`
           : `Se crearon ${data?.reservas_creadas ?? 0} reservas automáticamente.`,
         status: warnings.length ? "warning" : "success",
@@ -210,7 +229,7 @@ const ModalFixedSlotAdd = ({
       onClose();
     } catch (error: any) {
       toast({
-        title: "No se pudo crear el turno fijo",
+        title: product ? "No se pudo actualizar el turno fijo" : "No se pudo crear el turno fijo",
         description: error.response?.data?.detail || "Revisá los datos e intentá nuevamente.",
         status: "error",
         duration: 5000,
@@ -226,7 +245,7 @@ const ModalFixedSlotAdd = ({
     <Stack spacing={5} p={embedded ? 0 : { base: 5, md: 8 }}>
       {!embedded && (
         <Box>
-          <Heading as="h2" size="lg" pr={8} mb={1}>Nuevo turno fijo</Heading>
+          <Heading as="h2" size="lg" pr={8} mb={1}>{product ? "Editar turno fijo" : "Nuevo turno fijo"}</Heading>
           <Box color="text.secondary" fontSize="sm" mt={1}>
             Reservá automáticamente este horario durante el período indicado.
           </Box>
@@ -338,8 +357,8 @@ const ModalFixedSlotAdd = ({
 
       <HStack justify="flex-end" spacing={3}>
         <Button variant="secondary" onClick={onClose}>Cancelar</Button>
-        <Button variant="primary" onClick={submit} isLoading={saving} loadingText="Creando">
-          {conversionMode ? "Convertir en turno fijo" : "Crear turno fijo"}
+        <Button variant="primary" onClick={submit} isLoading={saving} loadingText={product ? "Guardando" : "Creando"}>
+          {product ? "Guardar cambios" : conversionMode ? "Convertir en turno fijo" : "Crear turno fijo"}
         </Button>
       </HStack>
     </Stack>

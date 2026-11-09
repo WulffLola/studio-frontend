@@ -40,7 +40,7 @@ const TableRooms = ({ onOpen }: { onOpen: () => void; }) => {
     const { rooms } = useSelector((state: any) => state.studio);
     const dispatch = useAppDispatch();
 
-    // Filtrado robusto (name, studio_name, capacity, deleted)
+    // ✅ Filtrado robusto (name, studio_name, capacity, deleted)
     const filteredItems = (rooms ?? []).filter((item: any) => {
         const status =
             item?.deleted === null
@@ -62,7 +62,7 @@ const TableRooms = ({ onOpen }: { onOpen: () => void; }) => {
         return normalized.includes(normalizedSearch);
     });
 
-    // Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
+    // ✅ Reset de página cuando cambia la lista o el filtro (evita “no lo veo” en otra página)
     useEffect(() => {
         setCurrentPage(1);
     }, [filteredItems.length, searchTerm]);

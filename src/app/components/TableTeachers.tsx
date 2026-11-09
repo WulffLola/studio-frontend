@@ -410,6 +410,7 @@ const TableTeachers = ({ list, onOpen }: { list: Array<any>; onOpen: () => void;
                         {/* Botón registrar */}
                         <Button
                             leftIcon={<FiPlus />}
+                            iconSpacing={2}
                             onClick={onOpen}
                             w={{ base: "100%", md: "auto" }}
                             flexBasis={{ base: "100%", md: "auto" }}

@@ -147,7 +147,7 @@ const Studios = () => {
 
     if (loading) {
         return (
-            <FullPageLoader />
+            <FullPageLoader message="Cargando Horarios y estudios" />
         );
     }
 

@@ -531,7 +531,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <FullPageLoader />
+      <FullPageLoader message="Cargando Inicio" />
     );
   }
 

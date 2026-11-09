@@ -68,9 +68,9 @@ const ModalExpensesTypeAdd = ({ product, onClose }: any) => {
     const toast = useToast();
 
     // const {
-    // isOpen: isAlertCodeOpen,
-    // onOpen: onOpenModalCode,
-    // onClose: onCloseModalCode,
+    //     isOpen: isAlertCodeOpen,
+    //     onOpen: onOpenModalCode,
+    //     onClose: onCloseModalCode,
     // } = useDisclosure();
 
 
@@ -175,17 +175,17 @@ const ModalExpensesTypeAdd = ({ product, onClose }: any) => {
 
 
     // useEffect(() => {
-    // const selectedAmount = paymentAmount.find(
-    // (item) => String(item.plan) === String(plan) && item.method === paymentMethod
-    // );
+    //     const selectedAmount = paymentAmount.find(
+    //         (item) => String(item.plan) === String(plan) && item.method === paymentMethod
+    //     );
 
-    // if (selectedAmount) {
-    // setAmountId(selectedAmount.id); // Guarda el id del amount en el estado 'amountId'
-    // setAmountValue(selectedAmount.amount); // Guarda el valor del monto para mostrarlo
-    // } else {
-    // setAmountId(""); // Si no hay coincidencia, limpia el id
-    // setAmountValue(""); // Limpia el valor mostrado
-    // }
+    //     if (selectedAmount) {
+    //         setAmountId(selectedAmount.id); // Guarda el id del amount en el estado 'amountId'
+    //         setAmountValue(selectedAmount.amount); // Guarda el valor del monto para mostrarlo
+    //     } else {
+    //         setAmountId(""); // Si no hay coincidencia, limpia el id
+    //         setAmountValue(""); // Limpia el valor mostrado
+    //     }
     // }, [plan, paymentMethod]); // Actualiza el valor del id y el monto cada vez que cambia el plan o el método de pago
 
     return (

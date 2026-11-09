@@ -118,7 +118,7 @@ const ModalRoomsAdd = ({
   };
 
   const handleNameChange = (value: string) => {
-    // Si intenta borrar el prefijo -> lo volvemos a poner
+    // Si intenta borrar el prefijo → lo volvemos a poner
     if (!value.startsWith(PREFIX)) {
       setName(PREFIX);
       return;

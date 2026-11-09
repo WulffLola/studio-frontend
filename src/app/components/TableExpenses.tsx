@@ -681,7 +681,8 @@ const TableExpenses = ({
             )}
 
             <SearchField
-              w={{ base: "100%", md: "50%", lg: "40%", xl: "20%" }}
+              w={{ base: "100%", md: "360px" }}
+              minW={{ md: "360px" }}
               placeholder="Buscar por fecha, tipo, método de pago, monto…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

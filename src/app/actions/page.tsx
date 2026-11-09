@@ -13,7 +13,6 @@ import TableActions from "../components/TableActions";
 import { useAppDispatch } from "../stores/hooks";
 import { useSelector } from "react-redux";
 import {getUsers, getActions} from '../stores/studioSlice';
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 
 const Actions = () => {
@@ -23,7 +22,6 @@ const Actions = () => {
   const [activeTab, setActiveTab] = useState(0); // Estado para controlar la pestaña activa
   const { tipo, tokens } = useAuthStore();
   // const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const { actions, users } = useSelector((state: any) => state.studio);
   const dispatch = useAppDispatch();
 
@@ -79,27 +77,9 @@ const Actions = () => {
   // }
 
   useEffect(() => {
-    // Simulamos una carga de datos o componentes
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000); // Cambia este tiempo según tus necesidades
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      dispatch(getActions())
-      dispatch(getUsers()); // Llamar a la API cuando el componente se monta
-    }
-  }, [loading]);
-
-
-  if (loading) {
-    return (
-      <FullPageLoader />
-    );
-  }
+    dispatch(getActions())
+    dispatch(getUsers());
+  }, [dispatch]);
 
 
 

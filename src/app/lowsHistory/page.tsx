@@ -16,14 +16,12 @@ import {
     getDeletedPeople,
     getSlots,
 } from '../stores/studioSlice';
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 
 const LowsHistory = () => {
     const [activeTab, setActiveTab] = useState(0); // Estado para controlar la pestaña activa
     // const [activeSubTab, setActiveSubTab] = useState(0);
     const { tipo, tokens } = useAuthStore();
-    const [loading, setLoading] = useState(true);
 
     const { deletedPeople, slots } =
         useSelector((state: any) => state.studio);
@@ -82,27 +80,9 @@ const LowsHistory = () => {
     // };
 
     useEffect(() => {
-        // Simulamos una carga de datos o componentes
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 2000); // Cambia este tiempo según tus necesidades
-
-        return () => clearTimeout(timer);
-    }, []);
-
-
-    useEffect(() => {
-        if (!loading) {
             dispatch(getDeletedPeople());
             dispatch(getSlots());
-        }
-    }, [loading]);
-
-    if (loading) {
-        return (
-            <FullPageLoader />
-        );
-    }
+    }, [dispatch]);
 
     return (
         <>

@@ -38,14 +38,12 @@ import TableActivityType from "../components/TableActivityType";
 import ModalActivityTypeAdd from "../components/ModalActivityTypeAdd";
 import TableActivitySubType from "../components/TableActivitySubType";
 import ModalActivitySubTypeAdd from "../components/ModalActivitySubTypeAdd";
-import { FullPageLoader } from "../components/ui/Loaders";
 import { PageContainer } from "../components/ui/PageContainer";
 
 const Plans = () => {
     const [activeTab, setActiveTab] = useState(0); // Estado para controlar la pestaña activa
     // const [activeSubTab, setActiveSubTab] = useState(0);
     const { tipo, tokens } = useAuthStore();
-    const [loading, setLoading] = useState(true);
     const isSuper = tipo === "Super" || tipo === "SUPER";
 
     // const [paymentsAmount, setPaymentsAmount] = useState([])
@@ -102,17 +100,6 @@ const Plans = () => {
     console.log(activityType)
 
     useEffect(() => {
-        // Simulamos una carga de datos o componentes
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 2000); // Cambia este tiempo según tus necesidades
-
-        return () => clearTimeout(timer);
-    }, []);
-
-
-    useEffect(() => {
-        if (!loading) {
             dispatch(getPaymentAmount());
             dispatch(getPlanSubType());
             dispatch(getActivitySubType());
@@ -121,14 +108,7 @@ const Plans = () => {
                 dispatch(getTypePlans());
             }
             dispatch(getDiscounts());
-        }
-    }, [loading, isSuper]);
-
-    if (loading) {
-        return (
-            <FullPageLoader />
-        );
-    }
+    }, [dispatch, isSuper]);
 
     return (
         <>
